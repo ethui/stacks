@@ -1,19 +1,12 @@
 defmodule AnvilOps.Services.Anvil do
-  alias Porcelain.Process, as: Proc
   use GenServer
   require Logger
 
   @type opts() :: [
           # the port manager process to use
-          port_manager: pid()
+          port_manager: pid(),
+          name: String.t() | nil
         ]
-
-  @type t() :: %{
-          # the port assigned to this instance
-          port: pos_integer(),
-          # the external anvil process
-          proc: Proc.t()
-        }
 
   @spec start_link(opts()) :: GenServer.on_start()
   def start_link(opts) do
@@ -33,11 +26,13 @@ defmodule AnvilOps.Services.Anvil do
   # Server
 
   def init(opts) do
+    Process.flag(:trap_exit, true)
+
+    # reserve a port
     {:ok, port} =
       AnvilOps.Services.HttpPortManager.claim(opts[:port_manager])
 
-    proc = Porcelain.spawn("anvil", ["--port", to_string(port)], out: :stream)
-    # TODO: detect early failures
+    {:ok, proc} = MuonTrap.Daemon.start_link("anvil", ["--port", to_string(port)])
 
     {:ok, %{port: port, proc: proc}}
   end
@@ -46,14 +41,8 @@ defmodule AnvilOps.Services.Anvil do
     {:reply, "http://localhost:#{port}", state}
   end
 
-  def handle_cast(:stop, state) do
+  def handle_cast(:stop, %{proc: proc} = state) do
+    GenServer.stop(proc)
     {:stop, :normal, state}
-  end
-
-  def terminate(_, %{proc: proc}) do
-    IO.inspect(proc)
-    # :os.cmd("kill -SIGINT #{proc.pid}")
-    Proc.stop(proc) |> IO.inspect()
-    :ok
   end
 end

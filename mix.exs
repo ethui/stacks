@@ -42,7 +42,7 @@ defmodule AnvilOps.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
-      {:porcelain, "~> 2.0"},
+      {:muontrap, "~> 1.6"},
       {:tesla, "~> 1.4", only: :test},
       {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
@@ -60,4 +60,3 @@ defmodule AnvilOps.MixProject do
     ]
   end
 end
-

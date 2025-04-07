@@ -10,31 +10,42 @@ defmodule AnvilOps.Services.AnvilTest do
   end
 
   test "creates an anvil process", %{port_manager: port_manager} do
-    anvil = start_link_supervised!({Anvil, port_manager: port_manager})
+    {:ok, anvil} = Anvil.start_link(port_manager: port_manager)
+    Process.sleep(100)
 
     url = Anvil.url(anvil)
 
-    url
-    |> AnvilClient.new()
-    |> AnvilClient.rpc_request("anvil_nodeInfo", [])
+    resp =
+      url
+      |> AnvilClient.new()
+      |> AnvilClient.rpc_request("anvil_nodeInfo", [])
+
+    assert {:ok, _} = resp
+
+    Anvil.stop(anvil)
+    Process.sleep(100)
+
+    err =
+      url
+      |> AnvilClient.new()
+      |> AnvilClient.rpc_request("anvil_nodeInfo", [])
+
+    assert {:error, :econnrefused} = err
   end
 
   test "creates multiple anvil processes", %{port_manager: port_manager} do
     anvils =
-      for i <- 1..1 do
+      for i <- 1..10 do
         {:ok, pid} = Anvil.start_link(port_manager: port_manager, name: :"anvil_#{i}")
-
         Process.monitor(pid)
-
         pid
       end
 
     Process.sleep(100)
 
     for anvil <- anvils do
-      url = Anvil.url(anvil)
-
-      url
+      anvil
+      |> Anvil.url()
       |> AnvilClient.new()
       |> AnvilClient.rpc_request("anvil_nodeInfo", [])
     end
@@ -43,7 +54,5 @@ defmodule AnvilOps.Services.AnvilTest do
       Anvil.stop(anvil)
       assert_receive {:DOWN, _ref, :process, ^anvil, :normal}
     end
-
-    Process.sleep(15_000)
   end
 end
