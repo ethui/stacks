@@ -1,5 +1,6 @@
 defmodule Ethui.Services.AnvilTest do
-  alias Ethui.Services.{Anvil, HttpPortManager}
+  alias Ethui.Services.{HttpPortManager}
+  alias Ethui.Services.Anvil, as: Anvil
   use ExUnit.Case, async: false
 
   setup_all do
@@ -56,7 +57,7 @@ defmodule Ethui.Services.AnvilTest do
     end
   end
 
-  @tag :skip
+  @tag capture_log: true
   test "conflicting ports" do
     # start two conflicting port managers
     {:ok, port_manager1} =
@@ -65,7 +66,14 @@ defmodule Ethui.Services.AnvilTest do
     {:ok, port_manager2} =
       HttpPortManager.start_link(range: 7000..7000, name: :port_manager_2)
 
-    {:ok, _anvil1} = Anvil.start_link(port_manager: port_manager1, name: :anvil_1)
-    {:ok, _anvil2} = Anvil.start_link(port_manager: port_manager2, name: :anvil_2)
+    {:ok, _anvil1} = GenServer.start_link(Anvil, port_manager: port_manager1, name: :anvil_1)
+
+    # give enough time to not cause a race condition, and ensure the 2nd anvil is the one that crashes
+    Process.sleep(100)
+
+    {:ok, anvil2} = GenServer.start_link(Anvil, port_manager: port_manager2, name: :anvil_1)
+
+    Process.monitor(anvil2)
+    assert_receive {:DOWN, _, _, ^anvil2, _}, 2_000
   end
 end

@@ -56,10 +56,25 @@ defmodule Ethui.Services.Anvil do
 
     {:ok, proc} =
       MuonTrap.Daemon.start_link("anvil", ["--port", to_string(port)],
-        logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end
+        logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
+        # TODO maybe patch muontrap to have a separate stream for stderr
+        stderr_to_stdout: true,
+        exit_status_to_reason: & &1
       )
 
     {:noreply, %{state | proc: proc}}
+  end
+
+  @impl GenServer
+  def handle_info({:EXIT, _pid, exit_status}, state) do
+    case exit_status do
+      0 ->
+        {:stop, :normal, state}
+
+      exit_code ->
+        Logger.error("anvil exited with code #{inspect(exit_code)}")
+        {:stop, :normal, state}
+    end
   end
 
   @impl GenServer
@@ -76,7 +91,7 @@ defmodule Ethui.Services.Anvil do
   @impl GenServer
   def handle_cast({:log, f}, %{logs: logs} = state) do
     # TODO prefix a unique identifier for this process
-    Logger.debug(f)
+    # Logger.warn(f)
     logs = :queue.in(f, logs) |> trim()
     {:noreply, %{state | logs: :queue.in(f, logs)}}
   end
