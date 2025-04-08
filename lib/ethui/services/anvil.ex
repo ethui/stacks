@@ -29,6 +29,11 @@ defmodule Ethui.Services.Anvil do
     GenServer.call(pid, :url)
   end
 
+  @spec logs(pid()) :: String.t()
+  def logs(pid) do
+    GenServer.call(pid, :logs)
+  end
+
   @spec stop(pid()) :: :ok
   def stop(pid) do
     GenServer.cast(pid, :stop)
@@ -80,6 +85,11 @@ defmodule Ethui.Services.Anvil do
   @impl GenServer
   def handle_call(:url, _from, %{port: port} = state) do
     {:reply, "http://localhost:#{port}", state}
+  end
+
+  @impl GenServer
+  def handle_call(:logs, _from, %{logs: logs} = state) do
+    {:reply, logs |> :queue.to_list(), state}
   end
 
   @impl GenServer

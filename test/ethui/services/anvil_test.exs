@@ -76,4 +76,13 @@ defmodule Ethui.Services.AnvilTest do
     Process.monitor(anvil2)
     assert_receive {:DOWN, _, _, ^anvil2, _}, 2_000
   end
+
+  test "logs/1", %{port_manager: port_manager} do
+    {:ok, anvil} = Anvil.start_link(port_manager: port_manager)
+    Process.sleep(100)
+
+    logs = Anvil.logs(anvil)
+    assert is_list(logs)
+    assert length(logs) > 0
+  end
 end
