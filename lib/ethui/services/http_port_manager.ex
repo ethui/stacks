@@ -14,6 +14,7 @@ defmodule Ethui.Services.HttpPortManager do
 
   @spec start_link(opts()) :: GenServer.on_start()
   def start_link(opts) do
+    IO.inspect(opts)
     GenServer.start_link(__MODULE__, opts, name: opts[:name])
   end
 
@@ -41,9 +42,9 @@ defmodule Ethui.Services.HttpPortManager do
   #
 
   @impl GenServer
-  def init(range: range) do
+  def init(opts) do
     Process.flag(:trap_exit, true)
-    {:ok, %{range: range, claimed: MapSet.new()}}
+    {:ok, %{range: opts[:range], claimed: MapSet.new()}}
   end
 
   @impl GenServer
