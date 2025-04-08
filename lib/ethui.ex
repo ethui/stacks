@@ -1,6 +1,6 @@
-defmodule AnvilOps do
+defmodule Ethui do
   @moduledoc """
-  AnvilOps keeps the contexts that define your domain
+  Ethui keeps the contexts that define your domain
   and business logic.
 
   Contexts are also responsible for managing your data, regardless

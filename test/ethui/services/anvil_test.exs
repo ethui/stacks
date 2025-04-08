@@ -1,5 +1,5 @@
-defmodule AnvilOps.Services.AnvilTest do
-  alias AnvilOps.Services.{Anvil, HttpPortManager}
+defmodule Ethui.Services.AnvilTest do
+  alias Ethui.Services.{Anvil, HttpPortManager}
   use ExUnit.Case, async: false
 
   setup_all do

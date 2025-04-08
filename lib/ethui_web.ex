@@ -1,12 +1,12 @@
-defmodule AnvilOpsWeb do
+defmodule EthuiWeb do
   @moduledoc """
   The entrypoint for defining your web interface, such
   as controllers, components, channels, and so on.
 
   This can be used in your application as:
 
-      use AnvilOpsWeb, :controller
-      use AnvilOpsWeb, :html
+      use EthuiWeb, :controller
+      use EthuiWeb, :html
 
   The definitions below will be executed for every controller,
   component, etc, so keep them short and clean, focused
@@ -39,9 +39,9 @@ defmodule AnvilOpsWeb do
     quote do
       use Phoenix.Controller,
         formats: [:html, :json],
-        layouts: [html: AnvilOpsWeb.Layouts]
+        layouts: [html: EthuiWeb.Layouts]
 
-      use Gettext, backend: AnvilOpsWeb.Gettext
+      use Gettext, backend: EthuiWeb.Gettext
 
       import Plug.Conn
 
@@ -52,9 +52,9 @@ defmodule AnvilOpsWeb do
   def verified_routes do
     quote do
       use Phoenix.VerifiedRoutes,
-        endpoint: AnvilOpsWeb.Endpoint,
-        router: AnvilOpsWeb.Router,
-        statics: AnvilOpsWeb.static_paths()
+        endpoint: EthuiWeb.Endpoint,
+        router: EthuiWeb.Router,
+        statics: EthuiWeb.static_paths()
     end
   end
 

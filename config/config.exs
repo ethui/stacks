@@ -7,18 +7,18 @@
 # General application configuration
 import Config
 
-config :anvil_ops,
+config :ethui,
   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint
-config :anvil_ops, AnvilOpsWeb.Endpoint,
+config :ethui, EthuiWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
-    formats: [json: AnvilOpsWeb.ErrorJSON],
+    formats: [json: EthuiWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: AnvilOps.PubSub,
+  pubsub_server: Ethui.PubSub,
   live_view: [signing_salt: "6z29pbJB"]
 
 # Configures the mailer
@@ -28,7 +28,7 @@ config :anvil_ops, AnvilOpsWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :anvil_ops, AnvilOps.Mailer, adapter: Swoosh.Adapters.Local
+config :ethui, Ethui.Mailer, adapter: Swoosh.Adapters.Local
 
 # Configures Elixir's Logger
 config :logger, :console,

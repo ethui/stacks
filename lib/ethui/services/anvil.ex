@@ -1,4 +1,4 @@
-defmodule AnvilOps.Services.Anvil do
+defmodule Ethui.Services.Anvil do
   use GenServer
   require Logger
 
@@ -30,7 +30,7 @@ defmodule AnvilOps.Services.Anvil do
 
     # reserve a port
     {:ok, port} =
-      AnvilOps.Services.HttpPortManager.claim(opts[:port_manager])
+      Ethui.Services.HttpPortManager.claim(opts[:port_manager])
 
     {:ok, proc} = MuonTrap.Daemon.start_link("anvil", ["--port", to_string(port)])
 

@@ -1,5 +1,5 @@
-defmodule AnvilOps.Services.HttpPortManagerTest do
-  alias AnvilOps.Services.HttpPortManager
+defmodule Ethui.Services.HttpPortManagerTest do
+  alias Ethui.Services.HttpPortManager
   use ExUnit.Case
 
   setup do

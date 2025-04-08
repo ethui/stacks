@@ -1,4 +1,4 @@
-defmodule AnvilOps.Services.HttpPortManager do
+defmodule Ethui.Services.HttpPortManager do
   use GenServer
 
   @type t() :: [

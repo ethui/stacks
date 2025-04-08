@@ -1,4 +1,4 @@
-# AnvilOps
+# Ethui
 
 To start your Phoenix server:
 
