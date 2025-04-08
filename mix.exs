@@ -44,7 +44,8 @@ defmodule Ethui.MixProject do
       {:bandit, "~> 1.5"},
       {:muontrap, "~> 1.6"},
       {:tesla, "~> 1.4", only: :test},
-      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
   end
 
