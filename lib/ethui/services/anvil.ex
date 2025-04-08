@@ -8,6 +8,8 @@ defmodule Ethui.Services.Anvil do
   use GenServer
   require Logger
 
+  @log_max_size 10_000
+
   @type opts() :: [
           # the port manager process to use
           port_manager: pid(),
@@ -40,13 +42,24 @@ defmodule Ethui.Services.Anvil do
   def init(opts) do
     Process.flag(:trap_exit, true)
 
-    # reserve a port
     {:ok, port} =
       Ethui.Services.HttpPortManager.claim(opts[:port_manager])
 
-    {:ok, proc} = MuonTrap.Daemon.start_link("anvil", ["--port", to_string(port)])
+    send(self(), :boot)
 
-    {:ok, %{port: port, proc: proc}}
+    {:ok, %{port: port, proc: nil, logs: :queue.new()}}
+  end
+
+  @impl GenServer
+  def handle_info(:boot, %{port: port} = state) do
+    pid = self()
+
+    {:ok, proc} =
+      MuonTrap.Daemon.start_link("anvil", ["--port", to_string(port)],
+        logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end
+      )
+
+    {:noreply, %{state | proc: proc}}
   end
 
   @impl GenServer
@@ -58,5 +71,22 @@ defmodule Ethui.Services.Anvil do
   def handle_cast(:stop, %{proc: proc} = state) do
     GenServer.stop(proc)
     {:stop, :normal, state}
+  end
+
+  @impl GenServer
+  def handle_cast({:log, f}, %{logs: logs} = state) do
+    # TODO prefix a unique identifier for this process
+    Logger.debug(f)
+    logs = :queue.in(f, logs) |> trim()
+    {:noreply, %{state | logs: :queue.in(f, logs)}}
+  end
+
+  defp trim(q) do
+    if :queue.len(q) > @log_max_size do
+      {{:value, _}, q} = :queue.out(q)
+      trim(q)
+    else
+      q
+    end
   end
 end

@@ -14,7 +14,6 @@ defmodule Ethui.Services.HttpPortManager do
 
   @spec start_link(opts()) :: GenServer.on_start()
   def start_link(opts) do
-    IO.inspect(opts)
     GenServer.start_link(__MODULE__, opts, name: opts[:name])
   end
 

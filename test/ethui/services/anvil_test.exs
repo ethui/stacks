@@ -65,7 +65,7 @@ defmodule Ethui.Services.AnvilTest do
     {:ok, port_manager2} =
       HttpPortManager.start_link(range: 7000..7000, name: :port_manager_2)
 
-    {:ok, anvil} = Anvil.start_link(port_manager: port_manager1, name: :anvil_1)
-    {:ok, anvil} = Anvil.start_link(port_manager: port_manager2, name: :anvil_2)
+    {:ok, _anvil1} = Anvil.start_link(port_manager: port_manager1, name: :anvil_1)
+    {:ok, _anvil2} = Anvil.start_link(port_manager: port_manager2, name: :anvil_2)
   end
 end
