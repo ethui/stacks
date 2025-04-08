@@ -16,7 +16,8 @@ defmodule Ethui.Application do
       # Start a worker by calling: Ethui.Worker.start_link(arg)
       # {Ethui.Worker, arg},
       # Start to serve requests, typically the last entry
-      EthuiWeb.Endpoint
+      EthuiWeb.Endpoint,
+      Ethui.Services.Supervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

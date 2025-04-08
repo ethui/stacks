@@ -59,15 +59,21 @@ defmodule Ethui.Services.Anvil do
   def handle_info(:boot, %{port: port} = state) do
     pid = self()
 
+    sock_path = "/tmp/anvil/#{port}.ipc"
+
     {:ok, proc} =
-      MuonTrap.Daemon.start_link("anvil", ["--port", to_string(port)],
+      MuonTrap.Daemon.start_link(
+        "anvil",
+        ["--port", to_string(port), "--ipc", sock_path],
         logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
         # TODO maybe patch muontrap to have a separate stream for stderr
         stderr_to_stdout: true,
         exit_status_to_reason: & &1
       )
 
-    {:noreply, %{state | proc: proc}}
+    sock = :gen_tcp.connect({:local, sock_path}, 0, [:binary, active: false, reuseaddr: true])
+
+    {:noreply, %{state | proc: proc, sock: sock}}
   end
 
   @impl GenServer
