@@ -1,11 +1,17 @@
+"/run/user/1000/devenv-cd09ee4/postgres"
+"/run/user/1000/devenv-cd09ee4/postgres"
+"/run/user/1000/devenv-cd09ee4/postgres"
 import Config
 
 # Configure your database
 config :ethui, Ethui.Repo,
+  # connect via UNIX socket
+  # if nil, will revert to the hostname
+  socket_dir: IO.inspect(System.get_env("PGHOST")),
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  database: "ethui_dev",
+  database: "db",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
