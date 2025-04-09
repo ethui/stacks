@@ -1,5 +1,6 @@
-defmodule Ethui.Services.MultiAnvilTest do
-  alias Ethui.Services.{MultiAnvilSupervisor, MultiAnvil, Anvil, HttpPorts}
+defmodule Ethui.StacksTest do
+  alias Ethui.Stacks
+  alias Ethui.Services.{Anvil, HttpPorts}
   use ExUnit.Case
 
   setup_all do
@@ -10,22 +11,22 @@ defmodule Ethui.Services.MultiAnvilTest do
   end
 
   test "can orchestrate multiple anvils", %{ports: ports, registry: registry} do
-    {:ok, mult_anvil_supervisor} = MultiAnvilSupervisor.start_link()
+    {:ok, mult_anvil_supervisor} = Stacks.Supervisor.start_link()
 
-    {:ok, multi_anvil} =
-      MultiAnvil.start_link(
+    {:ok, server} =
+      Stacks.Server.start_link(
         supervisor: mult_anvil_supervisor,
         ports: ports,
-        registry: __MODULE__.Registry
+        registry: registry
       )
 
-    {:ok, anvil1, _pid1} = MultiAnvil.start_anvil(multi_anvil, id: "anvil1")
-    {:ok, anvil2, pid2} = MultiAnvil.start_anvil(multi_anvil, id: "anvil2")
+    {:ok, anvil1, _pid1} = Stacks.Server.start_stack(server, id: "anvil1")
+    {:ok, anvil2, pid2} = Stacks.Server.start_stack(server, id: "anvil2")
 
     assert Anvil.url(anvil1) != Anvil.url(anvil2)
 
     Process.monitor(pid2)
-    MultiAnvil.stop_anvil(multi_anvil, "anvil2")
+    Stacks.Server.stop_stack(server, "anvil2")
     assert_receive {:DOWN, _, _, ^pid2, _}
   end
 end

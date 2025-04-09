@@ -1,13 +1,13 @@
 defmodule EthuiWeb.AnvilController do
   use EthuiWeb, :controller
-  alias Ethui.Services.{MultiAnvil, Anvil}
+  alias Ethui.{Stacks, Services.Anvil}
 
-  @multi_anvil MultiAnvil
+  @multi_anvil Stacks.Server
 
   def index(conn, _params) do
     # Extract the PIDs and get their URLs
     anvils =
-      MultiAnvil.list(@multi_anvil)
+      Stacks.Server.list(@multi_anvil)
 
     json(conn, %{
       status: "success",
@@ -18,8 +18,8 @@ defmodule EthuiWeb.AnvilController do
   def create(conn, _params) do
     id = to_string(:rand.uniform(1_000))
 
-    case MultiAnvil.start_anvil(@multi_anvil, id: id) do
-      {:ok, name, pid} ->
+    case Stacks.Server.start_stack(@multi_anvil, id: id) do
+      {:ok, name, _pid} ->
         conn
         |> put_status(201)
         |> json(%{
@@ -38,10 +38,9 @@ defmodule EthuiWeb.AnvilController do
   end
 
   def delete(conn, %{"id" => id}) do
-    case MultiAnvil.stop_anvil(@multi_anvil, id) do
-      :ok ->
-        conn |> put_status(204) |> json(%{})
-
+    with :ok <- Stacks.Server.stop_stack(@multi_anvil, id) do
+      conn |> put_status(204) |> json(%{})
+    else
       {:error, :not_found} ->
         conn |> put_status(404) |> json(%{status: "error", error: "not found"})
 

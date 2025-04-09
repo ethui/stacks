@@ -3,7 +3,8 @@ defmodule Ethui.Services.Supervisor do
   Global supervisor that manages the ethui services
   """
 
-  alias Ethui.Services.{MultiAnvil, MultiAnvilSupervisor, HttpPorts}
+  alias Ethui.Stacks
+  alias Ethui.Services.HttpPorts
   use Supervisor
 
   def start_link(opts) do
@@ -17,11 +18,11 @@ defmodule Ethui.Services.Supervisor do
     children = [
       {HttpPorts, range: 7000..8000, name: HttpPorts},
       {Registry, keys: :unique, name: @registry_name},
-      {MultiAnvilSupervisor, name: MultiAnvilSupervisor, registry: @registry_name},
-      {MultiAnvil,
-       supervisor: MultiAnvilSupervisor,
+      {Stacks.Supervisor, name: Stacks.Supervisor, registry: @registry_name},
+      {Stacks.Server,
+       supervisor: Stacks.Supervisor,
        ports: HttpPorts,
-       name: MultiAnvil,
+       name: Stacks.Server,
        registry: @registry_name}
     ]
 

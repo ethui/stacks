@@ -1,9 +1,9 @@
-defmodule Ethui.Services.MultiAnvil do
+defmodule Ethui.Stacks.Server do
   @moduledoc """
   GenServer that manages a collection of `anvil` instances
   """
 
-  alias Ethui.Services.{Anvil, MultiAnvilSupervisor}
+  alias Ethui.Stacks
   use GenServer
 
   @type opts() :: [
@@ -33,12 +33,12 @@ defmodule Ethui.Services.MultiAnvil do
   # Client
   #
 
-  def start_anvil(pid, opts) do
-    GenServer.call(pid, {:start_anvil, opts})
+  def start_stack(pid, opts) do
+    GenServer.call(pid, {:start_stack, opts})
   end
 
-  def stop_anvil(pid, anvil) do
-    GenServer.call(pid, {:stop_anvil, anvil})
+  def stop_stack(pid, anvil) do
+    GenServer.call(pid, {:stop_stack, anvil})
   end
 
   def list(pid) do
@@ -62,14 +62,14 @@ defmodule Ethui.Services.MultiAnvil do
 
   @impl GenServer
   def handle_call(
-        {:start_anvil, opts},
+        {:start_stack, opts},
         _from,
         %{supervisor: sup, ports: ports, registry: registry, instances: instances} = state
       ) do
     id = opts[:id]
     name = {:via, Registry, {registry, id}}
     full_opts = [ports: ports, name: name]
-    {:ok, pid} = MultiAnvilSupervisor.start_anvil(sup, full_opts)
+    {:ok, pid} = Stacks.Supervisor.start_stack(sup, full_opts)
 
     new_state = %{state | instances: Map.put(instances, id, pid)}
     {:reply, {:ok, name, pid}, new_state}
@@ -77,7 +77,7 @@ defmodule Ethui.Services.MultiAnvil do
 
   @impl GenServer
   def handle_call(
-        {:stop_anvil, id_or_name},
+        {:stop_stack, id_or_name},
         _from,
         %{supervisor: sup, instances: instances} = state
       ) do
@@ -85,7 +85,7 @@ defmodule Ethui.Services.MultiAnvil do
 
     case Map.fetch(instances, id) do
       {:ok, pid} ->
-        MultiAnvilSupervisor.stop_anvil(sup, pid)
+        Stacks.Supervisor.stop_stack(sup, pid)
         {:reply, :ok, %{state | instances: Map.delete(instances, id)}}
 
       :error ->
@@ -102,31 +102,4 @@ defmodule Ethui.Services.MultiAnvil do
   # allows the internal API to deal with either direct IDs or registry names
   def to_id({:via, _, {_, id}}), do: id
   def to_id(id) when is_binary(id), do: id
-end
-
-defmodule Ethui.Services.MultiAnvilSupervisor do
-  @moduledoc """
-  Supervisor used by `__MODULE__.MultiAnvil` to dynamically supervise `anvil` instances
-  """
-
-  alias Ethui.Services.Anvil
-  use DynamicSupervisor
-
-  def start_link(opts \\ []) do
-    DynamicSupervisor.start_link(__MODULE__, opts, name: opts[:name])
-  end
-
-  @impl DynamicSupervisor
-  def init(_opts) do
-    DynamicSupervisor.init(strategy: :one_for_one)
-  end
-
-  def start_anvil(pid, opts) do
-    spec = {Anvil, opts}
-    DynamicSupervisor.start_child(pid, spec)
-  end
-
-  def stop_anvil(pid, anvil) do
-    DynamicSupervisor.terminate_child(pid, anvil)
-  end
 end
