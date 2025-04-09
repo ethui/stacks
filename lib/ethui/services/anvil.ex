@@ -12,8 +12,7 @@ defmodule Ethui.Services.Anvil do
 
   @type opts() :: [
           # the port manager process to use
-          port_manager: pid(),
-          name: String.t() | nil
+          ports: pid()
         ]
 
   @spec start_link(opts()) :: GenServer.on_start()
@@ -48,7 +47,7 @@ defmodule Ethui.Services.Anvil do
     Process.flag(:trap_exit, true)
 
     {:ok, port} =
-      Ethui.Services.HttpPortManager.claim(opts[:port_manager])
+      Ethui.Services.HttpPorts.claim(opts[:ports])
 
     send(self(), :boot)
 

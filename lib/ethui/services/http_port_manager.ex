@@ -1,15 +1,13 @@
-defmodule Ethui.Services.HttpPortManager do
+defmodule Ethui.Services.HttpPorts do
   use GenServer
 
   @type t() :: [
           range: Range.t(),
-          claimed: MapSet.t(pos_integer()),
-          name: String.t() | nil
+          claimed: MapSet.t(pos_integer())
         ]
 
   @type opts() :: [
-          range: Range.t(),
-          name: String.t() | nil
+          range: Range.t()
         ]
 
   @spec start_link(opts()) :: GenServer.on_start()

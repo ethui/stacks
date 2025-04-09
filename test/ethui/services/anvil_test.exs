@@ -1,17 +1,16 @@
 defmodule Ethui.Services.AnvilTest do
-  alias Ethui.Services.{HttpPortManager}
-  alias Ethui.Services.Anvil, as: Anvil
-  use ExUnit.Case, async: false
+  alias Ethui.Services.{Anvil, HttpPorts}
+  use ExUnit.Case
 
   setup_all do
     Process.flag(:trap_exit, true)
-    pid = start_link_supervised!({HttpPortManager, range: 7000..8000, name: :port_manager})
+    pid = start_link_supervised!({HttpPorts, range: 7000..8000})
 
-    {:ok, port_manager: pid}
+    {:ok, ports: pid}
   end
 
-  test "creates an anvil process", %{port_manager: port_manager} do
-    {:ok, anvil} = Anvil.start_link(port_manager: port_manager)
+  test "creates an anvil process", %{ports: ports} do
+    {:ok, anvil} = Anvil.start_link(ports: ports)
     Process.sleep(100)
 
     url = Anvil.url(anvil)
@@ -34,10 +33,10 @@ defmodule Ethui.Services.AnvilTest do
     assert {:error, :econnrefused} = err
   end
 
-  test "creates multiple anvil processes", %{port_manager: port_manager} do
+  test "creates multiple anvil processes", %{ports: ports} do
     anvils =
       for i <- 1..10 do
-        {:ok, pid} = Anvil.start_link(port_manager: port_manager, name: :"anvil_#{i}")
+        {:ok, pid} = Anvil.start_link(ports: ports, name: :"anvil_#{i}")
         Process.monitor(pid)
         pid
       end
@@ -60,25 +59,25 @@ defmodule Ethui.Services.AnvilTest do
   @tag capture_log: true
   test "conflicting ports" do
     # start two conflicting port managers
-    {:ok, port_manager1} =
-      HttpPortManager.start_link(range: 7000..7000, name: :port_manager_1)
+    {:ok, ports1} =
+      HttpPorts.start_link(range: 7000..7000, name: :ports_1)
 
-    {:ok, port_manager2} =
-      HttpPortManager.start_link(range: 7000..7000, name: :port_manager_2)
+    {:ok, ports2} =
+      HttpPorts.start_link(range: 7000..7000, name: :ports_2)
 
-    {:ok, _anvil1} = GenServer.start_link(Anvil, port_manager: port_manager1, name: :anvil_1)
+    {:ok, _anvil1} = GenServer.start_link(Anvil, ports: ports1, name: :anvil_1)
 
     # give enough time to not cause a race condition, and ensure the 2nd anvil is the one that crashes
     Process.sleep(100)
 
-    {:ok, anvil2} = GenServer.start_link(Anvil, port_manager: port_manager2, name: :anvil_1)
+    {:ok, anvil2} = GenServer.start_link(Anvil, ports: ports2, name: :anvil_1)
 
     Process.monitor(anvil2)
     assert_receive {:DOWN, _, _, ^anvil2, _}, 2_000
   end
 
-  test "logs/1", %{port_manager: port_manager} do
-    {:ok, anvil} = Anvil.start_link(port_manager: port_manager)
+  test "logs/1", %{ports: ports} do
+    {:ok, anvil} = Anvil.start_link(ports: ports)
     Process.sleep(100)
 
     logs = Anvil.logs(anvil)

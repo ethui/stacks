@@ -1,17 +1,17 @@
-defmodule Ethui.Services.HttpPortManagerTest do
-  alias Ethui.Services.HttpPortManager
+defmodule Ethui.Services.HttpPortsTest do
+  alias Ethui.Services.HttpPorts
   use ExUnit.Case
 
-  setup do
-    pid = start_link_supervised!({HttpPortManager, range: [1..100]})
+  setup_all do
+    pid = start_link_supervised!({HttpPorts, range: [1..100]})
 
     {:ok, pid: pid}
   end
 
   test "claimed ports remain claimed", %{pid: pid} do
-    {:ok, port} = HttpPortManager.claim(pid)
-    assert HttpPortManager.is_claimed(pid, port)
-    HttpPortManager.free(pid, port)
-    refute HttpPortManager.is_claimed(pid, port)
+    {:ok, port} = HttpPorts.claim(pid)
+    assert HttpPorts.is_claimed(pid, port)
+    HttpPorts.free(pid, port)
+    refute HttpPorts.is_claimed(pid, port)
   end
 end
