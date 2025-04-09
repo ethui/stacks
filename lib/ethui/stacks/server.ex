@@ -1,6 +1,8 @@
 defmodule Ethui.Stacks.Server do
   @moduledoc """
-  GenServer that manages a collection of `anvil` instances
+  GenServer that manages a collection of stacks
+
+  # TODO: A stack is currently composed of a single entity: an `anvil` process, but should eventually hold more
   """
 
   alias Ethui.Stacks
@@ -16,6 +18,7 @@ defmodule Ethui.Stacks.Server do
   @type t() :: %{
           supervisor: pid(),
           ports: pid(),
+          registry: pid(),
           instances: %{atom() => pid()}
         }
 
