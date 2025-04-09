@@ -20,7 +20,7 @@ jobs:
         elixir-version: '1.18.3'
         otp-version: 'OTP-27'
 
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       with:
         path: |
           deps
