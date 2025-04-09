@@ -12,8 +12,6 @@ defmodule Ethui.Services.MultiAnvilTest do
   test "can orchestrate multiple anvils", %{ports: ports, registry: registry} do
     {:ok, mult_anvil_supervisor} = MultiAnvilSupervisor.start_link()
 
-    IO.inspect(registry)
-
     {:ok, multi_anvil} =
       MultiAnvil.start_link(
         supervisor: mult_anvil_supervisor,
