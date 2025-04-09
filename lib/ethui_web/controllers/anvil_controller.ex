@@ -16,15 +16,15 @@ defmodule EthuiWeb.AnvilController do
   end
 
   def create(conn, _params) do
-    id = :"#{:rand.uniform(1_000)}"
+    id = to_string(:rand.uniform(1_000))
 
-    case MultiAnvil.start_anvil(@multi_anvil, name: id) do
-      {:ok, anvil} ->
+    case MultiAnvil.start_anvil(@multi_anvil, id: id) do
+      {:ok, name, pid} ->
         conn
         |> put_status(201)
         |> json(%{
           id: id,
-          url: Anvil.url(anvil)
+          url: Anvil.url(name)
         })
 
       {:error, reason} ->
@@ -38,8 +38,7 @@ defmodule EthuiWeb.AnvilController do
   end
 
   def delete(conn, %{"id" => id}) do
-    with {:ok, id} <- parse_id(id),
-         :ok <- MultiAnvil.stop_anvil(@multi_anvil, id) do
+    with :ok <- MultiAnvil.stop_anvil(@multi_anvil, id) do
       conn |> put_status(204) |> json(%{})
     else
       {:error, :not_found} ->
@@ -52,14 +51,6 @@ defmodule EthuiWeb.AnvilController do
           status: "error",
           error: inspect(reason)
         })
-    end
-  end
-
-  defp parse_id(id) do
-    try do
-      {:ok, String.to_existing_atom(id)}
-    rescue
-      _ -> {:error, :not_found}
     end
   end
 

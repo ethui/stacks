@@ -5,6 +5,7 @@ defmodule Ethui.Services.MultiAnvil do
   @type opts() :: [
           supervisor: pid(),
           ports: pid(),
+          registry: atom(),
           name: String.t() | nil
         ]
 
@@ -13,6 +14,11 @@ defmodule Ethui.Services.MultiAnvil do
           ports: pid(),
           instances: %{atom() => pid()}
         }
+
+  # the ID of an individual anvil instance
+  @type id() :: String.t()
+  # the registered name of the anvil GenServer
+  @type name() :: {:via, atom(), {atom(), id()}}
 
   @spec start_link(opts()) :: GenServer.on_start()
   def start_link(opts \\ []) do
@@ -41,26 +47,42 @@ defmodule Ethui.Services.MultiAnvil do
 
   @impl GenServer
   def init(opts) do
-    {:ok, %{supervisor: opts[:supervisor], ports: opts[:ports], instances: Map.new()}}
+    {:ok,
+     %{
+       supervisor: opts[:supervisor],
+       ports: opts[:ports],
+       registry: opts[:registry],
+       instances: Map.new()
+     }}
   end
 
   @impl GenServer
   def handle_call(
         {:start_anvil, opts},
         _from,
-        %{supervisor: sup, ports: ports, instances: instances} = state
+        %{supervisor: sup, ports: ports, registry: registry, instances: instances} = state
       ) do
-    full_opts = [ports: ports, name: opts[:name]]
+    id = opts[:id]
+    name = {:via, Registry, {registry, id}}
+    full_opts = [ports: ports, name: name]
     {:ok, pid} = MultiAnvilSupervisor.start_anvil(sup, full_opts)
-    {:reply, {:ok, pid}, %{state | instances: Map.put(instances, opts[:name], pid)}}
+
+    new_state = %{state | instances: Map.put(instances, id, pid)}
+    {:reply, {:ok, name, pid}, new_state}
   end
 
   @impl GenServer
-  def handle_call({:stop_anvil, name}, _from, %{supervisor: sup, instances: instances} = state) do
-    case Map.fetch(instances, name) do
+  def handle_call(
+        {:stop_anvil, id_or_name},
+        _from,
+        %{supervisor: sup, instances: instances} = state
+      ) do
+    id = to_id(id_or_name)
+
+    case Map.fetch(instances, id) do
       {:ok, pid} ->
         MultiAnvilSupervisor.stop_anvil(sup, pid)
-        {:reply, :ok, %{state | instances: Map.delete(instances, name)}}
+        {:reply, :ok, %{state | instances: Map.delete(instances, id)}}
 
       :error ->
         {:reply, {:error, :not_found}, state}
@@ -71,6 +93,11 @@ defmodule Ethui.Services.MultiAnvil do
   def handle_call(:list, _from, %{instances: instances} = state) do
     {:reply, Map.keys(instances), state}
   end
+
+  # extract the ID from what may be a {:via, ...} registry name
+  # allows the internal API to deal with either direct IDs or registry names
+  def to_id({:via, _, {_, id}}), do: id
+  def to_id(id) when is_binary(id), do: id
 end
 
 defmodule Ethui.Services.MultiAnvilSupervisor do
