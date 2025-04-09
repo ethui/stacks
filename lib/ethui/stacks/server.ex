@@ -72,7 +72,7 @@ defmodule Ethui.Stacks.Server do
     id = opts[:id]
     name = {:via, Registry, {registry, id}}
     full_opts = [ports: ports, name: name]
-    {:ok, pid} = Stacks.Supervisor.start_stack(sup, full_opts)
+    {:ok, pid} = Stacks.ServicesSupervisor.start_stack(sup, full_opts)
 
     new_state = %{state | instances: Map.put(instances, id, pid)}
     {:reply, {:ok, name, pid}, new_state}
@@ -88,7 +88,7 @@ defmodule Ethui.Stacks.Server do
 
     case Map.fetch(instances, id) do
       {:ok, pid} ->
-        Stacks.Supervisor.stop_stack(sup, pid)
+        Stacks.ServicesSupervisor.stop_stack(sup, pid)
         {:reply, :ok, %{state | instances: Map.delete(instances, id)}}
 
       :error ->

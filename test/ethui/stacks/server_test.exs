@@ -1,17 +1,17 @@
 defmodule Ethui.StacksTest do
   alias Ethui.Stacks
-  alias Ethui.Services.{Anvil, HttpPorts}
+  alias Ethui.Services.Anvil
   use ExUnit.Case
 
   setup_all do
-    ports = start_link_supervised!({HttpPorts, range: 7000..8000})
+    ports = start_link_supervised!({Stacks.HttpPorts, range: 7000..8000})
     start_supervised!({Registry, keys: :unique, name: __MODULE__.Registry})
 
     {:ok, ports: ports, registry: __MODULE__.Registry}
   end
 
   test "can orchestrate multiple anvils", %{ports: ports, registry: registry} do
-    {:ok, mult_anvil_supervisor} = Stacks.Supervisor.start_link()
+    {:ok, mult_anvil_supervisor} = Stacks.ServicesSupervisor.start_link()
 
     {:ok, server} =
       Stacks.Server.start_link(

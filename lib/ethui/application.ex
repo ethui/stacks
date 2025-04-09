@@ -17,7 +17,7 @@ defmodule Ethui.Application do
       # {Ethui.Worker, arg},
       # Start to serve requests, typically the last entry
       EthuiWeb.Endpoint,
-      Ethui.Services.Supervisor
+      Ethui.Stacks.Supervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

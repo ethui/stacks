@@ -48,7 +48,7 @@ defmodule Ethui.Services.Anvil do
     Process.flag(:trap_exit, true)
 
     {:ok, port} =
-      Ethui.Services.HttpPorts.claim(opts[:ports])
+      Ethui.Stacks.HttpPorts.claim(opts[:ports])
 
     send(self(), :boot)
 

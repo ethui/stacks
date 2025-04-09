@@ -1,5 +1,6 @@
 defmodule Ethui.Services.AnvilTest do
-  alias Ethui.Services.{Anvil, HttpPorts}
+  alias Ethui.Services.Anvil
+  alias Ethui.Stacks.HttpPorts
   use ExUnit.Case
 
   # setup_all do

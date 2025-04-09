@@ -1,4 +1,4 @@
-defmodule Ethui.Services.HttpPorts do
+defmodule Ethui.Stacks.HttpPorts do
   @moduledoc """
   GenServer that manages a range of HTTP ports
   """

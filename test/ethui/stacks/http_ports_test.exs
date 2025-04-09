@@ -1,5 +1,5 @@
-defmodule Ethui.Services.HttpPortsTest do
-  alias Ethui.Services.HttpPorts
+defmodule Ethui.Stacks.HttpPortsTest do
+  alias Ethui.Stacks.HttpPorts
   use ExUnit.Case
 
   setup_all do
