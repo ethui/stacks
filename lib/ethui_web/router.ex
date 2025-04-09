@@ -7,6 +7,10 @@ defmodule EthuiWeb.Router do
 
   scope "/api", EthuiWeb do
     pipe_through :api
+
+    resources "/anvil", AnvilController do
+      get "/logs", AnvilController, :logs
+    end
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

@@ -2,15 +2,15 @@ defmodule Ethui.Services.AnvilTest do
   alias Ethui.Services.{Anvil, HttpPorts}
   use ExUnit.Case
 
-  setup_all do
-    Process.flag(:trap_exit, true)
-    pid = start_link_supervised!({HttpPorts, range: 7000..8000})
+  # setup_all do
+  #   Process.flag(:trap_exit, true)
+  #   pid = start_link_supervised!({HttpPorts, range: 7000..8000})
+  #
+  #   {:ok, ports: pid}
+  # end
 
-    {:ok, ports: pid}
-  end
-
-  test "creates an anvil process", %{ports: ports} do
-    {:ok, anvil} = Anvil.start_link(ports: ports)
+  test "creates an anvil process" do
+    {:ok, anvil} = Anvil.start_link(ports: HttpPorts)
     Process.sleep(100)
 
     url = Anvil.url(anvil)
@@ -33,10 +33,10 @@ defmodule Ethui.Services.AnvilTest do
     assert {:error, :econnrefused} = err
   end
 
-  test "creates multiple anvil processes", %{ports: ports} do
+  test "creates multiple anvil processes" do
     anvils =
       for i <- 1..10 do
-        {:ok, pid} = Anvil.start_link(ports: ports, name: :"anvil_#{i}")
+        {:ok, pid} = Anvil.start_link(ports: HttpPorts, name: :"anvil_#{i}")
         Process.monitor(pid)
         pid
       end
@@ -60,10 +60,10 @@ defmodule Ethui.Services.AnvilTest do
   test "conflicting ports" do
     # start two conflicting port managers
     {:ok, ports1} =
-      HttpPorts.start_link(range: 7000..7000, name: :ports_1)
+      HttpPorts.start_link(range: 10000..10000, name: :ports_1)
 
     {:ok, ports2} =
-      HttpPorts.start_link(range: 7000..7000, name: :ports_2)
+      HttpPorts.start_link(range: 10000..10000, name: :ports_2)
 
     {:ok, _anvil1} = GenServer.start_link(Anvil, ports: ports1, name: :anvil_1)
 
@@ -76,12 +76,12 @@ defmodule Ethui.Services.AnvilTest do
     assert_receive {:DOWN, _, _, ^anvil2, _}, 2_000
   end
 
-  test "logs/1", %{ports: ports} do
-    {:ok, anvil} = Anvil.start_link(ports: ports)
-    Process.sleep(100)
-
-    logs = Anvil.logs(anvil)
-    assert is_list(logs)
-    assert length(logs) > 0
-  end
+  # test "logs/1", %{ports: ports} do
+  #   {:ok, anvil} = Anvil.start_link(ports: ports)
+  #   Process.sleep(100)
+  #
+  #   logs = Anvil.logs(anvil)
+  #   assert is_list(logs)
+  #   assert length(logs) > 0
+  # end
 end

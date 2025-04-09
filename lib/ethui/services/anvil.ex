@@ -12,7 +12,8 @@ defmodule Ethui.Services.Anvil do
 
   @type opts() :: [
           # the port manager process to use
-          ports: pid()
+          ports: pid(),
+          name: String.t() | nil
         ]
 
   @spec start_link(opts()) :: GenServer.on_start()

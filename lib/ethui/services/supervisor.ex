@@ -1,5 +1,5 @@
 defmodule Ethui.Services.Supervisor do
-  alias Ethui.Services.{MultiAnvil, HttpPorts}
+  alias Ethui.Services.{MultiAnvil, MultiAnvilSupervisor, HttpPorts}
   use Supervisor
 
   def start_link(opts) do
@@ -10,7 +10,8 @@ defmodule Ethui.Services.Supervisor do
   def init(_) do
     children = [
       {HttpPorts, range: 7000..8000, name: HttpPorts},
-      {MultiAnvil, name: MultiAnvil}
+      {MultiAnvilSupervisor, name: MultiAnvilSupervisor},
+      {MultiAnvil, supervisor: MultiAnvilSupervisor, ports: HttpPorts, name: MultiAnvil}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
