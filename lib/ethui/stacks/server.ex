@@ -1,4 +1,6 @@
 defmodule Ethui.Stacks.Server do
+  alias Ethui.Services.Anvil
+
   @moduledoc """
   GenServer that manages a collection of stacks
 
@@ -8,26 +10,27 @@ defmodule Ethui.Stacks.Server do
   alias Ethui.Stacks
   use GenServer
 
-  @type opts() :: [
-          supervisor: pid(),
-          ports: pid(),
-          registry: atom(),
+  @type opts :: [
+          supervisor: pid,
+          ports: pid,
+          registry: atom,
           name: String.t() | nil
         ]
 
-  @type t() :: %{
-          supervisor: pid(),
-          ports: pid(),
-          registry: pid(),
-          instances: %{atom() => pid()}
+  # state
+  @type t :: %{
+          supervisor: pid,
+          ports: pid,
+          registry: pid,
+          instances: %{id => pid}
         }
 
   # the ID of an individual anvil instance
-  @type id() :: String.t()
+  @type id :: String.t()
   # the registered name of the anvil GenServer
-  @type name() :: {:via, atom(), {atom(), id()}}
+  @type name :: {:via, atom, {atom, id}}
 
-  @spec start_link(opts()) :: GenServer.on_start()
+  @spec start_link(opts) :: GenServer.on_start()
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: opts[:name])
   end
@@ -36,22 +39,29 @@ defmodule Ethui.Stacks.Server do
   # Client
   #
 
+  @doc "Starts a new stack with a given ID"
+  @spec start_stack(atom, id: id) :: {:ok, name, pid} | {:error, any}
   def start_stack(pid, opts) do
     GenServer.call(pid, {:start_stack, opts})
   end
 
+  @doc "Stops a stack"
+  @spec stop_stack(atom, id | name) :: :ok | {:error, :not_found}
   def stop_stack(pid, anvil) do
     GenServer.call(pid, {:stop_stack, anvil})
   end
 
+  @doc "List all stacks"
+  @spec list(atom) :: [id]
   def list(pid) do
-    GenServer.call(pid, :list_anvils)
+    GenServer.call(pid, :list)
   end
 
   #
   # Server
   #
 
+  @spec init(opts) :: {:ok, t}
   @impl GenServer
   def init(opts) do
     {:ok,

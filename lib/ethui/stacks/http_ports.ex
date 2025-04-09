@@ -14,7 +14,7 @@ defmodule Ethui.Stacks.HttpPorts do
           range: Range.t()
         ]
 
-  @spec start_link(opts()) :: GenServer.on_start()
+  @spec start_link(opts) :: GenServer.on_start()
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: opts[:name])
   end
@@ -23,16 +23,19 @@ defmodule Ethui.Stacks.HttpPorts do
   # Client
   #
 
-  @spec claim(pid()) :: {:ok, pos_integer()} | {:error, :no_ports_available}
+  @doc "Claim a port. Prevents other processes from claiming it"
+  @spec claim(pid) :: {:ok, pos_integer} | {:error, :no_ports_available}
   def claim(pid) do
     GenServer.call(pid, :claim)
   end
 
-  @spec claimed?(pid, pos_integer()) :: boolean()
+  @doc "Check if a port is claimed"
+  @spec claimed?(pid, pos_integer) :: boolean
   def claimed?(pid, port) do
     GenServer.call(pid, {:claimed?, port})
   end
 
+  @doc "Free a port. Allows other processes to claim it"
   @spec free(pid, pos_integer()) :: :ok
   def free(pid, port) do
     GenServer.cast(pid, {:free, port})

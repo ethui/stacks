@@ -9,7 +9,8 @@ defmodule Ethui.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      dialyzer: [flags: ["-Wunmatched_returns", :error_handling, :underspecs]]
     ]
   end
 

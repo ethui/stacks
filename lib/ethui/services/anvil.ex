@@ -3,6 +3,7 @@ defmodule Ethui.Services.Anvil do
   GenServer that manages a single `anvil` instace
 
   Requires the pid of a PortManager process, which is used to reserve an HTTP port
+  This wraps a MuontipTrap Daemon
   """
 
   use GenServer
@@ -10,13 +11,16 @@ defmodule Ethui.Services.Anvil do
 
   @log_max_size 10_000
 
-  @type opts() :: [
-          # the port manager process to use
-          ports: pid(),
-          name: String.t() | nil
+  @type id :: pid | atom | {:via, atom, term}
+
+  @type opts :: [
+          # the HttpPort manager process to use
+          ports: id,
+          id: String.t() | nil
         ]
 
-  @spec start_link(opts()) :: GenServer.on_start()
+  @doc "Start an anvil instance"
+  @spec start_link(opts) :: GenServer.on_start()
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: opts[:name])
   end
@@ -24,19 +28,22 @@ defmodule Ethui.Services.Anvil do
   #
   # Client
 
-  @spec url(pid()) :: String.t()
-  def url(pid) do
-    GenServer.call(pid, :url)
+  @doc "Get the URL of an anvil instance"
+  @spec url(id) :: String.t()
+  def url(id) do
+    GenServer.call(id, :url)
   end
 
-  @spec logs(pid()) :: String.t()
-  def logs(pid) do
-    GenServer.call(pid, :logs)
+  @doc "Get the logs of an anvil instance"
+  @spec logs(id) :: String.t()
+  def logs(id) do
+    GenServer.call(id, :logs)
   end
 
-  @spec stop(pid()) :: :ok
-  def stop(pid) do
-    GenServer.cast(pid, :stop)
+  @doc "Stop an anvil instance"
+  @spec stop(id) :: :ok
+  def stop(id) do
+    GenServer.cast(id, :stop)
   end
 
   #

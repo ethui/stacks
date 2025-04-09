@@ -44,13 +44,13 @@ defmodule EthuiWeb.AnvilController do
       {:error, :not_found} ->
         conn |> put_status(404) |> json(%{status: "error", error: "not found"})
 
-      {:error, reason} ->
-        conn
-        |> put_status(500)
-        |> json(%{
-          status: "error",
-          error: inspect(reason)
-        })
+        #   {:error, reason} ->
+        #     conn
+        #     |> put_status(500)
+        #     |> json(%{
+        #       status: "error",
+        #       error: inspect(reason)
+        #     })
     end
   end
 
