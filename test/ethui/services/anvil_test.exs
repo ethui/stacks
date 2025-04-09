@@ -60,10 +60,10 @@ defmodule Ethui.Services.AnvilTest do
   test "conflicting ports" do
     # start two conflicting port managers
     {:ok, ports1} =
-      HttpPorts.start_link(range: 10000..10000, name: :ports_1)
+      HttpPorts.start_link(range: 10_000..10_000, name: :ports_1)
 
     {:ok, ports2} =
-      HttpPorts.start_link(range: 10000..10000, name: :ports_2)
+      HttpPorts.start_link(range: 10_000..10_000, name: :ports_2)
 
     {:ok, _anvil1} = GenServer.start_link(Anvil, ports: ports1, name: :anvil_1)
 
