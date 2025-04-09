@@ -1,5 +1,15 @@
 import Config
 
+# Configure your database
+config :ethui, Ethui.Repo,
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  database: "ethui_dev",
+  stacktrace: true,
+  show_sensitive_data_on_connection_error: true,
+  pool_size: 10
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
@@ -13,8 +23,11 @@ config :ethui, EthuiWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "z/mivPQDm9WEgKrBtu84J9b3SKqHePUZotDdfZdD3pp72pj3Nr6VqZRb2bMicS3o",
-  watchers: []
+  secret_key_base: "+Qe+odkEOK+4ZPAUd9ibp50RCnXs2BDxARiAwJHn39N5tR578C64WqchMmXkuh35",
+  watchers: [
+    esbuild: {Esbuild, :install_and_run, [:ethui, ~w(--sourcemap=inline --watch)]},
+    tailwind: {Tailwind, :install_and_run, [:ethui, ~w(--watch)]}
+  ]
 
 # ## SSL Support
 #
@@ -39,6 +52,16 @@ config :ethui, EthuiWeb.Endpoint,
 # configured to run both http and https servers on
 # different ports.
 
+# Watch static and templates for browser reloading.
+config :ethui, EthuiWeb.Endpoint,
+  live_reload: [
+    patterns: [
+      ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
+      ~r"priv/gettext/.*(po)$",
+      ~r"lib/ethui_web/(controllers|live|components)/.*(ex|heex)$"
+    ]
+  ]
+
 # Enable dev routes for dashboard and mailbox
 config :ethui, dev_routes: true
 
@@ -52,7 +75,11 @@ config :phoenix, :stacktrace_depth, 20
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
 
+config :phoenix_live_view,
+  # Include HEEx debug annotations as HTML comments in rendered markup
+  debug_heex_annotations: true,
+  # Enable helpful, but potentially expensive runtime checks
+  enable_expensive_runtime_checks: true
+
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
-
-config :mix_test_watch, clear: true
