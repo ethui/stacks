@@ -1,4 +1,8 @@
 defmodule Ethui.Services.HttpPorts do
+  @moduledoc """
+  GenServer that manages a range of HTTP ports
+  """
+
   use GenServer
 
   @type t() :: [
@@ -24,9 +28,9 @@ defmodule Ethui.Services.HttpPorts do
     GenServer.call(pid, :claim)
   end
 
-  @spec is_claimed(pid, pos_integer()) :: boolean()
-  def is_claimed(pid, port) do
-    GenServer.call(pid, {:is_claimed, port})
+  @spec claimed?(pid, pos_integer()) :: boolean()
+  def claimed?(pid, port) do
+    GenServer.call(pid, {:claimed?, port})
   end
 
   @spec free(pid, pos_integer()) :: :ok
@@ -60,7 +64,7 @@ defmodule Ethui.Services.HttpPorts do
   end
 
   @impl GenServer
-  def handle_call({:is_claimed, port}, _from, %{claimed: claimed} = state) do
+  def handle_call({:claimed?, port}, _from, %{claimed: claimed} = state) do
     {:reply, MapSet.member?(claimed, port), state}
   end
 

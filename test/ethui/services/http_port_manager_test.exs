@@ -10,8 +10,8 @@ defmodule Ethui.Services.HttpPortsTest do
 
   test "claimed ports remain claimed", %{pid: pid} do
     {:ok, port} = HttpPorts.claim(pid)
-    assert HttpPorts.is_claimed(pid, port)
+    assert HttpPorts.claimed?(pid, port)
     HttpPorts.free(pid, port)
-    refute HttpPorts.is_claimed(pid, port)
+    refute HttpPorts.claimed?(pid, port)
   end
 end

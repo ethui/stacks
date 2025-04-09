@@ -1,4 +1,8 @@
 defmodule Ethui.Services.MultiAnvil do
+  @moduledoc """
+  GenServer that manages a collection of `anvil` instances
+  """
+
   alias Ethui.Services.{Anvil, MultiAnvilSupervisor}
   use GenServer
 
@@ -101,6 +105,10 @@ defmodule Ethui.Services.MultiAnvil do
 end
 
 defmodule Ethui.Services.MultiAnvilSupervisor do
+  @moduledoc """
+  Supervisor used by `__MODULE__.MultiAnvil` to dynamically supervise `anvil` instances
+  """
+
   alias Ethui.Services.Anvil
   use DynamicSupervisor
 

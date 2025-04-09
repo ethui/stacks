@@ -1,4 +1,8 @@
 defmodule AnvilClient do
+  @moduledoc """
+  Client for interacting with an anvil instance
+  """
+
   use Tesla
 
   def new(url) do

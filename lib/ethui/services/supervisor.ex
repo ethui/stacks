@@ -1,4 +1,8 @@
 defmodule Ethui.Services.Supervisor do
+  @moduledoc """
+  Global supervisor that manages the ethui services
+  """
+
   alias Ethui.Services.{MultiAnvil, MultiAnvilSupervisor, HttpPorts}
   use Supervisor
 
