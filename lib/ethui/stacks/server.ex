@@ -1,6 +1,4 @@
 defmodule Ethui.Stacks.Server do
-  alias Ethui.Services.Anvil
-
   @moduledoc """
   GenServer that manages a collection of stacks
 

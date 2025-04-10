@@ -1,5 +1,6 @@
 defmodule EthuiWeb.Router do
   use EthuiWeb, :router
+  import Backpex.Router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -8,6 +9,7 @@ defmodule EthuiWeb.Router do
     plug :put_root_layout, html: {EthuiWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug Backpex.ThemeSelectorPlug
   end
 
   pipeline :api do
@@ -18,6 +20,18 @@ defmodule EthuiWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+  end
+
+  scope "/admin", EthuiWeb do
+    pipe_through :browser
+
+    backpex_routes()
+
+    get "/", RedirectController, :redirect_to_stacks
+
+    live_session :default, on_mount: Backpex.InitAssigns do
+      live_resources "/stacks", Live.StackLive
+    end
   end
 
   scope "/api", EthuiWeb do

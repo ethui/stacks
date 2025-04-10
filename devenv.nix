@@ -20,18 +20,19 @@ in
     };
   };
 
+  packages = with pkgs; [
+    # needed by daisyui
+    watchman
+  ];
+
   services = {
     postgres = {
       enable = true;
       initialDatabases = [ { name = "db"; } ];
-      initialScript = ''
-        CREATE USER postgres WITH PASSWORD 'postgres';
-        GRANT ALL PRIVILEGES ON DATABASE db TO postgres;
-      '';
     };
   };
 
   env = {
-    DATABASE_URL = "postgres://postgres:postgres@localhost:5432/db";
+    PGDATABASE = "db";
   };
 }

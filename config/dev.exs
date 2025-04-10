@@ -1,15 +1,11 @@
-"/run/user/1000/devenv-cd09ee4/postgres"
-"/run/user/1000/devenv-cd09ee4/postgres"
-"/run/user/1000/devenv-cd09ee4/postgres"
 import Config
 
 # Configure your database
 config :ethui, Ethui.Repo,
   # connect via UNIX socket
   # if nil, will revert to the hostname
-  socket_dir: IO.inspect(System.get_env("PGHOST")),
-  username: "postgres",
-  password: "postgres",
+  socket_dir: System.get_env("PGHOST"),
+  username: System.get_env("USER"),
   hostname: "localhost",
   database: "db",
   stacktrace: true,
