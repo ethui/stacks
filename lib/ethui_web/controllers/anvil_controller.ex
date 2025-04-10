@@ -38,9 +38,10 @@ defmodule EthuiWeb.AnvilController do
   end
 
   def delete(conn, %{"id" => id}) do
-    with :ok <- Stacks.Server.stop_stack(@multi_anvil, id) do
-      conn |> put_status(204) |> json(%{})
-    else
+    case Stacks.Server.stop_stack(@multi_anvil, id) do
+      :ok ->
+        conn |> put_status(204) |> json(%{})
+
       {:error, :not_found} ->
         conn |> put_status(404) |> json(%{status: "error", error: "not found"})
 
