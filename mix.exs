@@ -37,7 +37,8 @@ defmodule Ethui.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:muontrap, "~> 1.6"},
-      {:tesla, "~> 1.4", only: :test},
+      {:mint, "~> 1.7"},
+      {:exth, "~> 0.2.2", only: :test},
       {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
