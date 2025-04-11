@@ -36,6 +36,7 @@ in
   };
 
   env = {
-    PGDATABASE = "dev";
+    PGDATABASE = "ethui_dev";
+    PGDATABASE_TEST = "ethui_test";
   };
 }
