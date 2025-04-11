@@ -7,22 +7,20 @@ defmodule Ethui.Stacks.Stack do
   import Ecto.Changeset
 
   schema "stacks" do
-    field(:title, :string)
-    field(:friendly_id, :string)
+    field(:slug, :string)
 
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
-  def changeset(stack, attrs) do
+  def admin_create_changeset(stack, attrs, _conn) do
     stack
-    |> cast(attrs, [:title, :views])
-    |> validate_required([:title, :views])
+    |> cast(attrs, [:slug])
+    |> validate_required([:slug])
+    |> unique_constraint(:slug)
   end
 
-  def create_changeset(_a, _b, _c) do
-  end
-
-  def update_changeset(_a, _b, _c) do
+  def admin_update_changeset(stack, attrs, _conn) do
+    stack
+    |> cast(attrs, [])
   end
 end

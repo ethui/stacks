@@ -20,8 +20,8 @@ defmodule Ethui.StacksTest do
         registry: registry
       )
 
-    {:ok, anvil1, _pid1} = Stacks.Server.start_stack(server, id: "anvil1")
-    {:ok, anvil2, pid2} = Stacks.Server.start_stack(server, id: "anvil2")
+    {:ok, anvil1, _pid1} = Stacks.Server.start_stack(server, slug: "anvil1")
+    {:ok, anvil2, pid2} = Stacks.Server.start_stack(server, slug: "anvil2")
 
     assert Anvil.url(anvil1) != Anvil.url(anvil2)
 

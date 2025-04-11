@@ -74,6 +74,7 @@ defmodule Ethui.MixProject do
   defp aliases do
     [
       setup: ["deps.get"],
+      "ecto.reset": ["ecto.drop", "ecto.create", "ecto.migrate"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.deploy": ["tailwind ethui --minify"]
     ]

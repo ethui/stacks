@@ -30,15 +30,15 @@ defmodule EthuiWeb.Router do
     get "/", RedirectController, :redirect_to_stacks
 
     live_session :default, on_mount: Backpex.InitAssigns do
-      live_resources "/stacks", Live.StackLive
+      live_resources "/stacks", Live.Admin.StackLive
     end
   end
 
   scope "/api", EthuiWeb do
     pipe_through :api
 
-    resources "/anvil", AnvilController do
-      get "/logs", AnvilController, :logs
+    resources "/stacks", StackController, param: "slug" do
+      # get "/logs", StackController, :logs
     end
   end
 

@@ -3,10 +3,11 @@ defmodule Ethui.Repo.Migrations.CreateBlogPosts do
 
   def change do
     create table(:stacks) do
-      add(:title, :string)
-      add(:friendly_id, :string)
+      add(:slug, :string)
 
       timestamps(type: :utc_datetime)
     end
+
+    create(index(:stacks, [:slug], unique: true))
   end
 end

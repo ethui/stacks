@@ -16,7 +16,8 @@ defmodule Ethui.Services.Anvil do
   @type opts :: [
           # the HttpPort manager process to use
           ports: id,
-          id: String.t() | nil
+          slug: String.t() | nil,
+          name: id | nil
         ]
 
   @doc "Start an anvil instance"

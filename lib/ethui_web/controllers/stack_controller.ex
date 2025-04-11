@@ -1,13 +1,15 @@
-defmodule EthuiWeb.AnvilController do
+defmodule EthuiWeb.StackController do
   use EthuiWeb, :controller
-  alias Ethui.{Stacks, Services.Anvil}
 
-  @multi_anvil Stacks.Server
+  alias Ethui.Stacks.{Server, Stack}
+  alias Ethui.Services.Anvil
+  alias Ethui.Repo
+
+  @multi_anvil Server
 
   def index(conn, _params) do
-    # Extract the PIDs and get their URLs
     anvils =
-      Stacks.Server.list(@multi_anvil)
+      Server.list(@multi_anvil)
 
     json(conn, %{
       status: "success",
@@ -15,16 +17,24 @@ defmodule EthuiWeb.AnvilController do
     })
   end
 
-  def create(conn, _params) do
-    id = to_string(:rand.uniform(1_000))
-
-    case Stacks.Server.start_stack(@multi_anvil, id: id) do
-      {:ok, name, _pid} ->
-        conn
-        |> put_status(201)
-        |> json(%{
-          id: id,
+  def create(conn, params) do
+    with {:ok, stack} <- Stack.admin_create_changeset(%Stack{}, params, nil) |> Repo.insert(),
+         {:ok, name, _pid} <- Server.start_stack(@multi_anvil, slug: stack.slug) do
+      conn
+      |> put_status(201)
+      |> json(%{
+        slug: stack.slug,
+        anvil: %{
           url: Anvil.url(name)
+        }
+      })
+    else
+      {:error, %Ecto.Changeset{} = changeset} ->
+        conn
+        |> put_status(422)
+        |> json(%{
+          status: "error",
+          error: inspect(changeset.errors)
         })
 
       {:error, reason} ->
@@ -37,11 +47,12 @@ defmodule EthuiWeb.AnvilController do
     end
   end
 
-  def delete(conn, %{"id" => id}) do
-    case Stacks.Server.stop_stack(@multi_anvil, id) do
-      :ok ->
-        conn |> put_status(204) |> json(%{})
-
+  def delete(conn, %{"slug" => slug}) do
+    with %Stack{} = stack <- Repo.get_by(Stack, slug: slug),
+         _ <- Repo.delete(stack),
+         :ok <- Server.stop_stack(@multi_anvil, slug) do
+      conn |> put_status(204) |> json(%{})
+    else
       {:error, :not_found} ->
         conn |> put_status(404) |> json(%{status: "error", error: "not found"})
 
