@@ -28,8 +28,8 @@ jobs:
     env:
       USER: postgres
       PGPASSWORD: postgres
-      PGHOSTNAME: localhost
       PGDATABASE_TEST: postgres
+      MIX_ENV: test
 
     steps:
     - uses: actions/checkout@v4

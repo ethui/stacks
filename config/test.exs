@@ -12,7 +12,7 @@ config :ethui,
          username: System.get_env("USER"),
          password: System.get_env("PGPASSWORD"),
          database: System.get_env("PGDATABASE_TEST", "ethui_test"),
-         hostname: System.get_env("PGHOSTNAME", "localhost"),
+         hostname: "localhost",
          pool: Ecto.Adapters.SQL.Sandbox,
          pool_size: System.schedulers_online() * 2
        )
