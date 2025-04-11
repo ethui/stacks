@@ -1,4 +1,8 @@
 defmodule Ethui.Stacks.Stack do
+  @moduledoc """
+  Database entity for a stack
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 
