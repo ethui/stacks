@@ -28,11 +28,14 @@ in
   services = {
     postgres = {
       enable = true;
-      initialDatabases = [ { name = "db"; } ];
+      initialDatabases = [
+        { name = "ethui_dev"; }
+        { name = "ethui_test"; }
+      ];
     };
   };
 
   env = {
-    PGDATABASE = "db";
+    PGDATABASE = "dev";
   };
 }

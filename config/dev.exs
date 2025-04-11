@@ -6,8 +6,9 @@ config :ethui, Ethui.Repo,
   # if nil, will revert to the hostname
   socket_dir: System.get_env("PGHOST"),
   username: System.get_env("USER"),
+  password: System.get_env("PGPASSWORD"),
+  database: "ethui_dev",
   hostname: "localhost",
-  database: "db",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10

@@ -6,10 +6,11 @@ import Config
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :ethui, Ethui.Repo,
-  username: "postgres",
-  password: "postgres",
+  socket_dir: System.get_env("PGHOST"),
+  username: System.get_env("USER"),
+  password: System.get_env("PGPASSWORD"),
+  database: "ethui_test",
   hostname: "localhost",
-  database: "ethui_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
 
