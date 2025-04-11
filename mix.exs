@@ -28,14 +28,16 @@ defmodule Ethui.MixProject do
     [
       # application
       {:backpex, "~> 0.11"},
-      {:tesla, "~> 1.4", only: :test},
-      {:floki, ">= 0.30.0", only: :test},
       {:muontrap, "~> 1.6"},
+      {:mint, "~> 1.7"},
 
       # development
       {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:tesla, "~> 1.4", only: :test},
+      {:floki, ">= 0.30.0", only: :test},
+      {:exth, "~> 0.2.2", only: :test},
 
       # core
       {:swoosh, "~> 1.5"},

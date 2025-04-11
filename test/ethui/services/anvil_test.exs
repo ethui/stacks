@@ -2,6 +2,7 @@ defmodule Ethui.Services.AnvilTest do
   alias Ethui.Services.Anvil
   alias Ethui.Stacks.HttpPorts
   use ExUnit.Case
+  alias Exth.Rpc
 
   # setup_all do
   #   Process.flag(:trap_exit, true)
@@ -14,12 +15,11 @@ defmodule Ethui.Services.AnvilTest do
     {:ok, anvil} = Anvil.start_link(ports: HttpPorts)
     Process.sleep(100)
 
-    url = Anvil.url(anvil)
+    client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
 
     resp =
-      url
-      |> AnvilClient.new()
-      |> AnvilClient.rpc_request("anvil_nodeInfo", [])
+      Rpc.request("anvil_nodeInfo", [])
+      |> Rpc.send(client)
 
     assert {:ok, _} = resp
 
@@ -27,11 +27,10 @@ defmodule Ethui.Services.AnvilTest do
     Process.sleep(100)
 
     err =
-      url
-      |> AnvilClient.new()
-      |> AnvilClient.rpc_request("anvil_nodeInfo", [])
+      Rpc.request("anvil_nodeInfo", [])
+      |> Rpc.send(client)
 
-    assert {:error, :econnrefused} = err
+    assert {:error, %{reason: :econnrefused}} = err
   end
 
   test "creates multiple anvil processes" do
@@ -45,10 +44,11 @@ defmodule Ethui.Services.AnvilTest do
     Process.sleep(100)
 
     for anvil <- anvils do
-      anvil
-      |> Anvil.url()
-      |> AnvilClient.new()
-      |> AnvilClient.rpc_request("anvil_nodeInfo", [])
+      client =
+        Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
+
+      Rpc.request("anvil_nodeInfo", [])
+      |> Rpc.send(client)
     end
 
     for anvil <- anvils do
