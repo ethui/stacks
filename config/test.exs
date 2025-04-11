@@ -5,14 +5,17 @@ import Config
 # The MIX_TEST_PARTITION environment variable can be used
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
-config :ethui, Ethui.Repo,
-  socket_dir: System.get_env("PGHOST"),
-  username: System.get_env("USER"),
-  password: System.get_env("PGPASSWORD"),
-  database: System.get_env("PGDATABASE_TEST", "ethui_test"),
-  hostname: System.get_env("PGHOSTNAME", "localhost"),
-  pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: System.schedulers_online() * 2
+config :ethui,
+       Ethui.Repo,
+       IO.inspect(
+         socket_dir: System.get_env("PGHOST"),
+         username: System.get_env("USER"),
+         password: System.get_env("PGPASSWORD"),
+         database: System.get_env("PGDATABASE_TEST", "ethui_test"),
+         hostname: System.get_env("PGHOSTNAME", "localhost"),
+         pool: Ecto.Adapters.SQL.Sandbox,
+         pool_size: System.schedulers_online() * 2
+       )
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
