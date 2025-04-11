@@ -20,6 +20,7 @@ jobs:
       USER: postgres
       PGPASSWORD: postgres
       PGHOST: postgres
+      PGDATABASE_TEST: postgres
 
     services:
       postgres:
