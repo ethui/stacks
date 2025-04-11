@@ -60,7 +60,10 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-config :backpex, :pubsub_server, Ethui.PubSub
+config :backpex,
+  pubsub_server: Ethui.PubSub,
+  translator_function: {EthuiWeb.CoreComponents, :translate_backpex},
+  error_translator_function: {EthuiWeb.CoreComponents, :translate_backpex_error}
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
