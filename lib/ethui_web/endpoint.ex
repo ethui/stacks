@@ -7,7 +7,7 @@ defmodule EthuiWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_ethui_key",
-    signing_salt: "8wZa9FZZ",
+    signing_salt: "kEJ16v2a",
     same_site: "Lax"
   ]
 
@@ -28,7 +28,10 @@ defmodule EthuiWeb.Endpoint do
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do
+    socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
+    plug Phoenix.LiveReloader
     plug Phoenix.CodeReloader
+    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :ethui
   end
 
   plug Phoenix.LiveDashboard.RequestLogger,

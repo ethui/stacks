@@ -3,7 +3,6 @@ defmodule Ethui.Stacks.ServicesSupervisor do
   Supervisor used by `__MODULE__.Stacks` to dynamically supervise `anvil` instances and other required processes
   """
 
-  alias Ethui.Stacks.Server
   alias Ethui.Services.Anvil
   use DynamicSupervisor
 

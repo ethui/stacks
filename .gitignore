@@ -26,3 +26,16 @@ erl_crash.dump
 ethui_service-*.tar
 
 .aider*
+
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
+node_modules
+priv/static/assets/app.css
+priv/static/assets/app.js

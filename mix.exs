@@ -26,28 +26,56 @@ defmodule Ethui.MixProject do
 
   defp deps do
     [
-      {:phoenix, "~> 1.7.21"},
-      {:phoenix_live_dashboard, "~> 0.8.3"},
+      # application
+      {:backpex, "~> 0.11"},
+      {:muontrap, "~> 1.6"},
+      {:mint, "~> 1.7"},
+
+      # development
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:tesla, "~> 1.4", only: :test},
+      {:floki, ">= 0.30.0", only: :test},
+      {:exth, "~> 0.2.2", only: :test},
+
+      # core
       {:swoosh, "~> 1.5"},
       {:finch, "~> 0.13"},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
-      {:gettext, "~> 0.26"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
-      {:muontrap, "~> 1.6"},
-      {:mint, "~> 1.7"},
-      {:exth, "~> 0.2.2", only: :test},
-      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
+
+      # phoenix
+      {:phoenix, "~> 1.7.21"},
+      {:phoenix_ecto, "~> 4.5"},
+      {:ecto_sql, "~> 3.10"},
+      {:postgrex, ">= 0.0.0"},
+      {:phoenix_html, "~> 4.1"},
+      {:phoenix_live_reload, "~> 1.2", only: :dev},
+      {:phoenix_live_view, "~> 1.0"},
+      {:phoenix_live_dashboard, "~> 0.8.3"},
+
+      # assets
+      {:esbuild, "~> 0.9", runtime: Mix.env() == :dev},
+      {:tailwind, "~> 0.3.1", runtime: Mix.env() == :dev},
+      {:heroicons,
+       github: "tailwindlabs/heroicons",
+       tag: "v2.2.0",
+       sparse: "optimized",
+       app: false,
+       compile: false,
+       depth: 1}
     ]
   end
 
   defp aliases do
     [
-      setup: ["deps.get"]
+      setup: ["deps.get"],
+      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
+      "assets.deploy": ["tailwind ethui --minify"]
     ]
   end
 end

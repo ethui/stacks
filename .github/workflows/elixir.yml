@@ -16,6 +16,21 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+
+    env:
+      USER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE_TEST: postgres
+      MIX_ENV: test
+
     steps:
     - uses: actions/checkout@v4
 
@@ -35,5 +50,6 @@ jobs:
         restore-keys: ${{ runner.os }}-mix-
 
     - run: mix deps.get
+    - run: mix compile
     - run: mix credo
     - run: mix test

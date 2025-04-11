@@ -1,8 +1,37 @@
 defmodule EthuiWeb.Router do
   use EthuiWeb, :router
+  import Backpex.Router
+
+  pipeline :browser do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_live_flash
+    plug :put_root_layout, html: {EthuiWeb.Layouts, :root}
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+    plug Backpex.ThemeSelectorPlug
+  end
 
   pipeline :api do
     plug :accepts, ["json"]
+  end
+
+  scope "/", EthuiWeb do
+    pipe_through :browser
+
+    get "/", PageController, :home
+  end
+
+  scope "/admin", EthuiWeb do
+    pipe_through :browser
+
+    backpex_routes()
+
+    get "/", RedirectController, :redirect_to_stacks
+
+    live_session :default, on_mount: Backpex.InitAssigns do
+      live_resources "/stacks", Live.StackLive
+    end
   end
 
   scope "/api", EthuiWeb do
@@ -23,7 +52,7 @@ defmodule EthuiWeb.Router do
     import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
-      pipe_through [:fetch_session, :protect_from_forgery]
+      pipe_through :browser
 
       live_dashboard "/dashboard", metrics: EthuiWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview

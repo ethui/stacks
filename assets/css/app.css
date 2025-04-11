@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@source "../../deps/backpex/**/*.*ex";
+@source "../../deps/backpex/assets/js/hooks/**/*.*js";
+
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark;
+}

@@ -9,6 +9,7 @@ defmodule Ethui.Application do
   def start(_type, _args) do
     children = [
       EthuiWeb.Telemetry,
+      Ethui.Repo,
       {DNSCluster, query: Application.get_env(:ethui, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Ethui.PubSub},
       # Start the Finch HTTP client for sending emails
