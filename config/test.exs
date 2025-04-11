@@ -7,15 +7,13 @@ import Config
 # Run `mix help test` for more information.
 config :ethui,
        Ethui.Repo,
-       IO.inspect(
-         socket_dir: System.get_env("PGHOST"),
-         username: System.get_env("USER"),
-         password: System.get_env("PGPASSWORD"),
-         database: System.get_env("PGDATABASE_TEST", "ethui_test"),
-         hostname: "localhost",
-         pool: Ecto.Adapters.SQL.Sandbox,
-         pool_size: System.schedulers_online() * 2
-       )
+       socket_dir: System.get_env("PGHOST"),
+       username: System.get_env("USER"),
+       password: System.get_env("PGPASSWORD"),
+       database: System.get_env("PGDATABASE_TEST", "ethui_test"),
+       hostname: "localhost",
+       pool: Ecto.Adapters.SQL.Sandbox,
+       pool_size: System.schedulers_online() * 2
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
