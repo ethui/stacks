@@ -26,7 +26,7 @@ jobs:
     env:
       USER: postgres
       PGPASSWORD: postgres
-      PGHOSTNAME: postgres
+      PGHOSTNAME: localhost
       PGDATABASE_TEST: postgres
 
     steps:
