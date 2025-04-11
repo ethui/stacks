@@ -16,6 +16,18 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
 
+    env:
+      USER: postgres
+      PGPASSWORD: postgres
+      PGHOST: postgres
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+
     steps:
     - uses: actions/checkout@v4
 

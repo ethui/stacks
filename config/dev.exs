@@ -8,7 +8,7 @@ config :ethui, Ethui.Repo,
   username: System.get_env("USER"),
   password: System.get_env("PGPASSWORD"),
   database: "ethui_dev",
-  hostname: "localhost",
+  hostname: System.get_env("PGHOST", "localhost"),
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
