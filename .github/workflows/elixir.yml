@@ -17,16 +17,16 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      USER: postgres
-      PGPASSWORD: postgres
+      USER: ethui_test
+      PGPASSWORD: ethui_test
       PGHOST: postgres
 
     services:
       postgres:
         image: postgres
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: ethui_test
+          POSTGRES_PASSWORD: ethui_test
 
     steps:
     - uses: actions/checkout@v4
