@@ -19,7 +19,7 @@ jobs:
     env:
       USER: postgres
       PGPASSWORD: postgres
-      PGHOST: postgres
+      PGHOSTNAME: postgres
       PGDATABASE_TEST: postgres
 
     services:
