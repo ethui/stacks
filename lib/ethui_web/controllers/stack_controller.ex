@@ -18,7 +18,7 @@ defmodule EthuiWeb.StackController do
   end
 
   def create(conn, params) do
-    with {:ok, stack} <- Stack.admin_create_changeset(%Stack{}, params, nil) |> Repo.insert(),
+    with {:ok, stack} <- Stack.admin_create_changeset(%Stack{}, params) |> Repo.insert(),
          {:ok, name, _pid} <- Server.start_stack(@multi_anvil, slug: stack.slug) do
       conn
       |> put_status(201)

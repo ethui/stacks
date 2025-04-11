@@ -3,7 +3,7 @@ defmodule Ethui.Stacks.Supervisor do
   Global supervisor that manages the ethui services
   """
 
-  alias Ethui.Stacks.{Server, HttpPorts, ServicesSupervisor}
+  alias Ethui.Stacks.{Server, Stack, HttpPorts, ServicesSupervisor}
   use Supervisor
 
   def start_link(opts) do
@@ -16,6 +16,11 @@ defmodule Ethui.Stacks.Supervisor do
   @impl Supervisor
   def init(_) do
     children = [
+      # database watcher
+      {EctoWatch,
+       repo: Ethui.Repo,
+       pub_sub: Ethui.PubSub,
+       watchers: [{Stack, :inserted}, {Stack, :deleted}, {Stack, :updated}]},
       {HttpPorts, range: 7000..8000, name: HttpPorts},
       {Registry, keys: :unique, name: @registry_name},
       {ServicesSupervisor, name: @services_supervisor_name, registry: @registry_name},

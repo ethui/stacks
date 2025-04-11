@@ -5,7 +5,7 @@ defmodule Ethui.Stacks.Server do
   # TODO: A stack is currently composed of a single entity: an `anvil` process, but should eventually hold more
   """
 
-  alias Ethui.Stacks
+  alias Ethui.Stacks.{Stack, ServicesSupervisor}
   use GenServer
 
   @type opts :: [
@@ -62,6 +62,10 @@ defmodule Ethui.Stacks.Server do
   @spec init(opts) :: {:ok, t}
   @impl GenServer
   def init(opts) do
+    EctoWatch.subscribe({Stack, :inserted})
+    EctoWatch.subscribe({Stack, :updated})
+    EctoWatch.subscribe({Stack, :deleted})
+
     {:ok,
      %{
        supervisor: opts[:supervisor],
@@ -80,7 +84,7 @@ defmodule Ethui.Stacks.Server do
     slug = opts[:slug]
     name = {:via, Registry, {registry, slug}}
     full_opts = [ports: ports, name: name]
-    {:ok, pid} = Stacks.ServicesSupervisor.start_stack(sup, full_opts)
+    {:ok, pid} = ServicesSupervisor.start_stack(sup, full_opts)
 
     new_state = %{state | instances: Map.put(instances, slug, pid)}
     {:reply, {:ok, name, pid}, new_state}
@@ -96,7 +100,7 @@ defmodule Ethui.Stacks.Server do
 
     case Map.fetch(instances, slug) do
       {:ok, pid} ->
-        Stacks.ServicesSupervisor.stop_stack(sup, pid)
+        ServicesSupervisor.stop_stack(sup, pid)
         {:reply, :ok, %{state | instances: Map.delete(instances, slug)}}
 
       :error ->
@@ -107,6 +111,24 @@ defmodule Ethui.Stacks.Server do
   @impl GenServer
   def handle_call(:list, _from, %{instances: instances} = state) do
     {:reply, Map.keys(instances), state}
+  end
+
+  @impl GenServer
+  def handle_info({{Stack, :inserted}, stack}, state) do
+    IO.inspect({"inserted", stack, state})
+    {:noreply, state}
+  end
+
+  @impl GenServer
+  def handle_info({{Stack, :updated}, stack}, state) do
+    IO.inspect({"updated", stack})
+    {:noreply, state}
+  end
+
+  @impl GenServer
+  def handle_info({{Stack, :deleted}, stack}, state) do
+    IO.inspect({"deleted", stack})
+    {:noreply, state}
   end
 
   # extract the slug from what may be a {:via, ...} registry name
