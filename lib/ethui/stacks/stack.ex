@@ -29,8 +29,5 @@ defmodule Ethui.Stacks.Stack do
   def admin_update_changeset(stack, attrs, _ \\ nil) do
     stack
     |> cast(attrs, [])
-
-    # |> validate_required([:slug])
-    # |> unique_constraint(:slug)
   end
 end
