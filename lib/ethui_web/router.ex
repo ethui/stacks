@@ -19,7 +19,7 @@ defmodule EthuiWeb.Router do
   scope "/", EthuiWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    get "/", RedirectController, :redirect_to_admin
   end
 
   scope "/admin", EthuiWeb do
