@@ -1,4 +1,4 @@
-defmodule EthuiWeb.StackController do
+defmodule EthuiWeb.Api.StackController do
   use EthuiWeb, :controller
 
   alias Ethui.Stacks.{Server, Stack}

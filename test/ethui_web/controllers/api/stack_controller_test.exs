@@ -1,4 +1,4 @@
-defmodule EthuiWeb.StackControllerTest do
+defmodule EthuiWeb.Api.StackControllerTest do
   use EthuiWeb.ConnCase, async: true
 
   alias Ethui.Repo

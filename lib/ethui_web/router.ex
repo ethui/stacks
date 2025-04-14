@@ -37,7 +37,7 @@ defmodule EthuiWeb.Router do
   scope "/api", EthuiWeb do
     pipe_through :api
 
-    resources "/stacks", StackController, param: "slug" do
+    resources "/stacks", Api.StackController, param: "slug" do
       # get "/logs", StackController, :logs
     end
   end
