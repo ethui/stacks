@@ -5,8 +5,10 @@ defmodule Ethui.Stacks.Server do
   # TODO: A stack is currently composed of a single entity: an `anvil` process, but should eventually hold more
   """
 
-  alias Ethui.Stacks
   use GenServer
+  require Logger
+
+  alias Ethui.Stacks.{Stack, ServicesSupervisor}
 
   @type opts :: [
           supervisor: pid,
@@ -37,18 +39,6 @@ defmodule Ethui.Stacks.Server do
   # Client
   #
 
-  @doc "Starts a new stack with a given slug"
-  @spec start_stack(atom, slug: slug) :: {:ok, name, pid} | {:error, any}
-  def start_stack(pid, opts) do
-    GenServer.call(pid, {:start_stack, opts})
-  end
-
-  @doc "Stops a stack"
-  @spec stop_stack(atom, slug | name) :: :ok | {:error, :not_found}
-  def stop_stack(pid, anvil) do
-    GenServer.call(pid, {:stop_stack, anvil})
-  end
-
   @doc "List all stacks"
   @spec list(atom) :: [slug]
   def list(pid) do
@@ -62,6 +52,10 @@ defmodule Ethui.Stacks.Server do
   @spec init(opts) :: {:ok, t}
   @impl GenServer
   def init(opts) do
+    :ok = EctoWatch.subscribe({Stack, :inserted})
+    :ok = EctoWatch.subscribe({Stack, :updated})
+    :ok = EctoWatch.subscribe({Stack, :deleted})
+
     {:ok,
      %{
        supervisor: opts[:supervisor],
@@ -72,18 +66,14 @@ defmodule Ethui.Stacks.Server do
   end
 
   @impl GenServer
-  def handle_call(
-        {:start_stack, opts},
-        _from,
-        %{supervisor: sup, ports: ports, registry: registry, instances: instances} = state
-      ) do
-    slug = opts[:slug]
-    name = {:via, Registry, {registry, slug}}
-    full_opts = [ports: ports, name: name]
-    {:ok, pid} = Stacks.ServicesSupervisor.start_stack(sup, full_opts)
+  def handle_call({:start_stack, opts}, _from, state) do
+    case start_stack(opts, state) do
+      {:ok, name, pid, new_state} ->
+        {:reply, {:ok, name, pid}, new_state}
 
-    new_state = %{state | instances: Map.put(instances, slug, pid)}
-    {:reply, {:ok, name, pid}, new_state}
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
   end
 
   @impl GenServer
@@ -96,7 +86,7 @@ defmodule Ethui.Stacks.Server do
 
     case Map.fetch(instances, slug) do
       {:ok, pid} ->
-        Stacks.ServicesSupervisor.stop_stack(sup, pid)
+        ServicesSupervisor.stop_stack(sup, pid)
         {:reply, :ok, %{state | instances: Map.delete(instances, slug)}}
 
       :error ->
@@ -109,8 +99,65 @@ defmodule Ethui.Stacks.Server do
     {:reply, Map.keys(instances), state}
   end
 
+  @impl GenServer
+  def handle_info({{Stack, :inserted}, stack}, state) do
+    case start_stack(stack, state) do
+      {:ok, _name, _pid, new_state} ->
+        {:noreply, new_state}
+
+      error ->
+        Logger.error(error)
+        {:noreply, state}
+    end
+  end
+
+  @impl GenServer
+  def handle_info({{Stack, :updated}, _stack}, state) do
+    {:noreply, state}
+  end
+
+  @impl GenServer
+  def handle_info({{Stack, :deleted}, stack}, state) do
+    case stop_stack(stack, state) do
+      {:ok, new_state} ->
+        {:noreply, new_state}
+
+      error ->
+        Logger.error(error)
+        {:noreply, state}
+    end
+  end
+
+  @spec start_stack(map, t) :: {:ok, name, pid, t}
+  defp start_stack(
+         %{slug: slug},
+         %{supervisor: sup, ports: ports, registry: registry, instances: instances} = state
+       ) do
+    name = {:via, Registry, {registry, slug}}
+    full_opts = [ports: ports, name: name]
+    # TODO: can this fail?
+    {:ok, pid} = ServicesSupervisor.start_stack(sup, full_opts)
+
+    {:ok, name, pid, %{state | instances: Map.put(instances, slug, pid)}}
+  end
+
+  @spec stop_stack(map, map) :: {:ok, t} | {:error, :not_found}
+  defp stop_stack(
+         %{slug: slug},
+         %{supervisor: sup, instances: instances} = state
+       ) do
+    case Map.fetch(instances, slug) do
+      {:ok, pid} ->
+        ServicesSupervisor.stop_stack(sup, pid)
+        {:ok, %{state | instances: Map.delete(instances, slug)}}
+
+      :error ->
+        {:error, :not_found}
+    end
+  end
+
   # extract the slug from what may be a {:via, ...} registry name
   # allows the internal API to deal with either direct slugs or registry names
-  def to_slug({:via, _, {_, slug}}), do: slug
-  def to_slug(slug) when is_binary(slug), do: slug
+  defp to_slug({:via, _, {_, slug}}), do: slug
+  defp to_slug(slug) when is_binary(slug), do: slug
 end

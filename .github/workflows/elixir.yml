@@ -51,6 +51,6 @@ jobs:
 
     - run: mix deps.get
     - run: mix compile
-    - run: mix ecto.setup
+    - run: mix ecto.migrate
     - run: mix credo
     - run: mix test

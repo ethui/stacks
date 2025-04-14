@@ -1,32 +1,31 @@
-defmodule Ethui.StacksTest do
-  alias Ethui.Stacks
-  alias Ethui.Services.Anvil
-  use ExUnit.Case
+defmodule Ethui.Stacks.ServerTest do
+  use Ethui.DataCase
 
-  setup_all do
-    ports = start_link_supervised!({Stacks.HttpPorts, range: 7000..8000})
-    start_supervised!({Registry, keys: :unique, name: __MODULE__.Registry})
+  alias Ethui.Stacks.{Server, Stack}
+  alias Ethui.Repo
 
-    {:ok, ports: ports, registry: __MODULE__.Registry}
+  setup do
+    Ecto.Adapters.SQL.Sandbox.checkout(Ethui.Repo, sandbox: false)
+    cleanup()
+    :ok
   end
 
-  test "can orchestrate multiple anvils", %{ports: ports, registry: registry} do
-    {:ok, mult_anvil_supervisor} = Stacks.ServicesSupervisor.start_link()
+  defp cleanup do
+    Repo.delete_all(Stack)
 
-    {:ok, server} =
-      Stacks.Server.start_link(
-        supervisor: mult_anvil_supervisor,
-        ports: ports,
-        registry: registry
-      )
+    assert_eventually(fn ->
+      Server |> Server.list() |> length == 0
+    end)
+  end
 
-    {:ok, anvil1, _pid1} = Stacks.Server.start_stack(server, slug: "anvil1")
-    {:ok, anvil2, pid2} = Stacks.Server.start_stack(server, slug: "anvil2")
+  test "can orchestrate multiple anvils" do
+    {:ok, _name1, _pid1} = GenServer.call(Server, {:start_stack, %{slug: "slug1"}})
+    {:ok, _name2, _pid2} = GenServer.call(Server, {:start_stack, %{slug: "slug2"}})
 
-    assert Anvil.url(anvil1) != Anvil.url(anvil2)
+    assert Server.list(Server) == ["slug1", "slug2"]
 
-    Process.monitor(pid2)
-    Stacks.Server.stop_stack(server, "anvil2")
-    assert_receive {:DOWN, _, _, ^pid2, _}
+    GenServer.call(Server, {:stop_stack, "slug2"})
+
+    assert Server.list(Server) == ["slug1"]
   end
 end
