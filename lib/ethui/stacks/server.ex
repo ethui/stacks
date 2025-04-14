@@ -67,13 +67,10 @@ defmodule Ethui.Stacks.Server do
 
   @impl GenServer
   def handle_call({:start_stack, opts}, _from, state) do
-    case start_stack(opts, state) do
-      {:ok, name, pid, new_state} ->
-        {:reply, {:ok, name, pid}, new_state}
+    {:ok, name, pid, new_state} =
+      start_stack(opts, state)
 
-      {:error, reason} ->
-        {:reply, {:error, reason}, state}
-    end
+    {:reply, {:ok, name, pid}, new_state}
   end
 
   @impl GenServer
