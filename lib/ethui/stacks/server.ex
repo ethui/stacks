@@ -67,10 +67,14 @@ defmodule Ethui.Stacks.Server do
 
   @impl GenServer
   def handle_call({:start_stack, opts}, _from, state) do
-    with {:ok, name, pid, new_state} <- start_stack(opts, state) do
-      {:reply, {:ok, name, pid}, new_state}
-    else
-      {:error, reason} -> {:reply, {:error, reason}, state}
+    case
+
+    case start_stack(opts, state) do
+      {:ok, name, pid, new_state} ->
+        {:reply, {:ok, name, pid}, new_state}
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
     end
   end
 
@@ -99,9 +103,10 @@ defmodule Ethui.Stacks.Server do
 
   @impl GenServer
   def handle_info({{Stack, :inserted}, stack}, state) do
-    with {:ok, _name, _pid, new_state} <- start_stack(stack, state) do
-      {:noreply, new_state}
-    else
+    case start_stack(stack, state) do
+      {:ok, _name, _pid, new_state} ->
+        {:noreply, new_state}
+
       error ->
         Logger.error(error)
         {:noreply, state}
@@ -115,9 +120,10 @@ defmodule Ethui.Stacks.Server do
 
   @impl GenServer
   def handle_info({{Stack, :deleted}, stack}, state) do
-    with {:ok, new_state} <- stop_stack(stack, state) do
-      {:noreply, new_state}
-    else
+    case stop_stack(stack, state) do
+      {:ok, new_state} ->
+        {:noreply, new_state}
+
       error ->
         Logger.error(error)
         {:noreply, state}

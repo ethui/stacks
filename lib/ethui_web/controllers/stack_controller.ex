@@ -17,11 +17,13 @@ defmodule EthuiWeb.StackController do
   end
 
   def create(conn, params) do
-    with {:ok, _stack} <- Stack.create_changeset(%Stack{}, params) |> Repo.insert() do
-      conn
-      |> put_status(201)
-      |> json(%{})
-    else
+    case Stack.create_changeset(%Stack{}, params)
+         |> Repo.insert() do
+      {:ok, _stack} ->
+        conn
+        |> put_status(201)
+        |> json(%{})
+
       {:error, %Ecto.Changeset{} = changeset} ->
         conn
         |> put_status(422)
