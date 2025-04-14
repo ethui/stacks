@@ -25,8 +25,14 @@ defmodule Ethui.Stacks.Supervisor do
          {Stack, :deleted, extra_columns: [:slug]},
          {Stack, :updated}
        ]},
+
+      # http port reservation
       {HttpPorts, range: 7000..8000, name: HttpPorts},
+
+      # named registry for services
       {Registry, keys: :unique, name: @registry_name},
+
+      # services supervisor
       {ServicesSupervisor, name: @services_supervisor_name, registry: @registry_name},
       {Server,
        supervisor: @services_supervisor_name,
