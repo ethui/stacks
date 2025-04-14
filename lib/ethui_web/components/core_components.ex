@@ -694,9 +694,9 @@ defmodule EthuiWeb.CoreComponents do
     # with our gettext backend as first argument. Translations are
     # available in the errors.po file (as we use the "errors" domain).
     if count = opts[:count] do
-      Gettext.dngettext(DemoWeb.Gettext, "errors", msg, msg, count, opts)
+      Gettext.dngettext(EthuiWeb.Gettext, "errors", msg, msg, count, opts)
     else
-      Gettext.dgettext(DemoWeb.Gettext, "errors", msg, opts)
+      Gettext.dgettext(EthuiWeb.Gettext, "errors", msg, opts)
     end
   end
 end

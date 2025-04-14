@@ -37,7 +37,7 @@ defmodule Ethui.MixProject do
       {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:tesla, "~> 1.4", only: :test},
+      {:tesla, "~> 1.4"},
       {:floki, ">= 0.30.0", only: :test},
       {:exth, "~> 0.2.2", only: :test},
 

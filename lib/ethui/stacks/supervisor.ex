@@ -10,7 +10,7 @@ defmodule Ethui.Stacks.Supervisor do
     Supervisor.start_link(__MODULE__, [], name: opts[:name])
   end
 
-  @registry_name __MODULE__.Registry
+  @registry_name Ethui.Stacks.Registry
   @services_supervisor_name ServicesSupervisor
 
   @impl Supervisor

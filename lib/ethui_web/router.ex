@@ -16,6 +16,10 @@ defmodule EthuiWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :proxy do
+    plug :accepts, ["json"]
+  end
+
   scope "/", EthuiWeb do
     pipe_through :browser
 
@@ -40,6 +44,13 @@ defmodule EthuiWeb.Router do
     resources "/stacks", Api.StackController, param: "slug" do
       # get "/logs", StackController, :logs
     end
+  end
+
+  scope "/stacks", EthuiWeb do
+    pipe_through :proxy
+
+    post "/:slug", ProxyController, :anvil
+    # post "/:slug/*path", ProxyController, :forward
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

@@ -67,10 +67,13 @@ defmodule Ethui.Stacks.Server do
 
   @impl GenServer
   def handle_call({:start_stack, opts}, _from, state) do
-    {:ok, name, pid, new_state} =
-      start_stack(opts, state)
+    case start_stack(opts, state) do
+      {:ok, name, pid, new_state} ->
+        {:reply, {:ok, name, pid}, new_state}
 
-    {:reply, {:ok, name, pid}, new_state}
+      error ->
+        {:reply, error, state}
+    end
   end
 
   @impl GenServer
@@ -103,7 +106,7 @@ defmodule Ethui.Stacks.Server do
         {:noreply, new_state}
 
       error ->
-        Logger.error(error)
+        Logger.error(inspect(error))
         {:noreply, state}
     end
   end
@@ -120,7 +123,7 @@ defmodule Ethui.Stacks.Server do
         {:noreply, new_state}
 
       error ->
-        Logger.error(error)
+        Logger.error(inspect(error))
         {:noreply, state}
     end
   end
@@ -133,9 +136,15 @@ defmodule Ethui.Stacks.Server do
     name = {:via, Registry, {registry, slug}}
     full_opts = [ports: ports, name: name]
     # TODO: can this fail?
-    {:ok, pid} = ServicesSupervisor.start_stack(sup, full_opts)
+    Logger.info("Starting stack #{inspect(name)}")
 
-    {:ok, name, pid, %{state | instances: Map.put(instances, slug, pid)}}
+    case ServicesSupervisor.start_stack(sup, full_opts) do
+      {:ok, pid} ->
+        {:ok, name, pid, %{state | instances: Map.put(instances, slug, pid)}}
+
+      error ->
+        error
+    end
   end
 
   @spec stop_stack(map, map) :: {:ok, t} | {:error, :not_found}
@@ -145,6 +154,7 @@ defmodule Ethui.Stacks.Server do
        ) do
     case Map.fetch(instances, slug) do
       {:ok, pid} ->
+        Logger.info("Stopping stack #{inspect(pid)}")
         ServicesSupervisor.stop_stack(sup, pid)
         {:ok, %{state | instances: Map.delete(instances, slug)}}
 
