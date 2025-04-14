@@ -11,9 +11,7 @@ defmodule Ethui.MixProject do
       aliases: aliases(),
       deps: deps(),
       dialyzer: [
-        flags: ["-Wunmatched_returns", :error_handling, :underspecs],
-        format: "ignore_file"
-        # ignore_warnings: "lib/ethui_web/live/admin/stack_live.ex"
+        flags: ["-Wunmatched_returns", :error_handling, :underspecs]
       ]
     ]
   end
