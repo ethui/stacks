@@ -16,9 +16,6 @@ defmodule EthuiWeb.StackControllerTest do
     Repo.delete_all(Stack)
   end
 
-  # setup do
-  # end
-
   describe "create/2" do
     test "creates a stack", %{conn: conn} do
       slug = "slug"
