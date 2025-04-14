@@ -27,7 +27,7 @@ defmodule Ethui.Stacks.Supervisor do
        ]},
 
       # http port reservation
-      {HttpPorts, range: 5000..10000, name: HttpPorts},
+      {HttpPorts, range: 5000..10_000, name: HttpPorts},
 
       # named registry for services
       {Registry, keys: :unique, name: @registry_name},
