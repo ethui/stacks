@@ -20,7 +20,11 @@ defmodule Ethui.Stacks.Supervisor do
       {EctoWatch,
        repo: Ethui.Repo,
        pub_sub: Ethui.PubSub,
-       watchers: [{Stack, :inserted}, {Stack, :deleted}, {Stack, :updated}]},
+       watchers: [
+         {Stack, :inserted, extra_columns: [:slug]},
+         {Stack, :deleted, extra_columns: [:slug]},
+         {Stack, :updated}
+       ]},
       {HttpPorts, range: 7000..8000, name: HttpPorts},
       {Registry, keys: :unique, name: @registry_name},
       {ServicesSupervisor, name: @services_supervisor_name, registry: @registry_name},

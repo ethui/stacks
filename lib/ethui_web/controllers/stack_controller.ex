@@ -2,7 +2,6 @@ defmodule EthuiWeb.StackController do
   use EthuiWeb, :controller
 
   alias Ethui.Stacks.{Server, Stack}
-  alias Ethui.Services.Anvil
   alias Ethui.Repo
 
   @multi_anvil Server
@@ -18,16 +17,10 @@ defmodule EthuiWeb.StackController do
   end
 
   def create(conn, params) do
-    with {:ok, stack} <- Stack.admin_create_changeset(%Stack{}, params) |> Repo.insert(),
-         {:ok, name, _pid} <- Server.start_stack(@multi_anvil, slug: stack.slug) do
+    with {:ok, _stack} <- Stack.admin_create_changeset(%Stack{}, params) |> Repo.insert() do
       conn
       |> put_status(201)
-      |> json(%{
-        slug: stack.slug,
-        anvil: %{
-          url: Anvil.url(name)
-        }
-      })
+      |> json(%{})
     else
       {:error, %Ecto.Changeset{} = changeset} ->
         conn
@@ -49,8 +42,7 @@ defmodule EthuiWeb.StackController do
 
   def delete(conn, %{"slug" => slug}) do
     with %Stack{} = stack <- Repo.get_by(Stack, slug: slug),
-         _ <- Repo.delete(stack),
-         :ok <- Server.stop_stack(@multi_anvil, slug) do
+         _ <- Repo.delete(stack) do
       conn |> put_status(204) |> json(%{})
     else
       {:error, :not_found} ->

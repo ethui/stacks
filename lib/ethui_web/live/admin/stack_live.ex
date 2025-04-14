@@ -22,7 +22,4 @@ defmodule EthuiWeb.Live.Admin.StackLive do
       slug: %{module: Backpex.Fields.Text, label: "Slug"}
     ]
   end
-
-  # def can?(_assigns, action, _item) when action in [:index, :custom_create], do: true
-  # def can?(_assigns, _action, _item), do: true
 end

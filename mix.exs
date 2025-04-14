@@ -10,7 +10,11 @@ defmodule Ethui.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
-      dialyzer: [flags: ["-Wunmatched_returns", :error_handling, :underspecs]]
+      dialyzer: [
+        flags: ["-Wunmatched_returns", :error_handling, :underspecs],
+        format: "ignore_file"
+        # ignore_warnings: "lib/ethui_web/live/admin/stack_live.ex"
+      ]
     ]
   end
 
