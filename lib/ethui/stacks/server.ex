@@ -137,7 +137,7 @@ defmodule Ethui.Stacks.Server do
          %{supervisor: sup, ports: ports, registry: registry, instances: instances} = state
        ) do
     name = {:via, Registry, {registry, slug}}
-    full_opts = [ports: ports, name: name]
+    full_opts = [ports: ports, slug: slug, name: name]
     # TODO: can this fail?
     Logger.info("Starting stack #{inspect(name)}")
 

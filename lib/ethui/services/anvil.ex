@@ -20,6 +20,16 @@ defmodule Ethui.Services.Anvil do
           name: id | nil
         ]
 
+  @type t :: [
+          # http port
+          port: pos_integer,
+          # muontrap process
+          proc: pid | nil,
+          logs: :queue.queue(),
+          # directory where state and IPC socket is stored
+          dir: String.t()
+        ]
+
   @doc "Start an anvil instance"
   @spec start_link(opts) :: GenServer.on_start()
   def start_link(opts) do
@@ -51,24 +61,38 @@ defmodule Ethui.Services.Anvil do
   # Server
   #
 
+  @spec init(opts) :: {:ok, t}
   @impl GenServer
   def init(opts) do
     Process.flag(:trap_exit, true)
+
+    dir = data_dir(opts[:slug])
+    File.mkdir_p!(dir)
 
     {:ok, port} =
       Ethui.Stacks.HttpPorts.claim(opts[:ports])
 
     send(self(), :boot)
 
-    {:ok, %{port: port, proc: nil, logs: :queue.new()}}
+    {:ok,
+     %{
+       port: port,
+       proc: nil,
+       logs: :queue.new(),
+       dir: dir
+     }}
   end
 
   @impl GenServer
-  def handle_info(:boot, %{port: port} = state) do
+  def handle_info(:boot, %{port: port, dir: dir} = state) do
     pid = self()
 
+    Logger.debug(dir)
+
     {:ok, proc} =
-      MuonTrap.Daemon.start_link("anvil", ["--port", to_string(port)],
+      MuonTrap.Daemon.start_link(
+        "anvil",
+        ["--port", to_string(port), "--state", "#{dir}/state.json"],
         logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
         # TODO maybe patch muontrap to have a separate stream for stderr
         stderr_to_stdout: true,
@@ -121,5 +145,18 @@ defmodule Ethui.Services.Anvil do
     else
       q
     end
+  end
+
+  #
+  # env
+  #
+
+  defp data_dir(slug) do
+    root = config() |> Keyword.fetch!(:data_dir_root)
+    "#{root}/#{slug}/anvil"
+  end
+
+  defp config do
+    Application.get_env(:ethui, Ethui.Services)
   end
 end

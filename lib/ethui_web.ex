@@ -53,7 +53,8 @@ defmodule EthuiWeb do
   def live_view do
     quote do
       use Phoenix.LiveView,
-        layout: {EthuiWeb.Layouts, :app}
+        layout: {EthuiWeb.Layouts, :app},
+        log: :warning
 
       unquote(html_helpers())
     end
