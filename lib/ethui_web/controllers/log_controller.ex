@@ -19,7 +19,6 @@ defmodule EthuiWeb.LogController do
   defp stream(conn, slug, pid) do
     receive do
       {:logs, :anvil, ^slug, logs} ->
-        IO.inspect(logs)
         joined = Enum.join(logs, "\n") <> "\n"
 
         case chunk(conn, joined) do
@@ -28,8 +27,6 @@ defmodule EthuiWeb.LogController do
         end
 
       msg ->
-        IO.inspect(msg)
-
         Logger.warning(
           "Unexpected message received when streaming logs for #{slug}, #{inspect(msg)}"
         )
