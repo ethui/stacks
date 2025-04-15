@@ -132,7 +132,6 @@ defmodule Ethui.Stacks.Server do
 
     full_opts = [slug: slug, name: name, hash: hash]
     Logger.info("Starting stack #{inspect(name)}")
-    # {:ok, slug, self(), state}
 
     case ServicesSupervisor.start_stack(full_opts) do
       {:ok, pid} ->
