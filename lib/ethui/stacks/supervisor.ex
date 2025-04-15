@@ -21,7 +21,7 @@ defmodule Ethui.Stacks.Supervisor do
        repo: Ethui.Repo,
        pub_sub: Ethui.PubSub,
        watchers: [
-         {Stack, :inserted, extra_columns: [:slug]},
+         {Stack, :inserted, extra_columns: [:slug, :inserted_at]},
          {Stack, :deleted, extra_columns: [:slug]},
          {Stack, :updated}
        ]},

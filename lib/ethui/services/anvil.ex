@@ -16,7 +16,8 @@ defmodule Ethui.Services.Anvil do
   @type opts :: [
           # the HttpPort manager process to use
           ports: id,
-          slug: String.t() | nil,
+          slug: String.t(),
+          hash: String.t(),
           name: id | nil
         ]
 
@@ -66,7 +67,7 @@ defmodule Ethui.Services.Anvil do
   def init(opts) do
     Process.flag(:trap_exit, true)
 
-    dir = data_dir(opts[:slug])
+    dir = data_dir(opts[:slug], opts[:hash])
     File.mkdir_p!(dir)
 
     {:ok, port} =
@@ -151,9 +152,9 @@ defmodule Ethui.Services.Anvil do
   # env
   #
 
-  defp data_dir(slug) do
+  defp data_dir(slug, hash) do
     root = config() |> Keyword.fetch!(:data_dir_root)
-    "#{root}/#{slug}/anvil"
+    "#{root}/#{slug}.#{hash}/anvil"
   end
 
   defp config do
