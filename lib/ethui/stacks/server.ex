@@ -9,6 +9,7 @@ defmodule Ethui.Stacks.Server do
   require Logger
 
   alias Ethui.Stacks.{Stack, ServicesSupervisor}
+  alias Ethui.Repo
 
   @type opts :: [
           supervisor: pid,
@@ -55,6 +56,8 @@ defmodule Ethui.Stacks.Server do
     :ok = EctoWatch.subscribe({Stack, :inserted})
     :ok = EctoWatch.subscribe({Stack, :updated})
     :ok = EctoWatch.subscribe({Stack, :deleted})
+
+    start_all()
 
     {:ok,
      %{
@@ -161,6 +164,14 @@ defmodule Ethui.Stacks.Server do
       :error ->
         {:error, :not_found}
     end
+  end
+
+  defp start_all() do
+    Stack
+    |> Repo.all()
+    |> Enum.each(fn stack ->
+      send(self(), {{Stack, :inserted}, stack})
+    end)
   end
 
   # extract the slug from what may be a {:via, ...} registry name

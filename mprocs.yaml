@@ -1,7 +1,7 @@
 procs:
-  devenv:
-    cmd: ["devenv", "up"]
   phx:
     cmd: ["iex" , "-S", "mix", "phx.server"]
   test:
     cmd: ["mix", "test.watch"]
+  devenv:
+    cmd: ["devenv", "up", "-d"]
