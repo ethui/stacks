@@ -13,6 +13,8 @@ defmodule Ethui.Stacks.Supervisor do
   @registry_name Ethui.Stacks.Registry
   @services_supervisor_name ServicesSupervisor
 
+  @port_range if Mix.env() == :test, do: 20_000..21_000, else: 7000..10_000
+
   @impl Supervisor
   def init(_) do
     children = [
@@ -21,13 +23,13 @@ defmodule Ethui.Stacks.Supervisor do
        repo: Ethui.Repo,
        pub_sub: Ethui.PubSub,
        watchers: [
-         {Stack, :inserted, extra_columns: [:slug]},
+         {Stack, :inserted, extra_columns: [:slug, :inserted_at]},
          {Stack, :deleted, extra_columns: [:slug]},
          {Stack, :updated}
        ]},
 
       # http port reservation
-      {HttpPorts, range: 5000..10_000, name: HttpPorts},
+      {HttpPorts, range: @port_range, name: HttpPorts},
 
       # named registry for services
       {Registry, keys: :unique, name: @registry_name},

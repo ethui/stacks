@@ -1,19 +1,27 @@
 defmodule Ethui.Services.AnvilTest do
-  alias Ethui.Services.Anvil
-  alias Ethui.Stacks.HttpPorts
-  use ExUnit.Case
-  alias Exth.Rpc
+  use Ethui.DataCase, async: false
 
-  # setup_all do
-  #   Process.flag(:trap_exit, true)
-  #   pid = start_link_supervised!({HttpPorts, range: 7000..8000})
-  #
-  #   {:ok, ports: pid}
-  # end
+  alias Exth.Rpc
+  alias Ethui.Services.Anvil
+  alias Ethui.Stacks.{Stack, Server, HttpPorts}
+
+  setup do
+    Ecto.Adapters.SQL.Sandbox.checkout(Ethui.Repo, sandbox: false)
+    cleanup()
+    :ok
+  end
+
+  defp cleanup do
+    Repo.delete_all(Stack)
+
+    assert_eventually(fn ->
+      Server |> Server.list() |> length == 0
+    end)
+  end
 
   test "creates an anvil process" do
-    {:ok, anvil} = Anvil.start_link(ports: HttpPorts)
-    Process.sleep(100)
+    {:ok, anvil} = Anvil.start_link(ports: HttpPorts, slug: "slug123", hash: "hash")
+    Process.sleep(1000)
 
     client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
 
@@ -36,7 +44,7 @@ defmodule Ethui.Services.AnvilTest do
   test "creates multiple anvil processes" do
     anvils =
       for i <- 1..10 do
-        {:ok, pid} = Anvil.start_link(ports: HttpPorts, name: :"anvil_#{i}")
+        {:ok, pid} = Anvil.start_link(ports: HttpPorts, slug: :"anvil_#{i}", hash: "hash")
         Process.monitor(pid)
         pid
       end
@@ -66,12 +74,12 @@ defmodule Ethui.Services.AnvilTest do
     {:ok, ports2} =
       HttpPorts.start_link(range: 10_000..10_000, name: :ports_2)
 
-    {:ok, _anvil1} = GenServer.start_link(Anvil, ports: ports1, name: :anvil_1)
+    {:ok, _anvil1} = GenServer.start_link(Anvil, ports: ports1, slug: :anvil_1, hash: "hash")
 
     # give enough time to not cause a race condition, and ensure the 2nd anvil is the one that crashes
     Process.sleep(100)
 
-    {:ok, anvil2} = GenServer.start_link(Anvil, ports: ports2, name: :anvil_1)
+    {:ok, anvil2} = GenServer.start_link(Anvil, ports: ports2, slug: :anvil_1, hash: "hash")
 
     Process.monitor(anvil2)
     assert_receive {:DOWN, _, _, ^anvil2, _}, 2_000

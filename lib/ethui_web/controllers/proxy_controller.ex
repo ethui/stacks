@@ -7,21 +7,21 @@ defmodule EthuiWeb.ProxyController do
   Forwards POST requests to an anvil node
   """
   def anvil(%{body_params: body} = conn, %{"slug" => slug}) do
-    name = {:via, Registry, {Ethui.Stacks.Registry, slug}}
-
-    with url when not is_nil(url) <- Anvil.url(name),
+    with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, slug),
+         url when not is_nil(url) <- Anvil.url(pid),
          client <- build_client(url, conn.req_headers),
          {:ok, json_body} <- Jason.encode(body),
-         {:ok, %{status: status, body: resp_body, headers: resp_headers}} <-
+         {:ok, %Tesla.Env{status: status, body: resp_body, headers: resp_headers}} <-
            Tesla.post(client, "/", json_body) do
       conn
       |> put_resp_headers(resp_headers)
-      |> resp(status, resp_body)
+      |> put_status(status)
+      |> json(resp_body)
     else
-      nil ->
+      [] ->
         conn
-        |> put_status(:service_unavailable)
-        |> json(%{error: "Stack service not available"})
+        |> put_status(:not_found)
+        |> json(%{error: "Stack not found"})
 
       {:error, reason} ->
         Logger.error(inspect(reason))
@@ -46,9 +46,13 @@ defmodule EthuiWeb.ProxyController do
     headers =
       conn_headers
       |> Enum.filter(fn {key, _} ->
-        key not in ["host", "content-length"]
+        key not in ["host", "content-length", "content-type"]
       end)
 
-    Tesla.client([{Tesla.Middleware.BaseUrl, url}, {Tesla.Middleware.Headers, headers}])
+    Tesla.client([
+      {Tesla.Middleware.BaseUrl, url},
+      {Tesla.Middleware.Headers, headers},
+      Tesla.Middleware.JSON
+    ])
   end
 end

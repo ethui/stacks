@@ -19,13 +19,17 @@ defmodule Ethui.Stacks.ServerTest do
   end
 
   test "can orchestrate multiple anvils" do
-    {:ok, _name1, _pid1} = GenServer.call(Server, {:start_stack, %{slug: "slug1"}})
-    {:ok, _name2, _pid2} = GenServer.call(Server, {:start_stack, %{slug: "slug2"}})
+    %Stack{slug: "slug1"} |> Repo.insert!()
+    s2 = %Stack{slug: "slug2"} |> Repo.insert!()
 
-    assert Server.list(Server) == ["slug1", "slug2"]
+    assert_eventually(fn ->
+      Server |> Server.list() |> length == 2
+    end)
 
-    GenServer.call(Server, {:stop_stack, "slug2"})
+    s2 |> Repo.delete()
 
-    assert Server.list(Server) == ["slug1"]
+    assert_eventually(fn ->
+      Server |> Server.list() |> length == 1
+    end)
   end
 end

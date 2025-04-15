@@ -131,14 +131,19 @@ defmodule Ethui.Stacks.Server do
     end
   end
 
-  @spec start_stack(map, t) :: {:ok, name, pid, t}
+  @spec start_stack(map, t) :: {:ok, name, pid, t} | {:error, any}
   defp start_stack(
-         %{slug: slug},
+         %{slug: slug, inserted_at: inserted_at},
          %{supervisor: sup, ports: ports, registry: registry, instances: instances} = state
        ) do
     name = {:via, Registry, {registry, slug}}
-    full_opts = [ports: ports, name: name]
-    # TODO: can this fail?
+
+    hash =
+      :crypto.hash(:sha256, slug <> to_string(inserted_at))
+      |> Base.encode16()
+      |> binary_part(0, 8)
+
+    full_opts = [ports: ports, slug: slug, name: name, hash: hash]
     Logger.info("Starting stack #{inspect(name)}")
 
     case ServicesSupervisor.start_stack(sup, full_opts) do
