@@ -29,18 +29,14 @@ defmodule Ethui.Stacks.Supervisor do
        ]},
 
       # http port reservation
-      {HttpPorts, range: @port_range, name: HttpPorts},
+      {HttpPorts, range: @port_range},
 
       # named registry for services
       {Registry, keys: :unique, name: @registry_name},
 
       # services supervisor
-      {ServicesSupervisor, name: @services_supervisor_name, registry: @registry_name},
-      {Server,
-       supervisor: @services_supervisor_name,
-       ports: HttpPorts,
-       name: Server,
-       registry: @registry_name}
+      ServicesSupervisor,
+      {Server, supervisor: @services_supervisor_name, ports: HttpPorts, registry: @registry_name}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

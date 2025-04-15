@@ -7,7 +7,7 @@ defmodule Ethui.Stacks.ServicesSupervisor do
   use DynamicSupervisor
 
   def start_link(opts \\ []) do
-    DynamicSupervisor.start_link(__MODULE__, opts, name: opts[:name])
+    DynamicSupervisor.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @impl DynamicSupervisor

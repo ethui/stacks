@@ -14,7 +14,7 @@ defmodule Ethui.Stacks.ServerTest do
     Repo.delete_all(Stack)
 
     assert_eventually(fn ->
-      Server |> Server.list() |> length == 0
+      Server.list() |> length == 0
     end)
   end
 
@@ -23,13 +23,13 @@ defmodule Ethui.Stacks.ServerTest do
     s2 = %Stack{slug: "slug2"} |> Repo.insert!()
 
     assert_eventually(fn ->
-      Server |> Server.list() |> length == 2
+      Server.list() |> length == 2
     end)
 
     s2 |> Repo.delete()
 
     assert_eventually(fn ->
-      Server |> Server.list() |> length == 1
+      Server.list() |> length == 1
     end)
   end
 end

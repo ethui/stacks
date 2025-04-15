@@ -15,7 +15,6 @@ defmodule Ethui.Services.Anvil do
 
   @type opts :: [
           # the HttpPort manager process to use
-          ports: id,
           slug: String.t(),
           hash: String.t(),
           name: id | nil
@@ -70,7 +69,7 @@ defmodule Ethui.Services.Anvil do
     with {:ok, dir} <- data_dir(opts[:slug], opts[:hash]),
          File.mkdir_p!(dir),
          {:ok, port} <-
-           Ethui.Stacks.HttpPorts.claim(opts[:ports]) do
+           Ethui.Stacks.HttpPorts.claim() do
       send(self(), :boot)
 
       {:ok,

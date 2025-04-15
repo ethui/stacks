@@ -14,8 +14,7 @@ defmodule Ethui.Stacks.Server do
   @type opts :: [
           supervisor: pid,
           ports: pid,
-          registry: atom,
-          name: atom | nil
+          registry: atom
         ]
 
   # state
@@ -33,7 +32,7 @@ defmodule Ethui.Stacks.Server do
 
   @spec start_link(opts) :: GenServer.on_start()
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, opts, name: opts[:name])
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   #
@@ -41,9 +40,9 @@ defmodule Ethui.Stacks.Server do
   #
 
   @doc "List all stacks"
-  @spec list(atom) :: [slug]
-  def list(pid) do
-    GenServer.call(pid, :list)
+  @spec list :: [slug]
+  def list do
+    GenServer.call(__MODULE__, :list)
   end
 
   #

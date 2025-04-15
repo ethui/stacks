@@ -4,11 +4,9 @@ defmodule EthuiWeb.Api.StackController do
   alias Ethui.Stacks.{Server, Stack}
   alias Ethui.Repo
 
-  @multi_anvil Server
-
   def index(conn, _params) do
     anvils =
-      Server.list(@multi_anvil)
+      Server.list()
 
     json(conn, %{
       status: "success",
