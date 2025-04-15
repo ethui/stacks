@@ -3,7 +3,7 @@ defmodule Ethui.Services.AnvilTest do
 
   alias Exth.Rpc
   alias Ethui.Services.Anvil
-  alias Ethui.Stacks.{Server, HttpPorts}
+  alias Ethui.Stacks.{Stack, Server, HttpPorts}
 
   setup do
     Ecto.Adapters.SQL.Sandbox.checkout(Ethui.Repo, sandbox: false)
@@ -19,7 +19,6 @@ defmodule Ethui.Services.AnvilTest do
     end)
   end
 
-  @tag :skip
   test "creates an anvil process" do
     {:ok, anvil} = Anvil.start_link(ports: HttpPorts, slug: "slug123", hash: "hash")
     Process.sleep(1000)
@@ -42,11 +41,10 @@ defmodule Ethui.Services.AnvilTest do
     assert {:error, %{reason: :econnrefused}} = err
   end
 
-  @tag :skip
   test "creates multiple anvil processes" do
     anvils =
       for i <- 1..10 do
-        {:ok, pid} = Anvil.start_link(ports: HttpPorts, name: :"anvil_#{i}")
+        {:ok, pid} = Anvil.start_link(ports: HttpPorts, slug: :"anvil_#{i}", hash: "hash")
         Process.monitor(pid)
         pid
       end
@@ -68,7 +66,6 @@ defmodule Ethui.Services.AnvilTest do
   end
 
   @tag capture_log: true
-  @tag :skip
   test "conflicting ports" do
     # start two conflicting port managers
     {:ok, ports1} =
@@ -77,12 +74,12 @@ defmodule Ethui.Services.AnvilTest do
     {:ok, ports2} =
       HttpPorts.start_link(range: 10_000..10_000, name: :ports_2)
 
-    {:ok, _anvil1} = GenServer.start_link(Anvil, ports: ports1, name: :anvil_1)
+    {:ok, _anvil1} = GenServer.start_link(Anvil, ports: ports1, slug: :anvil_1, hash: "hash")
 
     # give enough time to not cause a race condition, and ensure the 2nd anvil is the one that crashes
     Process.sleep(100)
 
-    {:ok, anvil2} = GenServer.start_link(Anvil, ports: ports2, name: :anvil_1)
+    {:ok, anvil2} = GenServer.start_link(Anvil, ports: ports2, slug: :anvil_1, hash: "hash")
 
     Process.monitor(anvil2)
     assert_receive {:DOWN, _, _, ^anvil2, _}, 2_000

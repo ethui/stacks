@@ -1,15 +1,12 @@
 defmodule EthuiWeb.ProxyController do
   use EthuiWeb, :controller
-  alias Ethui.{Stacks, Services.Anvil}
+  alias Ethui.Services.Anvil
   require Logger
 
   @doc """
   Forwards POST requests to an anvil node
   """
   def anvil(%{body_params: body} = conn, %{"slug" => slug}) do
-    name = {:via, Registry, {Stacks.Registry, slug}}
-    IO.inspect(body)
-
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, slug),
          url when not is_nil(url) <- Anvil.url(pid),
          client <- build_client(url, conn.req_headers),

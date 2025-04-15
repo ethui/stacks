@@ -67,21 +67,22 @@ defmodule Ethui.Services.Anvil do
   def init(opts) do
     Process.flag(:trap_exit, true)
 
-    dir = data_dir(opts[:slug], opts[:hash])
-    File.mkdir_p!(dir)
+    with {:ok, dir} <- data_dir(opts[:slug], opts[:hash]),
+         File.mkdir_p!(dir),
+         {:ok, port} <-
+           Ethui.Stacks.HttpPorts.claim(opts[:ports]) do
+      send(self(), :boot)
 
-    {:ok, port} =
-      Ethui.Stacks.HttpPorts.claim(opts[:ports])
-
-    send(self(), :boot)
-
-    {:ok,
-     %{
-       port: port,
-       proc: nil,
-       logs: :queue.new(),
-       dir: dir
-     }}
+      {:ok,
+       %{
+         port: port,
+         proc: nil,
+         logs: :queue.new(),
+         dir: dir
+       }}
+    else
+      error -> error
+    end
   end
 
   @impl GenServer
@@ -152,9 +153,12 @@ defmodule Ethui.Services.Anvil do
   # env
   #
 
+  defp data_dir(nil, _), do: {:error, :no_slug}
+  defp data_dir(_, nil), do: {:error, :no_slug}
+
   defp data_dir(slug, hash) do
     root = config() |> Keyword.fetch!(:data_dir_root)
-    "#{root}/#{slug}.#{hash}/anvil"
+    {:ok, "#{root}/#{slug}.#{hash}/anvil"}
   end
 
   defp config do

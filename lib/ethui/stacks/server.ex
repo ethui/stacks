@@ -137,7 +137,12 @@ defmodule Ethui.Stacks.Server do
          %{supervisor: sup, ports: ports, registry: registry, instances: instances} = state
        ) do
     name = {:via, Registry, {registry, slug}}
-    hash = :crypto.hash(:sha256, slug <> to_string(inserted_at)) |> to_string() |> IO.inspect()
+
+    hash =
+      :crypto.hash(:sha256, slug <> to_string(inserted_at))
+      |> Base.encode16()
+      |> binary_part(0, 8)
+
     full_opts = [ports: ports, slug: slug, name: name, hash: hash]
     Logger.info("Starting stack #{inspect(name)}")
 
