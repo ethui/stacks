@@ -20,7 +20,7 @@ defmodule Ethui.Services.Anvil do
           name: id | nil
         ]
 
-  @type t :: [
+  @type t :: %{
           # http port
           port: pos_integer,
           # muontrap process
@@ -28,7 +28,7 @@ defmodule Ethui.Services.Anvil do
           logs: :queue.queue(),
           # directory where state and IPC socket is stored
           dir: String.t()
-        ]
+        }
 
   @doc "Start an anvil instance"
   @spec start_link(opts) :: GenServer.on_start()

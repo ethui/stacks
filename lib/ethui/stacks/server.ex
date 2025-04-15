@@ -131,7 +131,7 @@ defmodule Ethui.Stacks.Server do
     end
   end
 
-  @spec start_stack(map, t) :: {:ok, name, pid, t}
+  @spec start_stack(map, t) :: {:ok, name, pid, t} | {:error, any}
   defp start_stack(
          %{slug: slug},
          %{supervisor: sup, ports: ports, registry: registry, instances: instances} = state

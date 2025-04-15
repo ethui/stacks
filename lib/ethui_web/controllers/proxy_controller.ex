@@ -18,11 +18,6 @@ defmodule EthuiWeb.ProxyController do
       |> put_resp_headers(resp_headers)
       |> resp(status, resp_body)
     else
-      nil ->
-        conn
-        |> put_status(:service_unavailable)
-        |> json(%{error: "Stack service not available"})
-
       {:error, reason} ->
         Logger.error(inspect(reason))
 
