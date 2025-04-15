@@ -11,17 +11,8 @@ defmodule Ethui.Stacks.Server do
   alias Ethui.Stacks.{Stack, ServicesSupervisor}
   alias Ethui.Repo
 
-  @type opts :: [
-          supervisor: pid,
-          ports: pid,
-          registry: atom
-        ]
-
   # state
   @type t :: %{
-          supervisor: pid,
-          ports: pid,
-          registry: pid,
           instances: %{slug => pid}
         }
 
@@ -30,7 +21,7 @@ defmodule Ethui.Stacks.Server do
   # the registered name of the anvil GenServer
   @type name :: {:via, atom, {atom, slug}}
 
-  @spec start_link(opts) :: GenServer.on_start()
+  @spec start_link([]) :: GenServer.on_start()
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
@@ -49,9 +40,9 @@ defmodule Ethui.Stacks.Server do
   # Server
   #
 
-  @spec init(opts) :: {:ok, t}
+  @spec init([]) :: {:ok, t}
   @impl GenServer
-  def init(opts) do
+  def init(_) do
     :ok = EctoWatch.subscribe({Stack, :inserted})
     :ok = EctoWatch.subscribe({Stack, :updated})
     :ok = EctoWatch.subscribe({Stack, :deleted})
@@ -60,9 +51,6 @@ defmodule Ethui.Stacks.Server do
 
     {:ok,
      %{
-       supervisor: opts[:supervisor],
-       ports: opts[:ports],
-       registry: opts[:registry],
        instances: Map.new()
      }}
   end
@@ -82,13 +70,13 @@ defmodule Ethui.Stacks.Server do
   def handle_call(
         {:stop_stack, slug_or_name},
         _from,
-        %{supervisor: sup, instances: instances} = state
+        %{instances: instances} = state
       ) do
     slug = to_slug(slug_or_name)
 
     case Map.fetch(instances, slug) do
       {:ok, pid} ->
-        ServicesSupervisor.stop_stack(sup, pid)
+        ServicesSupervisor.stop_stack(pid)
         {:reply, :ok, %{state | instances: Map.delete(instances, slug)}}
 
       :error ->
@@ -133,19 +121,20 @@ defmodule Ethui.Stacks.Server do
   @spec start_stack(map, t) :: {:ok, name, pid, t} | {:error, any}
   defp start_stack(
          %{slug: slug, inserted_at: inserted_at},
-         %{supervisor: sup, ports: ports, registry: registry, instances: instances} = state
+         %{instances: instances} = state
        ) do
-    name = {:via, Registry, {registry, slug}}
+    name = {:via, Registry, {Ethui.Stacks.Registry, slug}}
 
     hash =
       :crypto.hash(:sha256, slug <> to_string(inserted_at))
       |> Base.encode16()
       |> binary_part(0, 8)
 
-    full_opts = [ports: ports, slug: slug, name: name, hash: hash]
+    full_opts = [slug: slug, name: name, hash: hash]
     Logger.info("Starting stack #{inspect(name)}")
+    # {:ok, slug, self(), state}
 
-    case ServicesSupervisor.start_stack(sup, full_opts) do
+    case ServicesSupervisor.start_stack(full_opts) do
       {:ok, pid} ->
         {:ok, name, pid, %{state | instances: Map.put(instances, slug, pid)}}
 
@@ -157,12 +146,12 @@ defmodule Ethui.Stacks.Server do
   @spec stop_stack(map, map) :: {:ok, t} | {:error, :not_found}
   defp stop_stack(
          %{slug: slug},
-         %{supervisor: sup, instances: instances} = state
+         %{instances: instances} = state
        ) do
     case Map.fetch(instances, slug) do
       {:ok, pid} ->
         Logger.info("Stopping stack #{inspect(pid)}")
-        ServicesSupervisor.stop_stack(sup, pid)
+        ServicesSupervisor.stop_stack(pid)
         {:ok, %{state | instances: Map.delete(instances, slug)}}
 
       :error ->

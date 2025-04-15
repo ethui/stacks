@@ -26,8 +26,10 @@ defmodule Ethui.Services.Anvil do
           # muontrap process
           proc: pid | nil,
           logs: :queue.queue(),
+          slug: String.t(),
           # directory where state and IPC socket is stored
-          dir: String.t()
+          dir: String.t(),
+          log_subscribers: MapSet.t()
         }
 
   @doc "Start an anvil instance"
@@ -45,10 +47,21 @@ defmodule Ethui.Services.Anvil do
     GenServer.call(id, :url)
   end
 
-  @doc "Get the logs of an anvil instance"
-  @spec logs(id) :: String.t()
-  def logs(id) do
-    GenServer.call(id, :logs)
+  @doc """
+    Subscribes to logs of an anvil instance.
+    An immediate message is sent with all current log history, followed by messages as future logs are read"
+  """
+  @spec subscribe_logs(id) :: :ok
+  def subscribe_logs(id) do
+    GenServer.cast(id, {:subscribe_logs, self()})
+  end
+
+  @doc """
+  Unsubscribes from receiving logs
+  """
+  @spec unsubscribe_logs(id) :: :ok
+  def unsubscribe_logs(id) do
+    GenServer.cast(id, {:unsubscribe_logs, self()})
   end
 
   @doc "Stop an anvil instance"
@@ -77,7 +90,9 @@ defmodule Ethui.Services.Anvil do
          port: port,
          proc: nil,
          logs: :queue.new(),
-         dir: dir
+         dir: dir,
+         slug: opts[:slug],
+         log_subscribers: MapSet.new()
        }}
     else
       error -> error
@@ -132,11 +147,28 @@ defmodule Ethui.Services.Anvil do
   end
 
   @impl GenServer
-  def handle_cast({:log, f}, %{logs: logs} = state) do
-    # TODO prefix a unique identifier for this process
-    # Logger.warn(f)
-    logs = :queue.in(f, logs) |> trim()
-    {:noreply, %{state | logs: :queue.in(f, logs)}}
+  def handle_cast({:log, line}, %{logs: logs, log_subscribers: subs} = state) do
+    for s <- subs do
+      send(s, {:logs, :anvil, state.slug, [line]})
+    end
+
+    new_logs = :queue.in(line, logs) |> trim()
+
+    {:noreply, %{state | logs: new_logs}}
+  end
+
+  @impl GenServer
+  def handle_cast(
+        {:subscribe_logs, pid},
+        %{slug: slug, logs: logs, log_subscribers: subs} = state
+      ) do
+    send(pid, {:logs, :anvil, slug, :queue.to_list(logs)})
+    {:noreply, %{state | log_subscribers: MapSet.put(subs, pid)}}
+  end
+
+  @impl GenServer
+  def handle_cast({:unsubscribe_logs, pid}, %{log_subscribers: subs} = state) do
+    {:noreply, %{state | log_subscribers: MapSet.delete(subs, pid)}}
   end
 
   defp trim(q) do

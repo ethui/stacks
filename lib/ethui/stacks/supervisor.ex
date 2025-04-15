@@ -11,7 +11,6 @@ defmodule Ethui.Stacks.Supervisor do
   end
 
   @registry_name Ethui.Stacks.Registry
-  @services_supervisor_name ServicesSupervisor
 
   @port_range if Mix.env() == :test, do: 20_000..21_000, else: 7000..10_000
 
@@ -36,7 +35,7 @@ defmodule Ethui.Stacks.Supervisor do
 
       # services supervisor
       ServicesSupervisor,
-      {Server, supervisor: @services_supervisor_name, ports: HttpPorts, registry: @registry_name}
+      Server
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

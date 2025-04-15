@@ -15,15 +15,15 @@ defmodule Ethui.Stacks.ServicesSupervisor do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  @spec start_stack(pid, Anvil.opts()) :: {:ok, pid} | {:error, any}
-  def start_stack(pid, opts) do
+  @spec start_stack(Anvil.opts()) :: {:ok, pid} | {:error, any}
+  def start_stack(opts) do
     # TODO replace this with a supervisor for this stack (which right now is only anvil)
     spec = {Anvil, opts}
-    DynamicSupervisor.start_child(pid, spec)
+    DynamicSupervisor.start_child(__MODULE__, spec)
   end
 
-  @spec stop_stack(atom, pid) :: :ok
-  def stop_stack(pid, anvil) do
-    DynamicSupervisor.terminate_child(pid, anvil)
+  @spec stop_stack(pid) :: :ok
+  def stop_stack(anvil) do
+    DynamicSupervisor.terminate_child(__MODULE__, anvil)
   end
 end

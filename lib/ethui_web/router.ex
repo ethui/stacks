@@ -49,8 +49,10 @@ defmodule EthuiWeb.Router do
   scope "/stacks", EthuiWeb do
     pipe_through :proxy
 
-    post "/:slug", ProxyController, :anvil
-    # post "/:slug/*path", ProxyController, :forward
+    scope "/:slug" do
+      post "/", ProxyController, :anvil
+      get "/log", LogController, :show
+    end
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
