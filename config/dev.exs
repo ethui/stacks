@@ -88,4 +88,4 @@ config :phoenix_live_view,
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
 
-config :ethui, Ethui.Services, data_dir_root: "priv/data"
+config :ethui, Ethui.Stacks, data_dir_root: "priv/data/stacks"

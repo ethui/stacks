@@ -157,6 +157,6 @@ defmodule Ethui.Services.Anvil do
   end
 
   defp config do
-    Application.get_env(:ethui, Ethui.Services)
+    Application.get_env(:ethui, Ethui.Stacks)
   end
 end
