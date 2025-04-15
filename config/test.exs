@@ -39,3 +39,5 @@ config :phoenix_live_view,
   enable_expensive_runtime_checks: true
 
 config :mix_test_watch, clear: true
+
+config :ethui, Ethui.Stacks, data_dir_root: "priv/test-data/stacks"
