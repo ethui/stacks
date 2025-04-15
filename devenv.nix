@@ -23,6 +23,7 @@ in
   packages = with pkgs; [
     # needed by daisyui
     watchman
+    mprocs
   ];
 
   services = {
