@@ -103,8 +103,6 @@ defmodule Ethui.Services.Anvil do
   def handle_info(:boot, %{port: port, dir: dir} = state) do
     pid = self()
 
-    Logger.debug(dir)
-
     {:ok, proc} =
       MuonTrap.Daemon.start_link(
         "anvil",

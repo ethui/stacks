@@ -3,7 +3,7 @@ defmodule Ethui.Stacks.Supervisor do
   Global supervisor that manages the ethui services
   """
 
-  alias Ethui.Stacks.{Server, Stack, HttpPorts, ServicesSupervisor}
+  alias Ethui.Stacks.{Server, Stack, HttpPorts, MultiStackSupervisor}
   use Supervisor
 
   def start_link(opts) do
@@ -34,7 +34,7 @@ defmodule Ethui.Stacks.Supervisor do
       {Registry, keys: :unique, name: @registry_name},
 
       # services supervisor
-      ServicesSupervisor,
+      MultiStackSupervisor,
       Server
     ]
 

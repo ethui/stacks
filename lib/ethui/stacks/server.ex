@@ -1,14 +1,14 @@
 defmodule Ethui.Stacks.Server do
   @moduledoc """
-  GenServer that manages a collection of stacks
+    GenServer that manages a collection of stacks
 
-  # TODO: A stack is currently composed of a single entity: an `anvil` process, but should eventually hold more
+    # TODO: A stack is currently composed of a single entity: an `anvil` process, but should eventually hold more
   """
 
   use GenServer
   require Logger
 
-  alias Ethui.Stacks.{Stack, ServicesSupervisor}
+  alias Ethui.Stacks.{Stack, MultiStackSupervisor}
   alias Ethui.Repo
 
   # state
@@ -76,7 +76,7 @@ defmodule Ethui.Stacks.Server do
 
     case Map.fetch(instances, slug) do
       {:ok, pid} ->
-        ServicesSupervisor.stop_stack(pid)
+        MultiStackSupervisor.stop_stack(pid)
         {:reply, :ok, %{state | instances: Map.delete(instances, slug)}}
 
       :error ->
@@ -133,7 +133,7 @@ defmodule Ethui.Stacks.Server do
     full_opts = [slug: slug, name: name, hash: hash]
     Logger.info("Starting stack #{inspect(name)}")
 
-    case ServicesSupervisor.start_stack(full_opts) do
+    case MultiStackSupervisor.start_stack(full_opts) do
       {:ok, pid} ->
         {:ok, name, pid, %{state | instances: Map.put(instances, slug, pid)}}
 
@@ -150,7 +150,7 @@ defmodule Ethui.Stacks.Server do
     case Map.fetch(instances, slug) do
       {:ok, pid} ->
         Logger.info("Stopping stack #{inspect(pid)}")
-        ServicesSupervisor.stop_stack(pid)
+        MultiStackSupervisor.stop_stack(pid)
         {:ok, %{state | instances: Map.delete(instances, slug)}}
 
       :error ->
