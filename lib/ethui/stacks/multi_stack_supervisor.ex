@@ -7,6 +7,11 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
 
   alias Ethui.Stacks.SingleStackSupervisor
 
+  @type opts :: [
+          slug: String.t(),
+          hash: String.t()
+        ]
+
   def start_link(opts \\ []) do
     DynamicSupervisor.start_link(__MODULE__, opts, name: __MODULE__)
   end
@@ -16,11 +21,14 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  @spec start_stack(Anvil.opts()) :: {:ok, pid} | {:error, any}
-  def start_stack(anvil_opts) do
-    # TODO replace this with a supervisor for this stack (which right now is only anvil)
-    spec = {SingleStackSupervisor, [anvil: anvil_opts]}
-    DynamicSupervisor.start_child(__MODULE__, spec)
+  @spec start_stack(opts) :: {:ok, pid} | {:error, any}
+  def start_stack(opts) do
+    opts = [
+      slug: opts[:slug],
+      anvil: [slug: opts[:slug], hash: opts[:hash]]
+    ]
+
+    DynamicSupervisor.start_child(__MODULE__, {SingleStackSupervisor, opts})
   end
 
   @spec stop_stack(pid) :: :ok

@@ -5,17 +5,22 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
     - anvil node
   """
 
-  @type opts :: [
-          anvil: Anvil.opts()
-        ]
-
   use Supervisor
 
   alias Ethui.Services.Anvil
 
+  @type opts :: [
+          slug: String.t(),
+          anvil: Anvil.opts()
+        ]
+
   @spec start_link(opts) :: Supervisor.on_start()
   def start_link(opts) do
-    Supervisor.start_link(__MODULE__, opts)
+    Supervisor.start_link(__MODULE__, opts, name: name(opts[:slug]))
+  end
+
+  def name(slug) do
+    {:via, Registry, {Ethui.Stacks.Registry, {slug, :supervisor}}}
   end
 
   def init(opts) do
