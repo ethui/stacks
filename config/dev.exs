@@ -89,3 +89,5 @@ config :phoenix_live_view,
 config :swoosh, :api_client, false
 
 config :ethui, Ethui.Stacks, data_dir_root: "priv/data/stacks"
+
+config :ethui, Ethui.Stacks.IPFS, url: "http://127.0.0.1:5001"

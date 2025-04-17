@@ -36,6 +36,10 @@ in
     };
   };
 
+  processes = {
+    ipfs.exec = "docker run --volume=./priv/data/ipfs:/data/ipfs -p 5001:5001 ipfs/kubo:v0.34.1";
+  };
+
   env = {
     PGDATABASE = "ethui_dev";
     PGDATABASE_TEST = "ethui_test";

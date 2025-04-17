@@ -20,3 +20,4 @@ config :logger, level: :info
 # of environment variables, is done on config/runtime.exs.
 
 config :ethui, Ethui.Stacks, data_dir_root: raise("TODO")
+config :ethui, Ethui.Stacks.IPFS, url: raise("TODO")
