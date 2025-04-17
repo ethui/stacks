@@ -7,11 +7,12 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
 
   use Supervisor
 
-  alias Ethui.Services.Anvil
+  alias Ethui.Services.{Anvil, Graph}
 
   @type opts :: [
           slug: String.t(),
-          anvil: Anvil.opts()
+          anvil: Anvil.opts(),
+          graph: Graph.opts()
         ]
 
   @spec start_link(opts) :: Supervisor.on_start()
@@ -25,7 +26,8 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
 
   def init(opts) do
     children = [
-      {Anvil, opts[:anvil]}
+      {Anvil, opts[:anvil]},
+      {Graph, opts[:graph]}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
