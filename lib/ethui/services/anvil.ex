@@ -14,7 +14,6 @@ defmodule Ethui.Services.Anvil do
   @type id :: pid | atom | {:via, atom, term}
 
   @type opts :: [
-          # the HttpPort manager process to use
           slug: String.t(),
           hash: String.t(),
           name: id | nil
@@ -102,8 +101,6 @@ defmodule Ethui.Services.Anvil do
   @impl GenServer
   def handle_info(:boot, %{port: port, dir: dir} = state) do
     pid = self()
-
-    Logger.debug(dir)
 
     {:ok, proc} =
       MuonTrap.Daemon.start_link(
