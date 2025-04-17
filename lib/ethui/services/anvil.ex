@@ -15,8 +15,7 @@ defmodule Ethui.Services.Anvil do
 
   @type opts :: [
           slug: String.t(),
-          hash: String.t(),
-          name: id | nil
+          hash: String.t()
         ]
 
   @type t :: %{
@@ -34,7 +33,11 @@ defmodule Ethui.Services.Anvil do
   @doc "Start an anvil instance"
   @spec start_link(opts) :: GenServer.on_start()
   def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, name: opts[:name])
+    GenServer.start_link(__MODULE__, opts, name: name(opts[:slug]))
+  end
+
+  def name(slug) do
+    {:via, Registry, {Ethui.Stacks.Registry, {slug, :anvil}}}
   end
 
   #

@@ -1,14 +1,14 @@
 defmodule Ethui.Stacks.Server do
   @moduledoc """
-  GenServer that manages a collection of stacks
+    GenServer that manages a collection of stacks
 
-  # TODO: A stack is currently composed of a single entity: an `anvil` process, but should eventually hold more
+    # TODO: A stack is currently composed of a single entity: an `anvil` process, but should eventually hold more
   """
 
   use GenServer
   require Logger
 
-  alias Ethui.Stacks.{Stack, ServicesSupervisor}
+  alias Ethui.Stacks.{Stack, MultiStackSupervisor}
   alias Ethui.Repo
 
   # state
@@ -58,8 +58,8 @@ defmodule Ethui.Stacks.Server do
   @impl GenServer
   def handle_call({:start_stack, opts}, _from, state) do
     case start_stack(opts, state) do
-      {:ok, name, pid, new_state} ->
-        {:reply, {:ok, name, pid}, new_state}
+      {:ok, pid, new_state} ->
+        {:reply, {:ok, pid}, new_state}
 
       error ->
         {:reply, error, state}
@@ -76,7 +76,7 @@ defmodule Ethui.Stacks.Server do
 
     case Map.fetch(instances, slug) do
       {:ok, pid} ->
-        ServicesSupervisor.stop_stack(pid)
+        MultiStackSupervisor.stop_stack(pid)
         {:reply, :ok, %{state | instances: Map.delete(instances, slug)}}
 
       :error ->
@@ -92,7 +92,7 @@ defmodule Ethui.Stacks.Server do
   @impl GenServer
   def handle_info({{Stack, :inserted}, stack}, state) do
     case start_stack(stack, state) do
-      {:ok, _name, _pid, new_state} ->
+      {:ok, _pid, new_state} ->
         {:noreply, new_state}
 
       error ->
@@ -118,24 +118,22 @@ defmodule Ethui.Stacks.Server do
     end
   end
 
-  @spec start_stack(map, t) :: {:ok, name, pid, t} | {:error, any}
+  @spec start_stack(map, t) :: {:ok, pid, t} | {:error, any}
   defp start_stack(
          %{slug: slug, inserted_at: inserted_at},
          %{instances: instances} = state
        ) do
-    name = {:via, Registry, {Ethui.Stacks.Registry, slug}}
-
     hash =
       :crypto.hash(:sha256, slug <> to_string(inserted_at))
       |> Base.encode16()
       |> binary_part(0, 8)
 
-    full_opts = [slug: slug, name: name, hash: hash]
-    Logger.info("Starting stack #{inspect(name)}")
+    full_opts = [slug: slug, hash: hash]
+    Logger.info("Starting stack #{slug}")
 
-    case ServicesSupervisor.start_stack(full_opts) do
+    case MultiStackSupervisor.start_stack(full_opts) do
       {:ok, pid} ->
-        {:ok, name, pid, %{state | instances: Map.put(instances, slug, pid)}}
+        {:ok, pid, %{state | instances: Map.put(instances, slug, pid)}}
 
       error ->
         error
@@ -150,7 +148,7 @@ defmodule Ethui.Stacks.Server do
     case Map.fetch(instances, slug) do
       {:ok, pid} ->
         Logger.info("Stopping stack #{inspect(pid)}")
-        ServicesSupervisor.stop_stack(pid)
+        MultiStackSupervisor.stop_stack(pid)
         {:ok, %{state | instances: Map.delete(instances, slug)}}
 
       :error ->

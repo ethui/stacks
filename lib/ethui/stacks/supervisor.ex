@@ -3,11 +3,13 @@ defmodule Ethui.Stacks.Supervisor do
   Global supervisor that manages the ethui services
   """
 
-  alias Ethui.Stacks.{Server, Stack, HttpPorts, ServicesSupervisor}
   use Supervisor
 
-  def start_link(opts) do
-    Supervisor.start_link(__MODULE__, [], name: opts[:name])
+  alias Ethui.Stacks.{Server, Stack, HttpPorts, MultiStackSupervisor}
+
+  @spec start_link([]) :: Supervisor.on_start()
+  def start_link(_opts) do
+    Supervisor.start_link(__MODULE__, [], name: __MODULE__)
   end
 
   @registry_name Ethui.Stacks.Registry
@@ -34,7 +36,7 @@ defmodule Ethui.Stacks.Supervisor do
       {Registry, keys: :unique, name: @registry_name},
 
       # services supervisor
-      ServicesSupervisor,
+      MultiStackSupervisor,
       Server
     ]
 

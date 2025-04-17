@@ -9,11 +9,10 @@ defmodule EthuiWeb.LogController do
       [{pid, _}] ->
         Anvil.subscribe_logs(pid)
 
-        conn =
-          conn
-          |> put_resp_header("content-type", "text/plain")
-          |> send_chunked(:ok)
-          |> stream(slug, pid)
+        conn
+        |> put_resp_header("content-type", "text/plain")
+        |> send_chunked(:ok)
+        |> stream(slug, pid)
 
       _ ->
         conn
