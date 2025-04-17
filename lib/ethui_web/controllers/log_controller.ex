@@ -5,14 +5,20 @@ defmodule EthuiWeb.LogController do
   alias Ethui.Services.Anvil
 
   def show(conn, %{"slug" => slug}) do
-    with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, slug),
-         Anvil.subscribe_logs(pid) do
-      conn =
-        conn
-        |> put_resp_header("content-type", "text/plain")
-        |> send_chunked(200)
+    case Registry.lookup(Ethui.Stacks.Registry, slug) do
+      [{pid, _}] ->
+        Anvil.subscribe_logs(pid)
 
-      stream(conn, slug, pid)
+        conn =
+          conn
+          |> put_resp_header("content-type", "text/plain")
+          |> send_chunked(:ok)
+          |> stream(slug, pid)
+
+      _ ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{})
     end
   end
 
