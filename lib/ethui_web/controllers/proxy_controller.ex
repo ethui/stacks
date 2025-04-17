@@ -10,9 +10,8 @@ defmodule EthuiWeb.ProxyController do
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, slug),
          url when not is_nil(url) <- Anvil.url(pid),
          client <- build_client(url, conn.req_headers),
-         {:ok, json_body} <- Jason.encode(body),
          {:ok, %Tesla.Env{status: status, body: resp_body, headers: resp_headers}} <-
-           Tesla.post(client, "/", json_body) do
+           Tesla.post(client, "/", body) do
       conn
       |> put_resp_headers(resp_headers)
       |> put_status(status)
