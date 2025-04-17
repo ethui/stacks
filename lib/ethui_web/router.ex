@@ -35,7 +35,6 @@ defmodule EthuiWeb.Router do
 
     live_session :default, on_mount: Backpex.InitAssigns do
       live_resources "/stacks", Live.Admin.StackLive
-      live "/logs", Live.Admin.LogTailLive
     end
   end
 

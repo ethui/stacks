@@ -19,8 +19,7 @@ defmodule EthuiWeb.Live.Admin.StackLive do
   @impl Backpex.LiveResource
   def fields do
     [
-      slug: %{module: Backpex.Fields.Text, label: "Slug"},
-      logs: %{module: EthuiWeb.Components.Admin.Fields.Logs, label: "Logs", only: [:show]}
+      slug: %{module: Backpex.Fields.Text, label: "Slug"}
     ]
   end
 end
