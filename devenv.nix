@@ -29,15 +29,30 @@ in
   services = {
     postgres = {
       enable = true;
+      # listen_addresses = "0.0.0.0";
+      # port = 5499;
+      # hbaConf = builtins.readFile ./pg_hba.conf;
+
       initialDatabases = [
-        { name = "ethui_dev"; }
-        { name = "ethui_test"; }
+        {
+          name = "postgres";
+          pass = "postgres";
+        }
+        {
+          name = "ethui_dev";
+          pass = "postgres";
+        }
+        {
+          name = "ethui_test";
+          pass = "postgres";
+        }
       ];
     };
   };
 
   processes = {
-    ipfs.exec = "docker run --network=ethui-stacks --volume=./priv/data/ipfs:/data/ipfs -p 5001:5001 ipfs/kubo:v0.34.1";
+    ipfs.exec = "docker run --rm --network=ethui-stacks --volume=./priv/data/ipfs:/data/ipfs --name ethui-stacks-ipfs ipfs/kubo:v0.34.1";
+    # graph-db.exec = "docker run --rm --network=ethui-stacks --volume=./priv/data/postgres:/var/lib/postgresql/data --name ethui-stacks-postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=graph-node -e PGDATA=/var/lib/postgresql/data -e POSTGRES_INITDB_ARGS='-E UTF8 --locale=C' --name ethui-stacks-db --expose 5432:5499 postgres";
   };
 
   env = {

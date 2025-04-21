@@ -26,7 +26,7 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
 
   def init(opts) do
     children = [
-      {Anvil, opts[:anvil]}
+      {Anvil, opts[:anvil]},
       {Graph, opts[:graph]}
     ]
 
