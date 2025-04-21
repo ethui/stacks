@@ -104,13 +104,40 @@ defmodule Ethui.Services.Graph do
 
     pid = self()
     cmd = "docker"
-    config = pg_config()
     db_name = db_name(state)
 
-    # TODO make the postgres_host macos compatible
-    args =
-      "run --network=ethui-stacks --name ethui-stacks-#{slug}-graph --rm -p 8000:8000 -p 8001:8001 -p 8020:8020 -p 8030:8030 -p 8040:8040 -e postgres_host=172.17.0.1 -e postgres_port=#{pg_config[:port]} -e postgres_user=#{pg_config[:username]} -e postgres_pass=#{pg_config[:password]} -e postgres_db=#{db_name} -e ipfs=ethui-stacks-ipfs:5001 -e GRAPH_LOG=info -e ETHEREUM_REORG_THRESHOLD=1 -e ETHEREUM_ACESTOR_COUNT=1 -e ethereum=anvil:http://localhost:4000/stacks/#{slug} graphprotocol/graph-node"
-      |> String.split(" ")
+    env =
+      [
+        postgres_host: "172.17.0.1",
+        postgres_port: pg_config[:port],
+        postgres_user: pg_config[:username],
+        postgres_pass: pg_config[:password],
+        postgres_db: db_name,
+        ipfs: "ethui-stacks-ipfs:5001",
+        GRAPH_LOG: "info",
+        ETHEREUM_REORG_THRESHOLD: "1",
+        ETHEREUM_ACESTOR_COUNT: "1",
+        ethereum: "anvil:http://localhost:4000/stacks/#{slug}"
+      ]
+
+    ports =
+      [
+        "8000:8000",
+        "8001:8001",
+        "8020:8020",
+        "8030:8030",
+        "8040:8040"
+      ]
+
+    named_args =
+      [
+        network: "ethui-stacks",
+        name: "ethui-stacks-#{slug}-graph"
+      ]
+
+    flags = ["rm"]
+
+    args = format_docker_args(env, ports, named_args, flags) |> IO.inspect()
 
     MuonTrap.Daemon.start_link(cmd, args,
       logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
@@ -120,10 +147,27 @@ defmodule Ethui.Services.Graph do
   end
 
   defp pg_config do
-    Application.get_env(:ethui, Ethui.Repo)
+    config()[:pg]
+  end
+
+  defp config do
+    Application.get_env(:ethui, __MODULE__)
   end
 
   defp db_name(%{slug: slug, hash: hash}) do
     db_name = "ethui_stack_#{slug}_#{hash}"
+  end
+
+  defp format_docker_args(env, ports, named_args, flags) do
+    env =
+      Enum.map(env, fn {k, v} -> "--env #{k}=#{v}" end) |> Enum.join(" ")
+
+    ports = Enum.map(ports, fn p -> "-p #{p}" end) |> Enum.join(" ")
+    named_args = Enum.map(named_args, fn {k, v} -> "--#{k} #{v}" end) |> Enum.join(" ")
+    flags = Enum.map(flags, fn f -> "--#{f}" end) |> Enum.join(" ")
+
+    "run #{named_args} #{ports} #{env} #{flags} graphprotocol/graph-node"
+    |> IO.inspect()
+    |> String.split(" ")
   end
 end

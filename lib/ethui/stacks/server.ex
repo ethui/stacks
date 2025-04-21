@@ -127,6 +127,7 @@ defmodule Ethui.Stacks.Server do
       :crypto.hash(:sha256, slug <> to_string(inserted_at))
       |> Base.encode16()
       |> binary_part(0, 8)
+      |> String.downcase()
 
     full_opts = [slug: slug, hash: hash]
     Logger.info("Starting stack #{slug}")

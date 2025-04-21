@@ -93,3 +93,10 @@ config :ethui, Ethui.Stacks, data_dir_root: "priv/data/stacks"
 
 config :ethui, Ethui.Stacks.IPFS, url: "http://127.0.0.1:5001"
 
+config :ethui, Ethui.Services.Graph,
+  pg: [
+    hostname: "localhost",
+    port: System.get_env("PGPORT", "5432") |> String.to_integer(),
+    username: "graph",
+    password: "graph"
+  ]
