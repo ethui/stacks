@@ -25,18 +25,12 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
   end
 
   def init(opts) do
+    children = [{Anvil, opts[:anvil]}]
+
     # runnings subgraphs in test mode is not feasible, so we skip them
-    children =
-      if Mix.env() == :test do
-        [
-          {Anvil, opts[:anvil]}
-        ]
-      else
-        [
-          {Anvil, opts[:anvil]},
-          {Graph, opts[:graph]}
-        ]
-      end
+    if Mix.env() != :test do
+      children = [{Graph, opts[:graph]} | children]
+    end
 
     Supervisor.init(children, strategy: :one_for_one)
   end
