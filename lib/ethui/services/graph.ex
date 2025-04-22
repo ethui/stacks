@@ -90,12 +90,24 @@ defmodule Ethui.Services.Graph do
     end
   end
 
+  @doc """
+  Create a database for the given slug and hash
+
+  """
   defp create_db(%{slug: slug, hash: hash} = state) do
     {:ok, pg} =
       Postgrex.start_link(pg_config())
 
-    create_db_sql = "CREATE DATABASE #{db_name(state)}"
-    Postgrex.query(pg, create_db_sql, []) |> IO.inspect()
+    sql = "CREATE DATABASE #{db_name(state)}"
+
+    case Postgrex.query(pg, sql, []) do
+      {:ok, _} -> Logger.info("Database #{db_name(state)} created")
+      # database already exists, silently ignore
+      {:error, %Postgrex.Error{postgres: %{code: :duplicate_database}}} -> nil
+      # other errors
+      error -> Logger.error("Error creating database #{db_name(state)}: #{inspect(error)}")
+    end
+
     Process.exit(pg, :normal)
   end
 
