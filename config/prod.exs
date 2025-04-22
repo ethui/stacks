@@ -21,3 +21,12 @@ config :logger, level: :info
 
 config :ethui, Ethui.Stacks, data_dir_root: raise("TODO")
 config :ethui, Ethui.Stacks.IPFS, url: raise("TODO")
+
+config :ethui, Ethui.Services.Graph,
+  host: raise("TODO"),
+  pg: [
+    hostname: raise("TODO"),
+    port: raise("TODO"),
+    username: raise("TODO"),
+    password: raise("TODO")
+  ]
