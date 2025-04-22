@@ -19,6 +19,7 @@ defmodule EthuiWeb.ProxyControllerTest do
       slug = "slug10"
 
       %Stack{slug: slug} |> Repo.insert!()
+      Process.sleep(100)
 
       conn =
         conn
