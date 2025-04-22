@@ -187,11 +187,11 @@ defmodule Ethui.Services.Graph do
 
   defp format_docker_args(env, ports, named_args, flags) do
     env =
-      Enum.map(env, fn {k, v} -> "--env #{k}=#{v}" end) |> Enum.join(" ")
+      Enum.map_join(env, " ", fn {k, v} -> "--env #{k}=#{v}" end)
 
-    ports = Enum.map(ports, fn p -> "-p #{p}" end) |> Enum.join(" ")
-    named_args = Enum.map(named_args, fn {k, v} -> "--#{k} #{v}" end) |> Enum.join(" ")
-    flags = Enum.map(flags, fn f -> "--#{f}" end) |> Enum.join(" ")
+    ports = Enum.map_join(ports, " ", fn p -> "-p #{p}" end)
+    named_args = Enum.map_join(named_args, " ", fn {k, v} -> "--#{k} #{v}" end)
+    flags = Enum.map_join(flags, " ", fn f -> "--#{f}" end)
 
     "run #{named_args} #{ports} #{env} #{flags} graphprotocol/graph-node"
     |> String.split(" ")
