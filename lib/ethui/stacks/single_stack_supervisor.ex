@@ -7,11 +7,12 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
 
   use Supervisor
 
-  alias Ethui.Services.Anvil
+  alias Ethui.Services.{Anvil, Graph}
 
   @type opts :: [
           slug: String.t(),
-          anvil: Anvil.opts()
+          anvil: Anvil.opts(),
+          graph: Graph.opts()
         ]
 
   @spec start_link(opts) :: Supervisor.on_start()
@@ -24,9 +25,15 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
   end
 
   def init(opts) do
-    children = [
-      {Anvil, opts[:anvil]}
-    ]
+    children = [{Anvil, opts[:anvil]}]
+
+    # runnings subgraphs in test mode is not feasible, so we skip them
+    children =
+      if Mix.env() == :test do
+        children
+      else
+        [{Graph, opts[:graph]} | children]
+      end
 
     Supervisor.init(children, strategy: :one_for_one)
   end

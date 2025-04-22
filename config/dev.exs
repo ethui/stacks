@@ -8,6 +8,7 @@ config :ethui, Ethui.Repo,
   username: System.get_env("USER"),
   password: System.get_env("PGPASSWORD"),
   database: System.get_env("PGDATABASE", "ethui_dev"),
+  port: System.get_env("PGPORT", "5432") |> String.to_integer(),
   hostname: "localhost",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
@@ -91,3 +92,16 @@ config :swoosh, :api_client, false
 config :ethui, Ethui.Stacks, data_dir_root: "priv/data/stacks"
 
 config :ethui, Ethui.Stacks.IPFS, url: "http://127.0.0.1:5001"
+
+config :ethui, Ethui.Services.Graph,
+  # on macos, this should be set to host.docker.internal
+  host: System.get_env("DOCKER_HOST", "172.17.0.1"),
+  # since graph-node currently runs via docker, pg connection params are different,
+  # even though it's the same db as Ethui.Repo
+  # if we ever run graph-node directly on the host, this can be removed
+  pg: [
+    hostname: "localhost",
+    port: System.get_env("PGPORT", "5432") |> String.to_integer(),
+    username: "graph",
+    password: "graph"
+  ]

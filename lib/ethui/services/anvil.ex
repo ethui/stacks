@@ -2,7 +2,6 @@ defmodule Ethui.Services.Anvil do
   @moduledoc """
   GenServer that manages a single `anvil` instace
 
-  Requires the pid of a PortManager process, which is used to reserve an HTTP port
   This wraps a MuontipTrap Daemon
   """
 
@@ -14,7 +13,6 @@ defmodule Ethui.Services.Anvil do
   @type id :: pid | atom | {:via, atom, term}
 
   @type opts :: [
-          # the HttpPort manager process to use
           slug: String.t(),
           hash: String.t()
         ]

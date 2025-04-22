@@ -25,7 +25,8 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
   def start_stack(opts) do
     opts = [
       slug: opts[:slug],
-      anvil: [slug: opts[:slug], hash: opts[:hash]]
+      anvil: [slug: opts[:slug], hash: opts[:hash]],
+      graph: [slug: opts[:slug], hash: opts[:hash]]
     ]
 
     DynamicSupervisor.start_child(__MODULE__, {SingleStackSupervisor, opts})

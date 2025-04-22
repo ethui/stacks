@@ -7,7 +7,7 @@ defmodule EthuiWeb.ProxyController do
   Forwards POST requests to an anvil node
   """
   def anvil(%{body_params: body} = conn, %{"slug" => slug}) do
-    with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, slug),
+    with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
          url when not is_nil(url) <- Anvil.url(pid),
          client <- build_client(url, conn.req_headers),
          {:ok, %Tesla.Env{status: status, body: resp_body, headers: resp_headers}} <-
