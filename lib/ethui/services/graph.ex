@@ -1,4 +1,10 @@
 defmodule Ethui.Services.Graph do
+  @moduledoc """
+      GenServer that manages a single `node-graph` instace
+
+      This wraps a MuontipTrap Daemon
+  """
+
   use GenServer
   require Logger
 
@@ -62,8 +68,6 @@ defmodule Ethui.Services.Graph do
 
   @impl GenServer
   def handle_info({:EXIT, _pid, exit_status}, state) do
-    IO.inspect("here")
-
     case exit_status do
       0 ->
         {:stop, :normal, state}
@@ -122,7 +126,7 @@ defmodule Ethui.Services.Graph do
     # TODO make this configurable
     # this is the docker host IP on linux. it's currently not compatible with macos
     # and it should change if we ever run graph-node directly on the host
-    host = "172.17.0.1"
+    host = config()[:host]
 
     env =
       [
@@ -190,7 +194,6 @@ defmodule Ethui.Services.Graph do
     flags = Enum.map(flags, fn f -> "--#{f}" end) |> Enum.join(" ")
 
     "run #{named_args} #{ports} #{env} #{flags} graphprotocol/graph-node"
-    |> IO.inspect()
     |> String.split(" ")
   end
 end
