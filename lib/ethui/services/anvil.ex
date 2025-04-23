@@ -107,7 +107,7 @@ defmodule Ethui.Services.Anvil do
     {:ok, proc} =
       MuonTrap.Daemon.start_link(
         "anvil",
-        ["--port", to_string(port), "--state", "#{dir}/state.json"],
+        ["--port", to_string(port), "--state", "#{dir}/state.json", "--host", "0.0.0.0"],
         logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
         # TODO maybe patch muontrap to have a separate stream for stderr
         stderr_to_stdout: true,
