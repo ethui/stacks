@@ -39,5 +39,5 @@ devenv.local.nix
 node_modules
 priv/static/assets/app.css
 priv/static/assets/app.js
-priv/data
-priv/test-data
+data
+test-data

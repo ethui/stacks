@@ -37,6 +37,27 @@ defmodule Ethui.Services.Graph do
     {:via, Registry, {Ethui.Stacks.Registry, {slug, :graph}}}
   end
 
+  @doc """
+    Find the internal IP of a graph-node docker container
+  """
+  def ip(slug) do
+    case MuonTrap.cmd(
+           "docker",
+           [
+             "inspect",
+             "-f",
+             "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
+             "ethui-stacks-#{slug}-graph"
+           ]
+         ) do
+      {out, _} ->
+        {:ok, out |> String.split("\n") |> Enum.at(0)}
+
+      error ->
+        {:error, error}
+    end
+  end
+
   #
   # Server
   #
@@ -102,7 +123,7 @@ defmodule Ethui.Services.Graph do
 
   defp create_db(state) do
     {:ok, pg} =
-      Postgrex.start_link(pg_config())
+      Postgrex.start_link(config()[:pg])
 
     sql = "CREATE DATABASE #{db_name(state)}"
 
@@ -118,23 +139,21 @@ defmodule Ethui.Services.Graph do
   end
 
   defp boot_graph_node(%{slug: slug} = state) do
-    pg_config = pg_config()
-
+    config = config()
+    pg_config = config[:pg]
+    host = config[:docker_host]
     pid = self()
-    cmd = "docker"
-    db_name = db_name(state)
-    # TODO make this configurable
-    # this is the docker host IP on linux. it's currently not compatible with macos
-    # and it should change if we ever run graph-node directly on the host
-    host = config()[:host]
 
     env =
       [
-        postgres_host: host,
+        # TODO make this configurable
+        # this is the docker host IP on linux. it's currently not compatible with macos
+        # and it should change if we ever run graph-node directly on the host
+        postgres_host: config()[:docker_host],
         postgres_port: pg_config[:port],
         postgres_user: pg_config[:username],
         postgres_pass: pg_config[:password],
-        postgres_db: db_name,
+        postgres_db: db_name(state),
         ipfs: "ethui-stacks-ipfs:5001",
         GRAPH_LOG: "info",
         ETHEREUM_REORG_THRESHOLD: "1",
@@ -164,21 +183,19 @@ defmodule Ethui.Services.Graph do
       "init"
     ]
 
-    args = format_docker_args(env, ports, named_args, flags)
+    args =
+      format_docker_args(env, ports, named_args, flags)
+      |> IO.inspect()
 
-    MuonTrap.Daemon.start_link(cmd, args,
+    MuonTrap.Daemon.start_link("docker", args,
       logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
       stderr_to_stdout: true,
       exit_status_to_reason: & &1
     )
   end
 
-  defp pg_config do
-    config()[:pg]
-  end
-
   defp config do
-    Application.get_env(:ethui, __MODULE__)
+    Application.get_env(:ethui, Ethui.Stacks)
   end
 
   defp db_name(%{slug: slug, hash: hash}) do

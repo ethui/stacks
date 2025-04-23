@@ -1,12 +1,12 @@
 defmodule EthuiWeb.ProxyController do
   use EthuiWeb, :controller
-  alias Ethui.Services.Anvil
+  alias Ethui.Services.{Anvil, Graph}
   require Logger
 
   @doc """
   Forwards POST requests to an anvil node
   """
-  def anvil(conn, %{"slug" => slug} = params) do
+  def anvil(conn, %{"slug" => slug}) do
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
          url when not is_nil(url) <- Anvil.url(pid) do
       request(conn,
@@ -23,27 +23,29 @@ defmodule EthuiWeb.ProxyController do
     end
   end
 
-  def subgraph_http_get(conn, %{"slug" => slug, "path" => path} = params) do
-    query = params |> Map.drop(["slug", "path"])
-    # TODO is there a better way to merge the url parts?
-    url = "http://localhost:8000/#{Enum.join(path, "/")}"
-
-    request(conn, method: :get, url: url, query: conn.query_params)
+  def subgraph_http_get(conn, %{"slug" => slug, "path" => path}) do
+    with {:ok, ip} <- Graph.ip(slug) do
+      # TODO is there a better way to merge the url parts?
+      url = "http://#{ip}:8000/#{Enum.join(path, "/")}"
+      request(conn, method: :get, url: url, query: conn.query_params)
+    end
   end
 
-  def subgraph_http_post(conn, %{"slug" => slug, "path" => path} = params) do
-    # TODO is there a better way to merge the url parts?
-    url = "http://localhost:8000/#{Enum.join(path, "/")}"
+  def subgraph_http_post(conn, %{"slug" => slug, "path" => path}) do
+    with {:ok, ip} <- Graph.ip(slug) do
+      # TODO is there a better way to merge the url parts?
+      url = "http://#{ip}:8000/#{Enum.join(path, "/")}"
 
-    request(conn,
-      method: :post,
-      url: url,
-      query: conn.query_params,
-      body: conn.private[:raw_body]
-    )
+      request(conn,
+        method: :pust,
+        url: url,
+        query: conn.query_params,
+        body: conn.private[:raw_body]
+      )
+    end
   end
 
-  defp request(conn, opts \\ []) do
+  defp request(conn, opts) do
     opts =
       Keyword.merge(opts,
         # remove host and content-length headers, since they are set by the reverse proxy
@@ -65,33 +67,6 @@ defmodule EthuiWeb.ProxyController do
         |> put_status(:bad_gateway)
         |> json(%{error: "Failed to forward request", reason: inspect(reason)})
     end
-  end
-
-  defp build_anvil_client(url, conn_headers) do
-    headers =
-      conn_headers
-      |> Enum.filter(fn {key, _} ->
-        key not in ["host", "content-length", "content-type"]
-      end)
-
-    Tesla.client([
-      {Tesla.Middleware.BaseUrl, url},
-      {Tesla.Middleware.Headers, headers},
-      Tesla.Middleware.JSON
-    ])
-  end
-
-  defp build_client(url, conn_headers) do
-    headers =
-      conn_headers
-      |> Enum.filter(fn {key, _} ->
-        key not in ["host", "content-length"]
-      end)
-
-    Tesla.client([
-      {Tesla.Middleware.BaseUrl, url},
-      {Tesla.Middleware.Headers, headers}
-    ])
   end
 
   defp put_resp_headers(conn, headers) do

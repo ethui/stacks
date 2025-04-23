@@ -59,7 +59,7 @@ in
   };
 
   processes = {
-    ipfs.exec = "docker run --rm --network=ethui-stacks --volume=./priv/data/ipfs:/data/ipfs --name ethui-stacks-ipfs ipfs/kubo:v0.34.1";
+    ipfs.exec = "docker run --rm --network=ethui-stacks --volume=./data/ipfs:/data/ipfs --name ethui-stacks-ipfs ipfs/kubo:v0.34.1";
   };
 
   env = {

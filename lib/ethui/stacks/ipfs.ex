@@ -4,10 +4,10 @@ defmodule Ethui.Stacks.IPFS do
   """
 
   def url do
-    config()[:url]
+    config()[:ipfs_url]
   end
 
   defp config do
-    Application.get_env(:ethui, __MODULE__)
+    Application.get_env(:ethui, Ethui.Stacks)
   end
 end

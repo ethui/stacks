@@ -19,11 +19,10 @@ config :logger, level: :info
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.
 
-config :ethui, Ethui.Stacks, data_dir_root: raise("TODO")
-config :ethui, Ethui.Stacks.IPFS, url: raise("TODO")
-
-config :ethui, Ethui.Services.Graph,
-  host: raise("TODO"),
+config :ethui, Ethui.Stacks,
+  data_dir_root: raise("TODO"),
+  ipfs_url: raise("TODO"),
+  docker_host: raise("TODO"),
   pg: [
     hostname: raise("TODO"),
     port: raise("TODO"),
