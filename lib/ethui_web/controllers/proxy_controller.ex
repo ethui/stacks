@@ -34,7 +34,7 @@ defmodule EthuiWeb.ProxyController do
     case Graph.ip(slug) do
       {:ok, ip} ->
         url = "http://#{ip}:8000/#{path}"
-        forward(conn, :get, url, "/stacks/#{slug}/subgraph")
+        forward(conn, url, "/stacks/#{slug}/subgraph")
 
       error ->
         conn
@@ -66,7 +66,7 @@ defmodule EthuiWeb.ProxyController do
     # end
   end
 
-  defp forward(conn, method, url, base_path) do
+  defp forward(conn, url, base_path) do
     with {:ok, method} <- method_sym(conn.method),
          {:ok, conn} <-
            send_request(conn, method: method, url: url, query: conn.query_params) do
