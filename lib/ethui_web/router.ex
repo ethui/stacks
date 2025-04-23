@@ -56,8 +56,8 @@ defmodule EthuiWeb.Router do
 
     scope "/:slug" do
       get "/log", LogController, :show
+      match :*, "/", ProxyController, :anvil
       match :*, "/subgraph/*path", ProxyController, :subgraph_http
-      post "/", ProxyController, :anvil
     end
   end
 
