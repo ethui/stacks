@@ -8,15 +8,8 @@ defmodule EthuiWeb.ProxyController do
   """
   def anvil(conn, %{"slug" => slug}) do
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
-         url when not is_nil(url) <- Anvil.url(pid),
-         {:ok, conn} <-
-           send_request(conn,
-             method: :post,
-             url: url,
-             query: conn.query_params,
-             body: conn.private[:raw_body]
-           ) do
-      conn
+         url when not is_nil(url) <- Anvil.url(pid) do
+      forward(conn, url, "/stacks/#{slug}")
     else
       _ ->
         conn
@@ -36,40 +29,22 @@ defmodule EthuiWeb.ProxyController do
         url = "http://#{ip}:8000/#{path}"
         forward(conn, url, "/stacks/#{slug}/subgraph")
 
-      error ->
+      _ ->
         conn
-        |> put_status(:server_error)
-        |> json(%{error: inspect(error)})
+        |> put_status(:not_found)
+        |> json(%{error: "Stack not found"})
     end
-
-    # with {:ok, ip} <- Graph.ip(slug),
-    #      url <- "http://#{ip}:8000/#{path}",
-    #      # TODO is there a better way to merge the url parts?
-    #      {:ok, method} <- method_sym(conn.method),
-    #      {:ok, conn} <-
-    #        request(conn, method: method, url: url, query: conn.query_params) do
-    #   conn
-    # else
-    #   {:redirect, new_path} ->
-    #     conn
-    #     |> redirect(to: "/stacks/#{slug}/subgraph/#{new_path}")
-    #
-    #   :error ->
-    #     conn
-    #     |> put_status(:server_error)
-    #     |> json(%{error: "Redirect without location header"})
-    #
-    #   {:error, error} ->
-    #     conn
-    #     |> put_status(:server_error)
-    #     |> json(%{error: inspect(error)})
-    # end
   end
 
   defp forward(conn, url, base_path) do
     with {:ok, method} <- method_sym(conn.method),
          {:ok, conn} <-
-           send_request(conn, method: method, url: url, query: conn.query_params) do
+           send_request(conn,
+             method: method,
+             url: url,
+             query: conn.query_params,
+             body: conn.private[:raw_body]
+           ) do
       conn
     else
       {:redirect, new_path} ->
