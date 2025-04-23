@@ -4,7 +4,7 @@ defmodule EthuiWeb.ProxyController do
   require Logger
 
   @doc """
-  Forwards POST requests to an anvil node
+  Forwards requests to the anvil RPC
   """
   def anvil(conn, %{"slug" => slug}) do
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
@@ -18,9 +18,9 @@ defmodule EthuiWeb.ProxyController do
     end
   end
 
-  defp join_path(path) when is_binary(path), do: path
-  defp join_path(path) when is_list(path), do: Enum.join(path, "/")
-
+  @doc """
+  Forwards requests to the graph-node HTTP port
+  """
   def subgraph_http(conn, %{"slug" => slug, "path" => path}) do
     path = join_path(path)
 
@@ -73,6 +73,7 @@ defmodule EthuiWeb.ProxyController do
     client = Tesla.client([])
 
     case Tesla.request(client, opts) do
+      # redirect status code
       {:ok, %Tesla.Env{status: status, headers: resp_headers}} when status in [301, 302] ->
         {_, location} =
           resp_headers
@@ -80,12 +81,14 @@ defmodule EthuiWeb.ProxyController do
 
         {:redirect, location}
 
+      # successful response
       {:ok, %Tesla.Env{status: status, body: resp_body, headers: resp_headers}} ->
         {:ok,
          conn
          |> put_resp_headers(resp_headers)
          |> send_resp(status, resp_body)}
 
+      # error
       {:error, reason} ->
         Logger.error(inspect(reason))
 
@@ -102,6 +105,9 @@ defmodule EthuiWeb.ProxyController do
       put_resp_header(conn, String.downcase(key), value)
     end)
   end
+
+  defp join_path(path) when is_binary(path), do: path
+  defp join_path(path) when is_list(path), do: Enum.join(path, "/")
 
   defp method_sym("HEAD"), do: {:ok, :head}
   defp method_sym("GET"), do: {:ok, :get}
