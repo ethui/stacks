@@ -5,7 +5,7 @@ defmodule EthuiWeb.LogController do
   alias Ethui.Services.Anvil
 
   def show(conn, %{"slug" => slug}) do
-    case Registry.lookup(Ethui.Stacks.Registry, slug) do
+    case Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}) do
       [{pid, _}] ->
         Anvil.subscribe_logs(pid)
 
