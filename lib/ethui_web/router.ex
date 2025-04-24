@@ -17,6 +17,7 @@ defmodule EthuiWeb.Router do
   end
 
   pipeline :proxy do
+    plug :accepts, ["json"]
     # explicitly empty for clarity
     # we don't want any plugs here since that makes assumptions on the request type,
     # and proxy endpoints should support GET/POST, html/json, etc
@@ -57,7 +58,7 @@ defmodule EthuiWeb.Router do
     scope "/:slug" do
       get "/log", LogController, :show
       match :*, "/", ProxyController, :anvil
-      match :*, "/subgraph/*path", ProxyController, :subgraph_http
+      match :*, "/subgraph/*proxied_path", ProxyController, :subgraph_http
     end
   end
 

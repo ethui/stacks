@@ -9,7 +9,7 @@ defmodule EthuiWeb.ProxyController do
   def anvil(conn, %{"slug" => slug}) do
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
          url when not is_nil(url) <- Anvil.url(pid) do
-      forward(conn, url, "/stacks/#{slug}")
+      forward(conn, url)
     else
       _ ->
         conn
@@ -21,13 +21,11 @@ defmodule EthuiWeb.ProxyController do
   @doc """
   Forwards requests to the graph-node HTTP port
   """
-  def subgraph_http(conn, %{"slug" => slug, "path" => path}) do
-    path = join_path(path)
-
+  def subgraph_http(conn, %{"slug" => slug, "proxied_path" => proxied_path}) do
     case Graph.ip(slug) do
       {:ok, ip} ->
-        url = "http://#{ip}:8000/#{path}"
-        forward(conn, url, "/stacks/#{slug}/subgraph")
+        url = "http://#{ip}:8000/#{Enum.join(proxied_path, "/")}"
+        forward(conn, url)
 
       _ ->
         conn
@@ -36,7 +34,10 @@ defmodule EthuiWeb.ProxyController do
     end
   end
 
-  defp forward(conn, url, base_path) do
+  defp forward(conn, url) do
+    proxied_path = Map.get(conn.path_params, "proxied_path", [])
+    base_proxy_path = proxy_path(conn.path_info, proxied_path)
+
     with {:ok, method} <- method_sym(conn.method),
          {:ok, conn} <-
            send_request(conn,
@@ -48,8 +49,11 @@ defmodule EthuiWeb.ProxyController do
       conn
     else
       {:redirect, new_path} ->
-        conn
-        |> redirect(to: "#{base_path}/#{new_path}")
+        to =
+          ("/" <> Enum.join(base_proxy_path, "/") <> "/" <> new_path)
+          |> String.replace(~r"/+", "/")
+
+        redirect(conn, to: to)
 
       :error ->
         conn
@@ -106,8 +110,10 @@ defmodule EthuiWeb.ProxyController do
     end)
   end
 
-  defp join_path(path) when is_binary(path), do: path
-  defp join_path(path) when is_list(path), do: Enum.join(path, "/")
+  defp proxy_path(full, proxied) do
+    full
+    |> Enum.take(length(full) - length(proxied))
+  end
 
   defp method_sym("HEAD"), do: {:ok, :head}
   defp method_sym("GET"), do: {:ok, :get}
