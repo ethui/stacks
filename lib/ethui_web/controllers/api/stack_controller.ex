@@ -5,8 +5,6 @@ defmodule EthuiWeb.Api.StackController do
   alias Ethui.Repo
 
   def index(conn, _params) do
-    IO.inspect(conn)
-
     anvils =
       Server.list()
 

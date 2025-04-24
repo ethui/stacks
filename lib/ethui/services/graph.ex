@@ -185,7 +185,6 @@ defmodule Ethui.Services.Graph do
 
     args =
       format_docker_args(env, ports, named_args, flags)
-      |> IO.inspect()
 
     MuonTrap.Daemon.start_link("docker", args,
       logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
