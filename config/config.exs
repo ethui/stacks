@@ -65,7 +65,7 @@ config :backpex,
   translator_function: {EthuiWeb.CoreComponents, :translate_backpex},
   error_translator_function: {EthuiWeb.CoreComponents, :translate_backpex_error}
 
-# config :reverse_proxy_plug, :http_client, ReverseProxyPlug.HTTPClient.Adapters.Tesla
+config :ethui, Ethui.Stacks, graph_node_image: "graphprotocol/graph-node:f02dfa2"
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

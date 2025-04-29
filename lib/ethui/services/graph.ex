@@ -213,8 +213,9 @@ defmodule Ethui.Services.Graph do
     ports = Enum.map_join(ports, " ", fn p -> "-p #{p}" end)
     named_args = Enum.map_join(named_args, " ", fn {k, v} -> "--#{k} #{v}" end)
     flags = Enum.map_join(flags, " ", fn f -> "--#{f}" end)
+    image = config()[:graph_node_image]
 
-    "run #{named_args} #{ports} #{env} #{flags} graphprotocol/graph-node"
+    "run #{named_args} #{ports} #{env} #{flags} #{image}"
     |> String.split(" ")
   end
 end
