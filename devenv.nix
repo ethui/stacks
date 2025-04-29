@@ -24,6 +24,7 @@ in
     # needed by daisyui
     watchman
     mprocs
+    wait4x
   ];
 
   services = {
@@ -60,6 +61,10 @@ in
 
   processes = {
     ipfs.exec = "docker run --rm --network=ethui-stacks --volume=./data/ipfs:/data/ipfs --name ethui-stacks-ipfs ipfs/kubo:v0.34.1";
+    iex.exec = ''
+      wait4x tcp localhost:5499
+      mix phx.server
+    '';
   };
 
   env = {

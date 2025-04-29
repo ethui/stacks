@@ -4,9 +4,46 @@ defmodule EthuiWeb.ProxyController do
   require Logger
 
   @doc """
-  Forwards requests to the anvil RPC
+    Forwards requests to the anvil RPC
   """
-  def anvil(conn, %{"slug" => slug}) do
+  def reverse_proxy(
+        %Plug.Conn{assigns: %{proxy: %{slug: slug, component: nil}}} = conn,
+        params
+      ) do
+    anvil(conn, params)
+  end
+
+  @doc """
+    Forwards requests to the graph-node HTTP port
+  """
+  def reverse_proxy(
+        %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph"}}} = conn,
+        params
+      ) do
+    subgraph_generic(conn, params, 8000)
+  end
+
+  @doc """
+    Forwards requests to the graph-node JSON-RPC port
+  """
+  def reverse_proxy(
+        %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph-rpc"}}} = conn,
+        params
+      ) do
+    subgraph_generic(conn, params, 8020)
+  end
+
+  @doc """
+    Forwards requests to the graph-node Indexing Status port
+  """
+  def reverse_proxy(
+        %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph-status"}}} = conn,
+        params
+      ) do
+    subgraph_generic(conn, params, 8030)
+  end
+
+  defp anvil(%Plug.Conn{assigns: %{proxy: %{slug: slug}}}, _params) do
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
          url when not is_nil(url) <- Anvil.url(pid) do
       forward(conn, url)
@@ -17,21 +54,6 @@ defmodule EthuiWeb.ProxyController do
         |> json(%{error: "Stack not found"})
     end
   end
-
-  @doc """
-  Forwards requests to the graph-node HTTP port
-  """
-  def subgraph_http(conn, params), do: subgraph_generic(conn, params, 8000)
-
-  @doc """
-  Forwards requests to the graph-node JSON-RPC port
-  """
-  def subgraph_jsonrpc(conn, params), do: subgraph_generic(conn, params, 8020)
-
-  @doc """
-  Forwards requests to the graph-node Indexing Status port
-  """
-  def subgraph_status(conn, params), do: subgraph_generic(conn, params, 8030)
 
   defp subgraph_generic(conn, %{"slug" => slug, "proxied_path" => proxied_path}, target_port) do
     case Graph.ip(slug) do
