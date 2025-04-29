@@ -13,7 +13,7 @@ config :ethui,
 
 # Configures the endpoint
 config :ethui, EthuiWeb.Endpoint,
-  url: [host: "localhost"],
+  url: [host: "lvh.me"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: EthuiWeb.ErrorHTML, json: EthuiWeb.ErrorJSON],

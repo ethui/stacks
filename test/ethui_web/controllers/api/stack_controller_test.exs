@@ -6,10 +6,8 @@ defmodule EthuiWeb.Api.StackControllerTest do
 
   setup do
     Ecto.Adapters.SQL.Sandbox.checkout(Repo, sandbox: false)
-
     cleanup()
-
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
+    :ok
   end
 
   defp cleanup do
@@ -17,20 +15,26 @@ defmodule EthuiWeb.Api.StackControllerTest do
   end
 
   describe "create/2" do
-    test "creates a stack", %{conn: conn} do
+    test "creates a stack" do
       slug = "slug"
-      conn = conn |> post(~p"/api/stacks", %{slug: slug})
+
+      conn =
+        api_conn()
+        |> post(~p"/stacks", %{slug: slug})
+
       assert json_response(conn, 201)
     end
   end
 
   describe "delete/2" do
-    test "deletes a stack", %{conn: conn} do
+    test "deletes a stack" do
+      conn = api_conn()
       slug = "slug2"
-      conn = conn |> post(~p"/api/stacks", %{slug: slug})
+
+      conn = conn |> post(~p"/stacks", %{slug: slug})
       assert json_response(conn, 201)
 
-      conn = conn |> delete(~p"/api/stacks/#{slug}")
+      conn = conn |> delete(~p"/stacks/#{slug}")
       assert conn.status == 204
     end
   end

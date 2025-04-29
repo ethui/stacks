@@ -101,8 +101,6 @@ defmodule Ethui.Services.Graph do
 
   @impl GenServer
   def handle_cast({:log, line}, %{logs: logs, log_subscribers: subs} = state) do
-    Logger.debug(line)
-
     for s <- subs do
       send(s, {:logs, :anvil, state.slug, [line]})
     end
@@ -141,8 +139,10 @@ defmodule Ethui.Services.Graph do
   defp boot_graph_node(%{slug: slug} = state) do
     config = config()
     pg_config = config[:pg]
-    host = config[:docker_host]
+    docker_host = config[:docker_host]
     pid = self()
+
+    proxy_host = "#{slug}.stacks.#{host_endpoint()}"
 
     env =
       [
@@ -158,7 +158,7 @@ defmodule Ethui.Services.Graph do
         GRAPH_LOG: "info",
         ETHEREUM_REORG_THRESHOLD: "1",
         ETHEREUM_ACESTOR_COUNT: "1",
-        ethereum: "anvil:http://#{host}:4000/stacks/#{slug}"
+        ethereum: "anvil:http://#{proxy_host}:4000"
       ]
 
     ports =
@@ -172,6 +172,7 @@ defmodule Ethui.Services.Graph do
 
     named_args =
       [
+        "add-host": "#{proxy_host}:#{docker_host}",
         network: "ethui-stacks",
         name: "ethui-stacks-#{slug}-graph"
       ]
@@ -191,6 +192,10 @@ defmodule Ethui.Services.Graph do
       stderr_to_stdout: true,
       exit_status_to_reason: & &1
     )
+  end
+
+  defp host_endpoint do
+    EthuiWeb.Endpoint.config(:url)[:host]
   end
 
   defp config do
