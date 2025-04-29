@@ -7,7 +7,7 @@ defmodule EthuiWeb.ProxyControllerTest do
   setup do
     Ecto.Adapters.SQL.Sandbox.checkout(Repo, sandbox: false)
     cleanup()
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
+    :ok
   end
 
   defp cleanup do
@@ -15,15 +15,15 @@ defmodule EthuiWeb.ProxyControllerTest do
   end
 
   describe "proxy/2" do
-    test "proxies to anvil", %{conn: conn} do
+    test "proxies to anvil" do
       slug = "slug10"
 
       %Stack{slug: slug} |> Repo.insert!()
       Process.sleep(100)
 
       conn =
-        conn
-        |> post(~p"/stacks/#{slug}", %{
+        anvil_conn(slug)
+        |> post(~p"/", %{
           jsonrpc: "2.0",
           method: "eth_blockNumber",
           params: [],

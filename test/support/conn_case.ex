@@ -35,4 +35,12 @@ defmodule EthuiWeb.ConnCase do
     Ethui.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
+
+  def api_conn do
+    Phoenix.ConnTest.build_conn(:post, "http://api.lvh.me", nil)
+  end
+
+  def anvil_conn(slug) do
+    Phoenix.ConnTest.build_conn(:post, "http://#{slug}.stacks.lvh.me", nil)
+  end
 end
