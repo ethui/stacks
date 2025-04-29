@@ -40,11 +40,6 @@ defmodule EthuiWeb.Router do
     end
   end
 
-  scope "/", EthuiWeb do
-    pipe_through :proxy
-    match :*, "/*proxied_path", ProxyController, :reverse_proxy
-  end
-
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:ethui, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put
@@ -60,5 +55,10 @@ defmodule EthuiWeb.Router do
       live_dashboard "/dashboard", metrics: EthuiWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
+  end
+
+  scope "/", EthuiWeb do
+    pipe_through :proxy
+    match :*, "/*proxied_path", ProxyController, :reverse_proxy
   end
 end
