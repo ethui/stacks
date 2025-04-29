@@ -4,8 +4,10 @@ defmodule EthuiWeb.ProxyController do
   require Logger
 
   @doc """
-    Forwards requests to the anvil RPC
+    Forwards requests to the appropriate underlying service
   """
+  def reverse_proxy(conn, params)
+
   def reverse_proxy(
         %Plug.Conn{assigns: %{proxy: %{slug: slug, component: nil}}} = conn,
         params
@@ -13,9 +15,6 @@ defmodule EthuiWeb.ProxyController do
     anvil(conn, params, slug)
   end
 
-  @doc """
-    Forwards requests to the graph-node HTTP port
-  """
   def reverse_proxy(
         %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph"}}} = conn,
         params
@@ -23,9 +22,6 @@ defmodule EthuiWeb.ProxyController do
     subgraph_generic(conn, params, slug, 8000)
   end
 
-  @doc """
-    Forwards requests to the graph-node JSON-RPC port
-  """
   def reverse_proxy(
         %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph-rpc"}}} = conn,
         params
@@ -33,9 +29,6 @@ defmodule EthuiWeb.ProxyController do
     subgraph_generic(conn, params, slug, 8020)
   end
 
-  @doc """
-    Forwards requests to the graph-node Indexing Status port
-  """
   def reverse_proxy(
         %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph-status"}}} = conn,
         params
@@ -43,7 +36,7 @@ defmodule EthuiWeb.ProxyController do
     subgraph_generic(conn, params, slug, 8030)
   end
 
-  def reverse_proxy(%Plug.Conn{assigns: assigns} = conn, params) do
+  def reverse_proxy(%Plug.Conn{assigns: assigns} = conn, _params) do
     Logger.error("cannot proxy #{inspect(assigns)}")
 
     conn

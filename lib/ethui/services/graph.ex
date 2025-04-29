@@ -101,8 +101,6 @@ defmodule Ethui.Services.Graph do
 
   @impl GenServer
   def handle_cast({:log, line}, %{logs: logs, log_subscribers: subs} = state) do
-    Logger.debug(line)
-
     for s <- subs do
       send(s, {:logs, :anvil, state.slug, [line]})
     end
@@ -158,7 +156,7 @@ defmodule Ethui.Services.Graph do
         GRAPH_LOG: "info",
         ETHEREUM_REORG_THRESHOLD: "1",
         ETHEREUM_ACESTOR_COUNT: "1",
-        ethereum: "anvil:http://#{host}:4000/stacks/#{slug}"
+        ethereum: "anvil:http://#{slug}.stacks.lvh.me:4000"
       ]
 
     ports =
@@ -172,6 +170,7 @@ defmodule Ethui.Services.Graph do
 
     named_args =
       [
+        "add-host": "#{slug}.stacks.lvh.me:#{host}",
         network: "ethui-stacks",
         name: "ethui-stacks-#{slug}-graph"
       ]
