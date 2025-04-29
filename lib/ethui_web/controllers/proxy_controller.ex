@@ -10,7 +10,7 @@ defmodule EthuiWeb.ProxyController do
         %Plug.Conn{assigns: %{proxy: %{slug: slug, component: nil}}} = conn,
         params
       ) do
-    anvil(conn, params)
+    anvil(conn, params, slug)
   end
 
   @doc """
@@ -20,7 +20,7 @@ defmodule EthuiWeb.ProxyController do
         %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph"}}} = conn,
         params
       ) do
-    subgraph_generic(conn, params, 8000)
+    subgraph_generic(conn, params, slug, 8000)
   end
 
   @doc """
@@ -30,7 +30,7 @@ defmodule EthuiWeb.ProxyController do
         %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph-rpc"}}} = conn,
         params
       ) do
-    subgraph_generic(conn, params, 8020)
+    subgraph_generic(conn, params, slug, 8020)
   end
 
   @doc """
@@ -40,10 +40,18 @@ defmodule EthuiWeb.ProxyController do
         %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph-status"}}} = conn,
         params
       ) do
-    subgraph_generic(conn, params, 8030)
+    subgraph_generic(conn, params, slug, 8030)
   end
 
-  defp anvil(%Plug.Conn{assigns: %{proxy: %{slug: slug}}}, _params) do
+  def reverse_proxy(%Plug.Conn{assigns: assigns} = conn, params) do
+    Logger.error("cannot proxy #{inspect(assigns)}")
+
+    conn
+    |> put_status(:not_found)
+    |> json(%{error: "Route not found"})
+  end
+
+  defp anvil(conn, _params, slug) do
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
          url when not is_nil(url) <- Anvil.url(pid) do
       forward(conn, url)
@@ -55,7 +63,7 @@ defmodule EthuiWeb.ProxyController do
     end
   end
 
-  defp subgraph_generic(conn, %{"slug" => slug, "proxied_path" => proxied_path}, target_port) do
+  defp subgraph_generic(conn, %{"proxied_path" => proxied_path}, slug, target_port) do
     case Graph.ip(slug) do
       {:ok, ip} ->
         url = "http://#{ip}:#{target_port}/#{Enum.join(proxied_path, "/")}"
