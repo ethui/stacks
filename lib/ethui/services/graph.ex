@@ -161,15 +161,6 @@ defmodule Ethui.Services.Graph do
         ethereum: "anvil:http://#{proxy_host}:4000"
       ]
 
-    ports =
-      [
-        "8000:8000",
-        "8001:8001",
-        "8020:8020",
-        "8030:8030",
-        "8040:8040"
-      ]
-
     named_args =
       [
         "add-host": "#{proxy_host}:#{docker_host}",
@@ -185,7 +176,7 @@ defmodule Ethui.Services.Graph do
     ]
 
     args =
-      format_docker_args(env, ports, named_args, flags)
+      format_docker_args(env, named_args, flags)
 
     MuonTrap.Daemon.start_link("docker", args,
       logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
@@ -206,16 +197,15 @@ defmodule Ethui.Services.Graph do
     "ethui_stack_#{slug}_#{hash}"
   end
 
-  defp format_docker_args(env, ports, named_args, flags) do
+  defp format_docker_args(env, named_args, flags) do
     env =
       Enum.map_join(env, " ", fn {k, v} -> "--env #{k}=#{v}" end)
 
-    ports = Enum.map_join(ports, " ", fn p -> "-p #{p}" end)
     named_args = Enum.map_join(named_args, " ", fn {k, v} -> "--#{k} #{v}" end)
     flags = Enum.map_join(flags, " ", fn f -> "--#{f}" end)
     image = config()[:graph_node_image]
 
-    "run #{named_args} #{ports} #{env} #{flags} #{image}"
+    "run #{named_args} #{env} #{flags} #{image}"
     |> String.split(" ")
   end
 end
