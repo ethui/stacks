@@ -21,10 +21,22 @@ defmodule EthuiWeb.ProxyController do
   @doc """
   Forwards requests to the graph-node HTTP port
   """
-  def subgraph_http(conn, %{"slug" => slug, "proxied_path" => proxied_path}) do
+  def subgraph_http(conn, params), do: subgraph_generic(conn, params, 8000)
+
+  @doc """
+  Forwards requests to the graph-node JSON-RPC port
+  """
+  def subgraph_jsonrpc(conn, params), do: subgraph_generic(conn, params, 8020)
+
+  @doc """
+  Forwards requests to the graph-node Indexing Status port
+  """
+  def subgraph_status(conn, params), do: subgraph_generic(conn, params, 8030)
+
+  defp subgraph_generic(conn, %{"slug" => slug, "proxied_path" => proxied_path}, target_port) do
     case Graph.ip(slug) do
       {:ok, ip} ->
-        url = "http://#{ip}:8000/#{Enum.join(proxied_path, "/")}"
+        url = "http://#{ip}:#{target_port}/#{Enum.join(proxied_path, "/")}"
         forward(conn, url)
 
       _ ->
