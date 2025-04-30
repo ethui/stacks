@@ -92,6 +92,7 @@ config :swoosh, :api_client, false
 config :ethui, Ethui.Stacks,
   data_dir_root: "data/dev/stacks",
   ipfs_url: "http://127.0.0.1:5001",
+  ipfs_data_dir: "./data/dev/ipfs",
   # on macos, this should be set to host.docker.internal
   docker_host: System.get_env("DOCKER_HOST", "172.17.0.1"),
   # since graph-node currently runs via docker, pg connection params are different,
