@@ -49,6 +49,9 @@ defmodule Ethui.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
+      {:cowboy, "~> 2.7"},
+      {:plug_cowboy, "~> 2.0"},
+      {:gun, "~> 2.0"},
 
       # phoenix
       {:phoenix, "~> 1.7.21"},

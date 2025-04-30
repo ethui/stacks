@@ -14,13 +14,23 @@ config :ethui,
 # Configures the endpoint
 config :ethui, EthuiWeb.Endpoint,
   url: [host: "lvh.me"],
-  adapter: Bandit.PhoenixAdapter,
+  # Bandit.PhoenixAdapter,
+  adapter: Phoenix.Endpoint.Cowboy2Adapter,
   render_errors: [
     formats: [html: EthuiWeb.ErrorHTML, json: EthuiWeb.ErrorJSON],
     layout: false
   ],
   pubsub_server: Ethui.PubSub,
-  live_view: [signing_salt: "G8Rh0+AS"]
+  live_view: [signing_salt: "G8Rh0+AS"],
+  http: [
+    dispatch: [
+      {:_,
+       [
+         {:_, Ethui.Stacks.WsProxy, []},
+         {:_, Plug.Cowboy.Handler, {EthuiWeb.Endpoint, []}}
+       ]}
+    ]
+  ]
 
 # Configures the mailer
 #
