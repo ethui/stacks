@@ -60,11 +60,6 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-config :backpex,
-  pubsub_server: Ethui.PubSub,
-  translator_function: {EthuiWeb.CoreComponents, :translate_backpex},
-  error_translator_function: {EthuiWeb.CoreComponents, :translate_backpex_error}
-
 config :ethui, Ethui.Stacks,
   graph_node_image: "graphprotocol/graph-node:f02dfa2",
   ipfs_image: "ipfs/kubo:v0.34.1"

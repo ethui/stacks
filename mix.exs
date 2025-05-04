@@ -29,7 +29,6 @@ defmodule Ethui.MixProject do
   defp deps do
     [
       # application
-      {:backpex, "~> 0.12"},
       {:muontrap, "~> 1.6"},
       {:mint, "~> 1.7"},
 
@@ -60,6 +59,7 @@ defmodule Ethui.MixProject do
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 1.0"},
       {:phoenix_live_dashboard, "~> 0.8.3"},
+      {:gettext, "~>0.26"},
 
       # assets
       {:esbuild, "~> 0.9", runtime: Mix.env() == :dev},
