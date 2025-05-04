@@ -35,6 +35,9 @@ defmodule Ethui.Stacks.Supervisor do
       # named registry for services
       {Registry, keys: :unique, name: @registry_name},
 
+      # global IPFS service
+      {Ethui.Services.Ipfs, []},
+
       # services supervisor
       MultiStackSupervisor,
       Server
