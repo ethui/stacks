@@ -87,7 +87,6 @@ defmodule Ethui.Services.Ipfs do
   end
 
   defp boot_ipfs_node() do
-    config = config()
     pid = self()
 
     named_args =
@@ -114,10 +113,6 @@ defmodule Ethui.Services.Ipfs do
     )
   end
 
-  defp config do
-    Application.get_env(:ethui, Ethui.Stacks)
-  end
-
   defp format_docker_args(named_args, flags) do
     named_args = Enum.map_join(named_args, " ", fn {k, v} -> "--#{k}=#{v}" end)
     flags = Enum.map_join(flags, " ", fn f -> "--#{f}" end)
@@ -125,5 +120,9 @@ defmodule Ethui.Services.Ipfs do
 
     "run #{named_args} #{flags} #{image}"
     |> String.split(" ")
+  end
+
+  defp config do
+    Application.get_env(:ethui, Ethui.Stacks)
   end
 end
