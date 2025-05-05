@@ -5,7 +5,7 @@ defmodule Ethui.Stacks.Supervisor do
 
   use Supervisor
 
-  alias Ethui.Stacks.{Server, Stack, HttpPorts, MultiStackSupervisor}
+  alias Ethui.Stacks.{Server, HttpPorts, MultiStackSupervisor}
 
   @spec start_link([]) :: Supervisor.on_start()
   def start_link(_opts) do
@@ -19,16 +19,6 @@ defmodule Ethui.Stacks.Supervisor do
   @impl Supervisor
   def init(_) do
     children = [
-      # database watcher
-      {EctoWatch,
-       repo: Ethui.Repo,
-       pub_sub: Ethui.PubSub,
-       watchers: [
-         {Stack, :inserted, extra_columns: [:slug, :inserted_at]},
-         {Stack, :deleted, extra_columns: [:slug]},
-         {Stack, :updated}
-       ]},
-
       # http port reservation
       {HttpPorts, range: @port_range},
 

@@ -15,13 +15,13 @@ defmodule EthuiWeb.Api.StackController do
   end
 
   def create(conn, params) do
-    case Stack.create_changeset(%Stack{}, params)
-         |> Repo.insert() do
-      {:ok, _stack} ->
+    with changeset <- Stack.create_changeset(params),
+      {:ok, stack} <- Repo.insert(changeset),
+      _ <- Server.start(stack) do
         conn
         |> put_status(201)
         |> json(%{})
-
+    else
       {:error, %Ecto.Changeset{} = changeset} ->
         conn
         |> put_status(422)
@@ -42,6 +42,7 @@ defmodule EthuiWeb.Api.StackController do
 
   def delete(conn, %{"slug" => slug}) do
     with %Stack{} = stack <- Repo.get_by(Stack, slug: slug),
+      _ <- Server.stop(stack),
          _ <- Repo.delete(stack) do
       conn |> put_status(204) |> json(%{})
     else
@@ -58,7 +59,6 @@ defmodule EthuiWeb.Api.StackController do
     end
   end
 
-  #
   # def logs(conn, %{"pid" => pid_string}) do
   #   # Convert the string PID back to a PID reference
   #   pid =
