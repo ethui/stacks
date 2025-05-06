@@ -1,11 +1,14 @@
 defmodule Ethui.Services.Docker do
   @moduledoc """
-      GenServer that manages a single docker container
-
-      This wraps a MuontipTrap Daemon
+    GenServer that manages a single docker container
+    This wraps a MuontipTrap Daemon
   """
 
   defmodule BeforeCompile do
+    @moduledoc """
+    Declares functions that can be overriden by the user module
+    """
+
     defmacro __before_compile__(_env) do
       quote do
         def extra_init(state, opts), do: state
