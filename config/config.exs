@@ -1,3 +1,5 @@
+[pool_size: 10, adapter: Ecto.Adapters.SQLite3]
+[pool_size: 10, adapter: Ecto.Adapters.Postgres]
 # This file is responsible for configuring your application
 # and its dependencies with the aid of the Config module.
 #
@@ -10,6 +12,14 @@ import Config
 config :ethui,
   ecto_repos: [Ethui.Repo],
   generators: [timestamp_type: :utc_datetime]
+
+server_mode? = System.get_env("ETHUI_STACKS_SERVER_MODE") != nil
+
+config :ethui,
+       Ethui.Repo,
+       # ssl: true,
+       pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+       adapter: if(server_mode?, do: Ecto.Adapters.Postgres, else: Ecto.Adapters.SQLite3)
 
 # Configures the endpoint
 config :ethui, EthuiWeb.Endpoint,

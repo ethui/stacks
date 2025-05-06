@@ -7,12 +7,8 @@ import Config
 # Run `mix help test` for more information.
 config :ethui,
        Ethui.Repo,
-       socket_dir: System.get_env("PGHOST"),
-       username: System.get_env("USER"),
-       password: System.get_env("PGPASSWORD"),
-       database: System.get_env("PGDATABASE_TEST", "ethui_test"),
-       port: System.get_env("PGPORT", "5432") |> String.to_integer(),
-       hostname: "localhost",
+       database: "data/test/ethui.db",
+       default_transaction_mode: :immediate,
        pool: Ecto.Adapters.SQL.Sandbox,
        pool_size: System.schedulers_online() * 2
 
