@@ -106,7 +106,7 @@ defmodule Ethui.Stacks.Server do
   end
 
   @impl GenServer
-  def handle_cast({:stop , stack}, state) do
+  def handle_cast({:stop, stack}, state) do
     case stop_stack(stack, state) do
       {:ok, new_state} ->
         {:noreply, new_state}
