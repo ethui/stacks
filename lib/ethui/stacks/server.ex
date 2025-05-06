@@ -1,7 +1,6 @@
 defmodule Ethui.Stacks.Server do
   @moduledoc """
     GenServer that manages a collection of stacks
-
     # TODO: A stack is currently composed of a single entity: an `anvil` process, but should eventually hold more
   """
 
@@ -106,7 +105,7 @@ defmodule Ethui.Stacks.Server do
   end
 
   @impl GenServer
-  def handle_cast({:stop , stack}, state) do
+  def handle_cast({:stop, stack}, state) do
     case stop_stack(stack, state) do
       {:ok, new_state} ->
         {:noreply, new_state}

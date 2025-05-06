@@ -1,40 +1,23 @@
 defmodule Ethui.Services.Graph do
   @moduledoc """
-      GenServer that manages a single `node-graph` instace
-
-      This wraps a MuontipTrap Daemon
+    GenServer that manages a single `node-graph` instace
+    This wraps a MuontipTrap Daemon
   """
 
-  use GenServer
-  require Logger
-
-  @type opts :: [
-          slug: String.t(),
-          hash: String.t()
-        ]
-
-  @type t :: %{
-          # muontrap process
-          proc: pid | nil,
-          logs: :queue.queue(),
-          slug: String.t(),
-          hash: String.t(),
-          log_subscribers: MapSet.t()
-        }
-
-  @log_max_size 10_000
-
-  #
-  # Client
-  #
-
-  @spec start_link(opts) :: GenServer.on_start()
-  def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, name: name(opts[:slug]))
-  end
+  use Ethui.Services.Docker,
+    image: Application.compile_env(:ethui, Ethui.Stacks)[:graph_node_image],
+    name: &__MODULE__.start_link_name/1,
+    named_args: &__MODULE__.named_args/1,
+    env: &__MODULE__.env/1
 
   def name(slug) do
     {:via, Registry, {Ethui.Stacks.Registry, {slug, :graph}}}
+  end
+
+  def extra_init(state, opts) do
+    state
+    |> Map.put(:slug, opts[:slug])
+    |> Map.put(:hash, opts[:hash])
   end
 
   @doc """
@@ -58,68 +41,8 @@ defmodule Ethui.Services.Graph do
     end
   end
 
-  #
-  # Server
-  #
-
-  @spec init(opts) :: {:ok, t}
   @impl GenServer
-  def init(opts) do
-    Process.flag(:trap_exit, true)
-
-    send(self(), :boot)
-
-    {:ok,
-     %{
-       slug: opts[:slug],
-       hash: opts[:hash],
-       proc: nil,
-       logs: :queue.new(),
-       log_subscribers: MapSet.new()
-     }}
-  end
-
-  @impl GenServer
-  def handle_info(:boot, state) do
-    create_db(state)
-    {:ok, proc} = boot_graph_node(state)
-
-    {:noreply, %{state | proc: proc}}
-  end
-
-  @impl GenServer
-  def handle_info({:EXIT, _pid, exit_status}, state) do
-    case exit_status do
-      0 ->
-        {:stop, :normal, state}
-
-      exit_code ->
-        Logger.error("sleep exited with code #{inspect(exit_code)}")
-        {:stop, :normal, state}
-    end
-  end
-
-  @impl GenServer
-  def handle_cast({:log, line}, %{logs: logs, log_subscribers: subs} = state) do
-    for s <- subs do
-      send(s, {:logs, :anvil, state.slug, [line]})
-    end
-
-    new_logs = :queue.in(line, logs) |> trim()
-
-    {:noreply, %{state | logs: new_logs}}
-  end
-
-  defp trim(q) do
-    if :queue.len(q) > @log_max_size do
-      {{:value, _}, q} = :queue.out(q)
-      trim(q)
-    else
-      q
-    end
-  end
-
-  defp create_db(state) do
+  def handle_info(:before_boot, state) do
     {:ok, pg} =
       Postgrex.start_link(config()[:pg])
 
@@ -134,55 +57,34 @@ defmodule Ethui.Services.Graph do
     end
 
     Process.exit(pg, :normal)
+    {:noreply, state}
   end
 
-  defp boot_graph_node(%{slug: slug} = state) do
-    config = config()
-    pg_config = config[:pg]
-    docker_host = config[:docker_host]
-    pid = self()
+  def start_link_name(opts) when is_list(opts), do: name(opts[:slug])
 
-    proxy_host = "#{slug}.stacks.#{host_endpoint()}"
-
-    env =
-      [
-        # TODO make this configurable
-        # this is the docker host IP on linux. it's currently not compatible with macos
-        # and it should change if we ever run graph-node directly on the host
-        postgres_host: config()[:docker_host],
-        postgres_port: pg_config[:port],
-        postgres_user: pg_config[:username],
-        postgres_pass: pg_config[:password],
-        postgres_db: db_name(state),
-        ipfs: "ethui-stacks-ipfs:5001",
-        GRAPH_LOG: "info",
-        ETHEREUM_REORG_THRESHOLD: "1",
-        ETHEREUM_ACESTOR_COUNT: "1",
-        ethereum: "anvil:http://#{proxy_host}:4000"
-      ]
-
-    named_args =
-      [
-        "add-host": "#{proxy_host}:#{docker_host}",
-        network: "ethui-stacks",
-        name: "ethui-stacks-#{slug}-graph"
-      ]
-
-    flags = [
-      # forces the container to be deleted after stopping, prevent issues with duplicate container named_args
-      "rm",
-      # makes sure signals are forwarded to the graph node, so that shutdowns work properly
-      "init"
+  def named_args(%{slug: slug} = _state) do
+    [
+      "add-host": "#{slug}.stacks.#{host_endpoint()}:#{config()[:docker_host]}",
+      network: "ethui-stacks",
+      name: "ethui-stacks-#{slug}-graph"
     ]
+  end
 
-    args =
-      format_docker_args(env, named_args, flags)
+  def env(%{slug: slug} = state) do
+    config = config()
 
-    MuonTrap.Daemon.start_link("docker", args,
-      logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
-      stderr_to_stdout: true,
-      exit_status_to_reason: & &1
-    )
+    [
+      postgres_host: config[:docker_host],
+      postgres_port: config[:pg][:port],
+      postgres_user: config[:pg][:username],
+      postgres_pass: config[:pg][:password],
+      postgres_db: db_name(state),
+      ipfs: "ethui-stacks-ipfs:5001",
+      GRAPH_LOG: "info",
+      ETHEREUM_REORG_THRESHOLD: "1",
+      ETHEREUM_ACESTOR_COUNT: "1",
+      ethereum: "anvil:http://#{slug}.stacks.#{host_endpoint()}:4000"
+    ]
   end
 
   defp host_endpoint do
@@ -195,17 +97,5 @@ defmodule Ethui.Services.Graph do
 
   defp db_name(%{slug: slug, hash: hash}) do
     "ethui_stack_#{slug}_#{hash}"
-  end
-
-  defp format_docker_args(env, named_args, flags) do
-    env =
-      Enum.map_join(env, " ", fn {k, v} -> "--env #{k}=#{v}" end)
-
-    named_args = Enum.map_join(named_args, " ", fn {k, v} -> "--#{k} #{v}" end)
-    flags = Enum.map_join(flags, " ", fn f -> "--#{f}" end)
-    image = config()[:graph_node_image]
-
-    "run #{named_args} #{env} #{flags} #{image}"
-    |> String.split(" ")
   end
 end
