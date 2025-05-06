@@ -1,7 +1,6 @@
 defmodule EthuiWeb.ProxyControllerTest do
   use EthuiWeb.ConnCase, async: false
 
-  alias Ethui.Repo
   alias Ethui.Stacks.{Stack, Server}
 
   setup do
