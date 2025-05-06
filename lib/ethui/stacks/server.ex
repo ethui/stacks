@@ -36,6 +36,14 @@ defmodule Ethui.Stacks.Server do
     GenServer.call(__MODULE__, :list)
   end
 
+  def start(%Stack{} = stack) do
+    GenServer.cast(__MODULE__, {:start, stack})
+  end
+
+  def stop(%Stack{} = stack) do
+    GenServer.cast(__MODULE__, {:stop, stack})
+  end
+
   #
   # Server
   #
@@ -43,10 +51,6 @@ defmodule Ethui.Stacks.Server do
   @spec init([]) :: {:ok, t}
   @impl GenServer
   def init(_) do
-    :ok = EctoWatch.subscribe({Stack, :inserted})
-    :ok = EctoWatch.subscribe({Stack, :updated})
-    :ok = EctoWatch.subscribe({Stack, :deleted})
-
     start_all()
 
     {:ok,
@@ -90,7 +94,7 @@ defmodule Ethui.Stacks.Server do
   end
 
   @impl GenServer
-  def handle_info({{Stack, :inserted}, stack}, state) do
+  def handle_cast({:start, stack}, state) do
     case start_stack(stack, state) do
       {:ok, _pid, new_state} ->
         {:noreply, new_state}
@@ -102,12 +106,7 @@ defmodule Ethui.Stacks.Server do
   end
 
   @impl GenServer
-  def handle_info({{Stack, :updated}, _stack}, state) do
-    {:noreply, state}
-  end
-
-  @impl GenServer
-  def handle_info({{Stack, :deleted}, stack}, state) do
+  def handle_cast({:stop , stack}, state) do
     case stop_stack(stack, state) do
       {:ok, new_state} ->
         {:noreply, new_state}
@@ -161,7 +160,7 @@ defmodule Ethui.Stacks.Server do
     Stack
     |> Repo.all()
     |> Enum.each(fn stack ->
-      send(self(), {{Stack, :inserted}, stack})
+      start(stack)
     end)
   end
 

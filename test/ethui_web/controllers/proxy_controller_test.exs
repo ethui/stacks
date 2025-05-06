@@ -2,24 +2,28 @@ defmodule EthuiWeb.ProxyControllerTest do
   use EthuiWeb.ConnCase, async: false
 
   alias Ethui.Repo
-  alias Ethui.Stacks.{Stack}
+  alias Ethui.Stacks.{Stack, Server}
 
   setup do
-    Ecto.Adapters.SQL.Sandbox.checkout(Repo, sandbox: false)
     cleanup()
     :ok
   end
 
   defp cleanup do
-    Repo.delete_all(Stack)
+    Server.list()
+    |> Enum.each(fn slug ->
+      Server.stop(%Stack{slug: slug})
+    end)
+
+    :ok
   end
 
   describe "proxy/2" do
     test "proxies to anvil" do
       slug = "slug10"
 
-      %Stack{slug: slug} |> Repo.insert!()
-      Process.sleep(100)
+      s = %Stack{slug: slug}
+      Server.start(s)
 
       conn =
         anvil_conn(slug)

@@ -6,17 +6,17 @@ defmodule Ethui.Services.AnvilTest do
   alias Ethui.Stacks.{Stack, Server, HttpPorts}
 
   setup do
-    Ecto.Adapters.SQL.Sandbox.checkout(Ethui.Repo, sandbox: false)
     cleanup()
     :ok
   end
 
   defp cleanup do
-    Repo.delete_all(Stack)
-
-    assert_eventually(fn ->
-      Server.list() |> length == 0
+    Server.list()
+    |> Enum.each(fn slug ->
+      Server.stop(%Stack{slug: slug})
     end)
+
+    :ok
   end
 
   test "creates an anvil process" do

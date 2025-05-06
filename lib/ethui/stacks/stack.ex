@@ -12,8 +12,8 @@ defmodule Ethui.Stacks.Stack do
     timestamps(type: :utc_datetime)
   end
 
-  def create_changeset(stack, attrs) do
-    stack
+  def create_changeset(attrs) do
+    %__MODULE__{}
     |> cast(attrs, [:slug])
     |> validate_required([:slug])
     |> unique_constraint(:slug)
