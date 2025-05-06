@@ -25,6 +25,7 @@ in
     watchman
     mprocs
     wait4x
+    sqlite
   ];
 
   services = {
@@ -40,19 +41,7 @@ in
       port = 5499;
       hbaConf = builtins.readFile ./pg_hba.conf;
 
-      initialDatabases = [
-        # for Mix.env == :dev
-        {
-          name = "ethui_dev";
-          pass = "postgres";
-        }
-
-        # for Mix.env == :test
-        {
-          name = "ethui_test";
-          pass = "postgres";
-        }
-      ];
+      initialDatabases = [ ];
 
       # creates an additional user for subgraphs, with permission to create their own databases
       initialScript = "CREATE USER graph CREATEDB SUPERUSER PASSWORD 'graph';";
@@ -64,10 +53,5 @@ in
       wait4x tcp localhost:5499
       mix phx.server
     '';
-  };
-
-  env = {
-    PGDATABASE = "ethui_dev";
-    PGDATABASE_TEST = "ethui_test";
   };
 }

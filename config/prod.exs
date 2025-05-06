@@ -16,13 +16,36 @@ config :swoosh, local: false
 # Do not print debug messages in production
 config :logger, level: :info
 
+config :ethui, Ethui.Repo,
+  default_transaction_mode: :immediate,
+  pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: System.schedulers_online() * 2
+
+server_mode? = System.get_env("ETHUI_STACKS_SERVER_MODE") != nil
+
+if server_mode? do
+  raise "TODO"
+else
+  system_config_root =
+    case :os.type() do
+      {:unix, :darwin} -> Path.join(System.user_home!(), "Library/Application Support")
+      _ -> System.get_env("XDG_CONFIG_HOME") || Path.join(System.user_home!(), ".config")
+    end
+
+  config_root = Path.join(system_config_root, "ethui", "stacks")
+
+  config :ethui,
+         Ethui.Repo,
+         database: Path.join(config_root, "stacks.db")
+end
+
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.
 
 config :ethui, Ethui.Stacks,
-  data_dir_root: raise("TODO"),
-  ipfs_url: raise("TODO"),
-  docker_host: raise("TODO"),
+  data_dir_root: config_root,
+  ipfs_url: "http://127.0.0.1:5001",
+  docker_host: System.get_env("DOCKER_HOST", "172.17.0.1"),
   pg: [
     hostname: raise("TODO"),
     port: raise("TODO"),

@@ -2,7 +2,6 @@ defmodule Ethui.Stacks.ServerTest do
   use Ethui.DataCase
 
   alias Ethui.Stacks.{Server, Stack}
-  alias Ethui.Repo
 
   setup do
     cleanup()

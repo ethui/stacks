@@ -2,14 +2,8 @@ import Config
 
 # Configure your database
 config :ethui, Ethui.Repo,
-  # connect via UNIX socket
-  # if nil, will revert to the hostname
-  socket_dir: System.get_env("PGHOST"),
-  username: System.get_env("USER"),
-  password: System.get_env("PGPASSWORD"),
-  database: System.get_env("PGDATABASE", "ethui_dev"),
-  port: System.get_env("PGPORT", "5432") |> String.to_integer(),
-  hostname: "localhost",
+  database: "data/dev/ethui.db",
+  default_transaction_mode: :immediate,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10,
