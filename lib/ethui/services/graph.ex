@@ -4,6 +4,8 @@ defmodule Ethui.Services.Graph do
     This wraps a MuontipTrap Daemon
   """
 
+  alias Ethui.Services.Pg
+
   use Ethui.Services.Docker,
     image: Application.compile_env(:ethui, Ethui.Stacks)[:graph_node_image],
     name: &__MODULE__.start_link_name/1,
@@ -43,8 +45,22 @@ defmodule Ethui.Services.Graph do
 
   @impl GenServer
   def handle_info(:before_boot, state) do
+    Process.sleep(1000)
+    {:ok, ip} = Pg.ip()
+
+    # TODO wait for postgres
     {:ok, pg} =
-      Postgrex.start_link(config()[:pg])
+      wait_for_postgrex(
+        socket_dir: nil,
+        socket: nil,
+        hostname: ip,
+        port: 5432,
+        username: Pg.username(),
+        password: Pg.password(),
+        database: "postgres",
+        connect_timeout: 20_000
+      )
+      |> IO.inspect()
 
     sql = "CREATE DATABASE #{db_name(state)}"
 
@@ -71,13 +87,10 @@ defmodule Ethui.Services.Graph do
   end
 
   def env(%{slug: slug} = state) do
-    config = config()
-
     [
-      postgres_host: config[:docker_host],
-      postgres_port: config[:pg][:port],
-      postgres_user: config[:pg][:username],
-      postgres_pass: config[:pg][:password],
+      postgres_host: "ethui-stacks-pg",
+      postgres_user: Pg.username(),
+      postgres_pass: Pg.password(),
       postgres_db: db_name(state),
       ipfs: "ethui-stacks-ipfs:5001",
       GRAPH_LOG: "info",
@@ -85,6 +98,7 @@ defmodule Ethui.Services.Graph do
       ETHEREUM_ACESTOR_COUNT: "1",
       ethereum: "anvil:http://#{slug}.stacks.#{host_endpoint()}:4000"
     ]
+    |> IO.inspect()
   end
 
   defp host_endpoint do
@@ -97,5 +111,21 @@ defmodule Ethui.Services.Graph do
 
   defp db_name(%{slug: slug, hash: hash}) do
     "ethui_stack_#{slug}_#{hash}"
+  end
+
+  defp wait_for_postgrex(opts, retries \\ 30, delay \\ 1000) do
+    IO.inspect(retries)
+
+    case Postgrex.start_link(opts) do
+      {:ok, pid} ->
+        {:ok, pid}
+
+      {:error, _} when retries > 0 ->
+        :timer.sleep(delay)
+        wait_for_postgrex(opts, retries - 1, delay)
+
+      err ->
+        err
+    end
   end
 end
