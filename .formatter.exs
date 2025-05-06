@@ -1,4 +1,4 @@
 [
-  import_deps: [:phoenix, :backpex],
+  import_deps: [:phoenix],
   inputs: ["*.{ex,exs}", "{config,lib,test}/**/*.{ex,exs}"]
 ]

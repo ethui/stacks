@@ -5,31 +5,28 @@ defmodule Ethui.Stacks.ServerTest do
   alias Ethui.Repo
 
   setup do
-    Ecto.Adapters.SQL.Sandbox.checkout(Ethui.Repo, sandbox: false)
     cleanup()
     :ok
   end
 
   defp cleanup do
-    Repo.delete_all(Stack)
-
-    assert_eventually(fn ->
-      Server.list() |> length == 0
+    Server.list()
+    |> Enum.each(fn slug ->
+      Server.stop(%Stack{slug: slug})
     end)
+
+    :ok
   end
 
   test "can orchestrate multiple anvils" do
-    %Stack{slug: "slug1"} |> Repo.insert!()
-    s2 = %Stack{slug: "slug2"} |> Repo.insert!()
+    s1 = %Stack{slug: "slug1"}
+    s2 = %Stack{slug: "slug2"}
 
-    assert_eventually(fn ->
-      Server.list() |> length == 2
-    end)
+    Server.start(s1)
+    Server.start(s2)
 
-    s2 |> Repo.delete()
-
-    assert_eventually(fn ->
-      Server.list() |> length == 1
-    end)
+    assert Server.list() |> length == 2
+    s2 |> Server.stop()
+    assert Server.list() |> length == 1
   end
 end
