@@ -60,7 +60,6 @@ defmodule Ethui.Services.Graph do
         database: "postgres",
         connect_timeout: 20_000
       )
-      |> IO.inspect()
 
     sql = "CREATE DATABASE #{db_name(state)}"
 
@@ -98,7 +97,6 @@ defmodule Ethui.Services.Graph do
       ETHEREUM_ACESTOR_COUNT: "1",
       ethereum: "anvil:http://#{slug}.stacks.#{host_endpoint()}:4000"
     ]
-    |> IO.inspect()
   end
 
   defp host_endpoint do
