@@ -1,7 +1,7 @@
 defmodule Ethui.Services.Docker do
   @moduledoc """
     GenServer that manages a single docker container
-    This wraps a MuontipTrap Daemon
+    This wraps a MuontrapTrap Daemon
   """
 
   defmodule BeforeCompile do
@@ -50,8 +50,6 @@ defmodule Ethui.Services.Docker do
       @spec init(any()) :: {:ok, t}
       @impl GenServer
       def init(opts) do
-        Process.flag(:trap_exit, true)
-
         send(self(), :before_boot)
         send(self(), :boot)
 
@@ -73,10 +71,17 @@ defmodule Ethui.Services.Docker do
 
         env = apply_if_fun(@opts[:env], state) || []
         named_args = apply_if_fun(@opts[:named_args], state) || []
+        volumes = apply_if_fun(@opts[:volumes], state) || []
         flags = ["rm", "init"]
 
         args =
-          format_docker_args(env, named_args, flags)
+          format_docker_args(env, named_args, volumes, flags)
+
+        if named_args[:name] do
+          System.cmd("docker", ["rm", "-f", named_args[:name]])
+        end
+
+        Process.flag(:trap_exit, true)
 
         {:ok, proc} =
           MuonTrap.Daemon.start_link("docker", args,
@@ -112,22 +117,21 @@ defmodule Ethui.Services.Docker do
         {:noreply, %{state | logs: new_logs}}
       end
 
-      defp boot() do
-      end
-
       defp apply_if_fun(fun, state) when is_function(fun, 1), do: fun.(state)
       defp apply_if_fun(other, _state), do: other
 
-      defp format_docker_args(env, named_args, flags) do
+      defp format_docker_args(env, named_args, volumes, flags) do
         env =
-          Enum.map_join(env, " ", fn {k, v} -> "--env #{k}=#{v}" end)
+          Enum.flat_map(env, fn {k, v} -> ["--env", "#{k}=#{v}"] end)
 
-        named_args = Enum.map_join(named_args, " ", fn {k, v} -> "--#{k}=#{v}" end)
-        flags = Enum.map_join(flags, " ", fn f -> "--#{f}" end)
+        volumes =
+          Enum.flat_map(volumes, fn {k, v} -> ["-v", "#{k}:#{v}"] end)
+
+        named_args = Enum.map(named_args, fn {k, v} -> "--#{k}=#{v}" end)
+        flags = Enum.map(flags, fn f -> "--#{f}" end)
         image = @opts[:image]
 
-        "run #{named_args} #{env} #{flags} #{image}"
-        |> String.split(~r/\s+/)
+        ["run"] ++ named_args ++ env ++ volumes ++ flags ++ [image]
       end
 
       defp trim(q) do

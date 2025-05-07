@@ -28,6 +28,9 @@ defmodule Ethui.Stacks.Supervisor do
       # global IPFS service
       {Ethui.Services.Ipfs, []},
 
+      # global Postgres service
+      {Ethui.Services.Pg, []},
+
       # services supervisor
       MultiStackSupervisor,
       Server

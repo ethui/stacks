@@ -37,4 +37,6 @@ config :phoenix_live_view,
 
 config :mix_test_watch, clear: true
 
-config :ethui, Ethui.Stacks, data_dir_root: "data/test/stacks"
+config :ethui, Ethui.Stacks,
+  data_dir_root: "data/test/stacks",
+  pg_data_dir: "./data/test/pg"

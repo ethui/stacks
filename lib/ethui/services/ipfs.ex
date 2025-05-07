@@ -1,8 +1,7 @@
 defmodule Ethui.Services.Ipfs do
   @moduledoc """
-      GenServer that manages a global `ipfs` instace, required by graph nodes
-
-      This wraps a MuontipTrap Daemon
+    GenServer that manages a global `ipfs` instace, required by graph nodes
+    This wraps a MuontipTrap Daemon
   """
 
   use Ethui.Services.Docker,
