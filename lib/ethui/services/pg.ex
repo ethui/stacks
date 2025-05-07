@@ -14,7 +14,6 @@ defmodule Ethui.Services.Pg do
     ],
     env: [
       POSTGRES_PASSWORD: @password,
-      # TODO fix these whitespace
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
     ],
     volumes: &__MODULE__.volumes/1
