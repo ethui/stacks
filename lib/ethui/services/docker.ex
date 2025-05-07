@@ -122,17 +122,16 @@ defmodule Ethui.Services.Docker do
 
       defp format_docker_args(env, named_args, volumes, flags) do
         env =
-          Enum.map_join(env, " ", fn {k, v} -> "--env #{k}=#{v}" end)
+          Enum.flat_map(env, fn {k, v} -> ["--env", "#{k}=#{v}"] end)
 
         volumes =
-          Enum.map_join(volumes, " ", fn {k, v} -> "-v #{k}:#{v}" end)
+          Enum.flat_map(volumes, fn {k, v} -> ["-v", "#{k}:#{v}"] end)
 
-        named_args = Enum.map_join(named_args, " ", fn {k, v} -> "--#{k}=#{v}" end)
-        flags = Enum.map_join(flags, " ", fn f -> "--#{f}" end)
+        named_args = Enum.map(named_args, fn {k, v} -> "--#{k}=#{v}" end)
+        flags = Enum.map(flags, fn f -> "--#{f}" end)
         image = @opts[:image]
 
-        "run #{named_args} #{env} #{volumes} #{flags} #{image}"
-        |> String.split(~r/\s+/)
+        ["run"] ++ named_args ++ env ++ volumes ++ flags ++ [image]
       end
 
       defp trim(q) do
