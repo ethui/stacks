@@ -112,8 +112,6 @@ defmodule Ethui.Services.Graph do
   end
 
   defp wait_for_postgrex(opts, retries \\ 30, delay \\ 1000) do
-    IO.inspect(retries)
-
     case Postgrex.start_link(opts) do
       {:ok, pid} ->
         {:ok, pid}
