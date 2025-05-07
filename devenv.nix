@@ -22,5 +22,6 @@ in
 
   packages = with pkgs; [
     sqlite
+    watchman
   ];
 }
