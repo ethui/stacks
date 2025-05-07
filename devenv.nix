@@ -21,6 +21,37 @@ in
   };
 
   packages = with pkgs; [
+    # needed by daisyui
+    watchman
+    mprocs
+    wait4x
     sqlite
   ];
+
+  services = {
+    postgres = {
+      enable = true;
+
+      # allow external connections (docker images)
+      listen_addresses = "0.0.0.0";
+
+      # choosing a non-standard port to not conflict with pg instances that may be running globally
+      # the phoenix app doesn't actually needs this, since it connects through a unix socket,
+      # but we need to expose a port for docker images to reach
+      port = 5499;
+      hbaConf = builtins.readFile ./pg_hba.conf;
+
+      initialDatabases = [ ];
+
+      # creates an additional user for subgraphs, with permission to create their own databases
+      initialScript = "CREATE USER graph CREATEDB SUPERUSER PASSWORD 'graph';";
+    };
+  };
+
+  processes = {
+    iex.exec = ''
+      wait4x tcp localhost:5499
+      mix phx.server
+    '';
+  };
 }
