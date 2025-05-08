@@ -24,7 +24,10 @@ config :ethui,
 # Configures the endpoint
 config :ethui, EthuiWeb.Endpoint,
   url: [host: "lvh.me"],
-  adapter: Bandit.PhoenixAdapter,
+  # Bandit seems to cause issues under heavy load:
+  # https://github.com/mtrudel/bandit/issues/438
+  # the default is Cowboy2, so the below setting should stay commented out
+  # adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: EthuiWeb.ErrorHTML, json: EthuiWeb.ErrorJSON],
     layout: false
