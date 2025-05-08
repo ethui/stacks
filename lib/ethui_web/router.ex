@@ -45,6 +45,7 @@ defmodule EthuiWeb.Router do
 
   scope "/", EthuiWeb do
     pipe_through :proxy
+    get "/logs", LogController, :show
     match :*, "/*proxied_path", ProxyController, :reverse_proxy
   end
 end

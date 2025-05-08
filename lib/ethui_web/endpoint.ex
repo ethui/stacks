@@ -41,6 +41,7 @@ defmodule EthuiWeb.Endpoint do
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
+
   # copies the entire request body into a private field, for later use
   # necessary because Plug.Parsers consumes the body, and merges and parses it along with query params
   # for proxying needs, we need the *raw* body, *without* including query params
