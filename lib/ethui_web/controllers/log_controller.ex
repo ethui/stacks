@@ -4,7 +4,7 @@ defmodule EthuiWeb.LogController do
 
   alias Ethui.Services.Anvil
 
-  def show(%Plug.Conn{assigns: %{proxy: %{slug: slug, component: nil}}} = conn,_params) do
+  def show(%Plug.Conn{assigns: %{proxy: %{slug: slug, component: nil}}} = conn, _params) do
     case Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}) do
       [{pid, _}] ->
         Anvil.subscribe_logs(pid)
