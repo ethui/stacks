@@ -16,8 +16,7 @@ defmodule EthuiWeb.LogController do
 
       _ ->
         conn
-        |> put_status(:not_found)
-        |> json(%{})
+        |> send_resp(:not_found, "")
     end
   end
 

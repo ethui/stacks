@@ -19,8 +19,7 @@ defmodule EthuiWeb.Api.StackController do
       {:ok, stack} <- Repo.insert(changeset),
       _ <- Server.start(stack) do
         conn
-        |> put_status(201)
-        |> json(%{})
+        |> send_resp(201, "")
     else
       {:error, %Ecto.Changeset{} = changeset} ->
         conn
@@ -41,12 +40,12 @@ defmodule EthuiWeb.Api.StackController do
   end
 
   def delete(conn, %{"slug" => slug}) do
-    with %Stack{} = stack <- Repo.get_by(Stack, slug: slug),
+    with %Stack{} = stack <- IO.inspect(Repo.get_by(Stack, slug: slug)),
       _ <- Server.stop(stack),
          _ <- Repo.delete(stack) do
-      conn |> put_status(204) |> json(%{})
+      conn |> send_resp(204, "")
     else
-      {:error, :not_found} ->
+      nil ->
         conn |> put_status(404) |> json(%{status: "error", error: "not found"})
 
         #   {:error, reason} ->

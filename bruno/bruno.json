@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "name": "bruno",
+  "name": "ethui/stacks",
   "type": "collection",
   "ignore": [
     "node_modules",
