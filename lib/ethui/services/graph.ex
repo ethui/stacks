@@ -93,9 +93,10 @@ defmodule Ethui.Services.Graph do
       postgres_db: db_name(state),
       ipfs: "ethui-stacks-ipfs:5001",
       GRAPH_LOG: "info",
+      EXTERNAL_HTTP_BASE_URL: "http://graph.#{slug}.stacks.#{host_endpoint()}:4000",
       ETHEREUM_REORG_THRESHOLD: "1",
       ETHEREUM_ACESTOR_COUNT: "1",
-      ethereum: "anvil:http://#{slug}.stacks.#{host_endpoint()}:4000"
+      ethereum: "#{slug}:http://#{slug}.stacks.#{host_endpoint()}:4000"
     ]
   end
 

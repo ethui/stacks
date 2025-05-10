@@ -16,10 +16,10 @@ defmodule EthuiWeb.Api.StackController do
 
   def create(conn, params) do
     with changeset <- Stack.create_changeset(params),
-      {:ok, stack} <- Repo.insert(changeset),
-      _ <- Server.start(stack) do
-        conn
-        |> send_resp(201, "")
+         {:ok, stack} <- Repo.insert(changeset),
+         _ <- Server.start(stack) do
+      conn
+      |> send_resp(201, "")
     else
       {:error, %Ecto.Changeset{} = changeset} ->
         conn
@@ -41,7 +41,7 @@ defmodule EthuiWeb.Api.StackController do
 
   def delete(conn, %{"slug" => slug}) do
     with %Stack{} = stack <- IO.inspect(Repo.get_by(Stack, slug: slug)),
-      _ <- Server.stop(stack),
+         _ <- Server.stop(stack),
          _ <- Repo.delete(stack) do
       conn |> send_resp(204, "")
     else
