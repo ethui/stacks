@@ -40,7 +40,7 @@ defmodule EthuiWeb.Api.StackController do
   end
 
   def delete(conn, %{"slug" => slug}) do
-    with %Stack{} = stack <- IO.inspect(Repo.get_by(Stack, slug: slug)),
+    with %Stack{} = stack <- Repo.get_by(Stack, slug: slug),
          _ <- Server.stop(stack),
          _ <- Repo.delete(stack) do
       conn |> send_resp(204, "")
