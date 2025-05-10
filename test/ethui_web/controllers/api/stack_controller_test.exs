@@ -22,7 +22,7 @@ defmodule EthuiWeb.Api.StackControllerTest do
         api_conn()
         |> post(~p"/stacks", %{slug: slug})
 
-      assert json_response(conn, 201)
+      assert response(conn, 201)
     end
   end
 
@@ -32,7 +32,7 @@ defmodule EthuiWeb.Api.StackControllerTest do
       slug = "slug2"
 
       conn = conn |> post(~p"/stacks", %{slug: slug})
-      assert json_response(conn, 201)
+      assert response(conn, 201)
 
       conn = conn |> delete(~p"/stacks/#{slug}")
       assert conn.status == 204
