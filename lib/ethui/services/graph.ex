@@ -22,25 +22,8 @@ defmodule Ethui.Services.Graph do
     |> Map.put(:hash, opts[:hash])
   end
 
-  @doc """
-    Find the internal IP of a graph-node docker container
-  """
-  def ip(slug) do
-    case MuonTrap.cmd(
-           "docker",
-           [
-             "inspect",
-             "-f",
-             "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
-             "ethui-stacks-#{slug}-graph"
-           ]
-         ) do
-      {out, _} ->
-        {:ok, out |> String.split("\n") |> Enum.at(0)}
-
-      error ->
-        {:error, error}
-    end
+  def ip_from_slug(slug) do
+    GenServer.call("ethui-stacks-#{slug}-graph", :ip)
   end
 
   @impl GenServer

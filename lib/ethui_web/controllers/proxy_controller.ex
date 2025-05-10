@@ -57,7 +57,7 @@ defmodule EthuiWeb.ProxyController do
   end
 
   defp subgraph_generic(conn, %{"proxied_path" => proxied_path}, slug, target_port) do
-    case Graph.ip(slug) do
+    case Graph.ip_from_slug(slug) do
       {:ok, ip} ->
         url = "http://#{ip}:#{target_port}/#{Enum.join(proxied_path, "/")}"
         forward(conn, url)
