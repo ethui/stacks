@@ -27,12 +27,14 @@ defmodule Ethui.Services.Docker do
       @before_compile unquote(__MODULE__).BeforeCompile
 
       @opts unquote(opts)
+      @name Keyword.get(@opts, :name, __MODULE__)
 
       @type t :: %{
               # muontrap process
               proc: pid | nil,
               logs: :queue.queue(),
-              log_subscribers: MapSet.t()
+              log_subscribers: MapSet.t(),
+              container_name: String.t() | nil
             }
 
       @log_max_size 10_000
@@ -41,6 +43,10 @@ defmodule Ethui.Services.Docker do
         GenServer.start_link(__MODULE__, opts,
           name: apply_if_fun(@opts[:name], opts) || __MODULE__
         )
+      end
+
+      def ip(pid \\ __MODULE__) do
+        GenServer.call(pid, :ip)
       end
 
       #
@@ -56,13 +62,46 @@ defmodule Ethui.Services.Docker do
         base_state = %{
           proc: nil,
           logs: :queue.new(),
-          log_subscribers: MapSet.new()
+          log_subscribers: MapSet.new(),
+          container_name: nil
         }
 
         state =
           extra_init(base_state, opts)
 
         {:ok, state}
+      end
+
+      @impl GenServer
+      def handle_call(:ip, _from, %{container_name: container_name} = state) do
+        reply = case MuonTrap.cmd(
+               "docker",
+               [
+                 "inspect",
+                 "-f",
+                 "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
+                 container_name
+               ]
+             ) do
+          {out, _} ->
+            {:ok, out |> String.split("\n") |> Enum.at(0)}
+
+          error ->
+            {:error, error}
+        end
+
+        {:reply, reply, state}
+      end
+
+      @impl GenServer
+      def handle_cast({:log, line}, %{logs: logs, log_subscribers: subs} = state) do
+        for s <- subs do
+          send(s, {:logs, __MODULE__, @name, [line]})
+        end
+
+        new_logs = :queue.in(line, logs) |> trim()
+
+        {:noreply, %{state | logs: new_logs}}
       end
 
       @impl GenServer
@@ -90,7 +129,7 @@ defmodule Ethui.Services.Docker do
             exit_status_to_reason: & &1
           )
 
-        {:noreply, %{state | proc: proc}}
+        {:noreply, %{state | proc: proc, container_name: named_args[:name]}}
       end
 
       @impl GenServer
@@ -104,17 +143,6 @@ defmodule Ethui.Services.Docker do
             Logger.error("exited with code #{inspect(exit_code)}")
             {:stop, :normal, state}
         end
-      end
-
-      @impl GenServer
-      def handle_cast({:log, line}, %{logs: logs, log_subscribers: subs} = state) do
-        for s <- subs do
-          send(s, {:logs, :anvil, state.slug, [line]})
-        end
-
-        new_logs = :queue.in(line, logs) |> trim()
-
-        {:noreply, %{state | logs: new_logs}}
       end
 
       defp apply_if_fun(fun, state) when is_function(fun, 1), do: fun.(state)

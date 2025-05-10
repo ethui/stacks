@@ -18,24 +18,6 @@ defmodule Ethui.Services.Pg do
     ],
     volumes: &__MODULE__.volumes/1
 
-  def ip do
-    case MuonTrap.cmd(
-           "docker",
-           [
-             "inspect",
-             "-f",
-             "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
-             "ethui-stacks-pg"
-           ]
-         ) do
-      {out, _} ->
-        {:ok, out |> String.split("\n") |> Enum.at(0)}
-
-      error ->
-        {:error, error}
-    end
-  end
-
   def username do
     "postgres"
   end
