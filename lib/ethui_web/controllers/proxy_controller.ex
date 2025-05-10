@@ -6,37 +6,24 @@ defmodule EthuiWeb.ProxyController do
   @doc """
     Forwards requests to the appropriate underlying service
   """
-  def reverse_proxy(conn, params)
+  def reverse_proxy(%Plug.Conn{assigns: %{proxy: %{slug: slug, component: component}}} = conn, params),
+    do: proxy_component(conn, params, {slug, component})
 
-  def reverse_proxy(
-        %Plug.Conn{assigns: %{proxy: %{slug: slug, component: nil}}} = conn,
-        params
-      ) do
-    anvil(conn, params, slug)
-  end
+  defp proxy_component(conn, params, {slug, nil}), do: anvil(conn, params, slug)
 
-  def reverse_proxy(
-        %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph"}}} = conn,
-        params
-      ) do
-    subgraph_generic(conn, params, slug, 8000)
-  end
+  defp proxy_component(conn, params, {slug, "graph"}),
+    do: subgraph_generic(conn, params, slug, 8000)
 
-  def reverse_proxy(
-        %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph-rpc"}}} = conn,
-        params
-      ) do
-    subgraph_generic(conn, params, slug, 8020)
-  end
+  defp proxy_component(conn, params, {slug, "graph-rpc"}),
+    do: subgraph_generic(conn, params, slug, 8020)
 
-  def reverse_proxy(
-        %Plug.Conn{assigns: %{proxy: %{slug: slug, component: "graph-status"}}} = conn,
-        params
-      ) do
-    subgraph_generic(conn, params, slug, 8030)
-  end
+  defp proxy_component(conn, params, {slug, "graph-status"}),
+    do: subgraph_generic(conn, params, slug, 8030)
 
-  def reverse_proxy(%Plug.Conn{assigns: assigns} = conn, _params) do
+  defp proxy_component(conn, params, {slug, "ipfs"}),
+    do: ipfs(conn, params, slug)
+
+  defp proxy_component(%Plug.Conn{assigns: assigns} = conn, _params, _proxy) do
     Logger.error("cannot proxy #{inspect(assigns)}")
 
     conn
@@ -62,6 +49,17 @@ defmodule EthuiWeb.ProxyController do
         url = "http://#{ip}:#{target_port}/#{Enum.join(proxied_path, "/")}"
         forward(conn, url)
 
+      _ ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Stack not found"})
+    end
+  end
+
+  defp ipfs(conn, %{"proxied_path" => proxied_path}, slug) do
+    with {:ok, ip} <- Ethui.Services.Ipfs.ip() do
+      forward(conn, "http://#{ip}:5001/#{Enum.join(proxied_path, "/"")}")
+    else
       _ ->
         conn
         |> put_status(:not_found)
