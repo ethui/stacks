@@ -74,21 +74,22 @@ defmodule Ethui.Services.Docker do
 
       @impl GenServer
       def handle_call(:ip, _from, %{container_name: container_name} = state) do
-        reply = case MuonTrap.cmd(
-               "docker",
-               [
-                 "inspect",
-                 "-f",
-                 "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
-                 container_name
-               ]
-             ) do
-          {out, _} ->
-            {:ok, out |> String.split("\n") |> Enum.at(0)}
+        reply =
+          case MuonTrap.cmd(
+                 "docker",
+                 [
+                   "inspect",
+                   "-f",
+                   "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
+                   container_name
+                 ]
+               ) do
+            {out, _} ->
+              {:ok, out |> String.split("\n") |> Enum.at(0)}
 
-          error ->
-            {:error, error}
-        end
+            error ->
+              {:error, error}
+          end
 
         {:reply, reply, state}
       end
@@ -120,7 +121,7 @@ defmodule Ethui.Services.Docker do
           System.cmd("docker", ["rm", "-f", named_args[:name]])
         end
 
-        Process.flag(:trap_exit, true)
+        # Process.flag(:trap_exit, true)
 
         {:ok, proc} =
           MuonTrap.Daemon.start_link("docker", args,
