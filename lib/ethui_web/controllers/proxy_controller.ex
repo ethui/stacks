@@ -75,13 +75,16 @@ defmodule EthuiWeb.ProxyController do
     proxied_path = Map.get(conn.path_params, "proxied_path", [])
     base_proxy_path = proxy_path(conn.path_info, proxied_path)
 
+    # This relies on Plug.Parsers to having run
+    {:ok, body, conn} = Plug.Conn.read_body(conn)
+
     with {:ok, method} <- method_sym(conn.method),
          {:ok, conn} <-
            send_request(conn,
              method: method,
              url: url,
              query: conn.query_params,
-             body: conn.private[:raw_body]
+             body: body
            ) do
       conn
     else
