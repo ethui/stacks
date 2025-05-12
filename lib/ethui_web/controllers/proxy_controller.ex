@@ -60,9 +60,10 @@ defmodule EthuiWeb.ProxyController do
   end
 
   defp ipfs(conn, %{"proxied_path" => proxied_path}) do
-    with {:ok, ip} <- Ethui.Services.Ipfs.ip() do
-      forward(conn, "http://#{ip}:5001/#{Enum.join(proxied_path, "/")}")
-    else
+    case Ethui.Services.Ipfs.ip() do
+      {:ok, ip} ->
+        forward(conn, "http://#{ip}:5001/#{Enum.join(proxied_path, "/")}")
+
       _ ->
         conn
         |> put_status(:not_found)
