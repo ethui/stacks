@@ -6,8 +6,11 @@ defmodule EthuiWeb.ProxyController do
   @doc """
     Forwards requests to the appropriate underlying service
   """
-  def reverse_proxy(%Plug.Conn{assigns: %{proxy: %{slug: slug, component: component}}} = conn, params),
-    do: proxy_component(conn, params, {slug, component})
+  def reverse_proxy(
+        %Plug.Conn{assigns: %{proxy: %{slug: slug, component: component}}} = conn,
+        params
+      ),
+      do: proxy_component(conn, params, {slug, component})
 
   defp proxy_component(conn, params, {slug, nil}), do: anvil(conn, params, slug)
 
@@ -20,8 +23,8 @@ defmodule EthuiWeb.ProxyController do
   defp proxy_component(conn, params, {slug, "graph-status"}),
     do: subgraph_generic(conn, params, slug, 8030)
 
-  defp proxy_component(conn, params, {slug, "ipfs"}),
-    do: ipfs(conn, params, slug)
+  defp proxy_component(conn, params, {_slug, "ipfs"}),
+    do: ipfs(conn, params)
 
   defp proxy_component(%Plug.Conn{assigns: assigns} = conn, _params, _proxy) do
     Logger.error("cannot proxy #{inspect(assigns)}")
@@ -56,9 +59,9 @@ defmodule EthuiWeb.ProxyController do
     end
   end
 
-  defp ipfs(conn, %{"proxied_path" => proxied_path}, slug) do
+  defp ipfs(conn, %{"proxied_path" => proxied_path}) do
     with {:ok, ip} <- Ethui.Services.Ipfs.ip() do
-      forward(conn, "http://#{ip}:5001/#{Enum.join(proxied_path, "/"")}")
+      forward(conn, "http://#{ip}:5001/#{Enum.join(proxied_path, "/")}")
     else
       _ ->
         conn
