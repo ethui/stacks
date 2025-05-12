@@ -23,7 +23,7 @@ defmodule Ethui.Services.Graph do
   end
 
   def ip_from_slug(slug) do
-    GenServer.call("ethui-stacks-#{slug}-graph", :ip)
+    GenServer.call(name(slug), :ip)
   end
 
   @impl GenServer

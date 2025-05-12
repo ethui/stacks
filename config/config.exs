@@ -76,7 +76,8 @@ config :phoenix, :json_library, Jason
 config :ethui, Ethui.Stacks,
   graph_node_image: "graphprotocol/graph-node:f02dfa2",
   ipfs_image: "ipfs/kubo:v0.34.1",
-  pg_image: "postgres:17.4"
+  pg_image: "postgres:17.4",
+  anvil_bin: System.get_env("ETHUI_STACKS_ANVIL_BIN", "anvil")
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

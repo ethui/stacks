@@ -41,25 +41,9 @@ defmodule EthuiWeb.Endpoint do
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
-  # copies the entire request body into a private field, for later use
-  # necessary because Plug.Parsers consumes the body, and merges and parses it along with query params
-  # for proxying needs, we need the *raw* body, *without* including query params
-  plug :copy_req_body
-
-  plug Plug.Parsers,
-    parsers: [:urlencoded, :multipart, :json],
-    pass: ["*/*"],
-    json_decoder: Phoenix.json_library()
-
-  plug Plug.MethodOverride
-  plug Plug.Head
-  plug Plug.Session, @session_options
   plug EthuiWeb.Router
 
-  defp copy_req_body(conn, _) do
-    # TODO: only do this on /stacks/* requests, which target the proxy controller
-    {:ok, body, _} = Plug.Conn.read_body(conn)
-
-    Plug.Conn.put_private(conn, :raw_body, body)
+  def session_options do
+    @session_options
   end
 end

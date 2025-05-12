@@ -106,7 +106,7 @@ defmodule Ethui.Services.Anvil do
 
     {:ok, proc} =
       MuonTrap.Daemon.start_link(
-        "anvil",
+        anvil_bin(),
         ["--port", to_string(port), "--state", "#{dir}/state.json", "--host", "0.0.0.0"],
         logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
         # TODO maybe patch muontrap to have a separate stream for stderr
@@ -189,6 +189,10 @@ defmodule Ethui.Services.Anvil do
   defp data_dir(slug, hash) do
     root = config() |> Keyword.fetch!(:data_dir_root)
     {:ok, "#{root}/#{slug}.#{hash}/anvil"}
+  end
+
+  defp anvil_bin do
+    config() |> Keyword.fetch!(:anvil_bin)
   end
 
   defp config do

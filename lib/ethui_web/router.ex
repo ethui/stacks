@@ -1,8 +1,22 @@
 defmodule EthuiWeb.Router do
   use EthuiWeb, :router
 
+  # This pipeline was originally in EthuiWeb.Endpoint
+  # but had to be moved here to remove it from the :proxy pipeline
+  pipeline :base do
+    plug Plug.Parsers,
+      parsers: [:urlencoded, :multipart, :json],
+      pass: ["*/*"],
+      json_decoder: Phoenix.json_library()
+
+    plug Plug.MethodOverride
+    plug Plug.Head
+    plug Plug.Session, EthuiWeb.Endpoint.session_options()
+  end
+
   pipeline :browser do
     plug :accepts, ["html"]
+
     plug :fetch_session
     plug :fetch_live_flash
     plug :put_root_layout, html: {EthuiWeb.Layouts, :root}
@@ -19,7 +33,7 @@ defmodule EthuiWeb.Router do
   end
 
   scope "/", EthuiWeb, host: "api." do
-    pipe_through :api
+    pipe_through [:base, :api]
 
     resources "/stacks", Api.StackController, param: "slug" do
       # get "/logs", StackController, :logs
@@ -36,7 +50,7 @@ defmodule EthuiWeb.Router do
     import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
-      pipe_through :browser
+      pipe_through [:base, :browser]
 
       live_dashboard "/dashboard", metrics: EthuiWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
@@ -45,6 +59,7 @@ defmodule EthuiWeb.Router do
 
   scope "/", EthuiWeb do
     pipe_through :proxy
+
     get "/logs", LogController, :show
     match :*, "/*proxied_path", ProxyController, :reverse_proxy
   end
