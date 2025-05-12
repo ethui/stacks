@@ -26,7 +26,8 @@ defmodule Ethui.Services.Anvil do
           slug: String.t(),
           # directory where state and IPC socket is stored
           dir: String.t(),
-          log_subscribers: MapSet.t()
+          log_subscribers: MapSet.t(),
+          chain_id: String.t()
         }
 
   @doc "Start an anvil instance"
@@ -93,7 +94,8 @@ defmodule Ethui.Services.Anvil do
          logs: :queue.new(),
          dir: dir,
          slug: opts[:slug],
-         log_subscribers: MapSet.new()
+         log_subscribers: MapSet.new(),
+         chain_id: chain_id()
        }}
     else
       error -> error
@@ -101,13 +103,22 @@ defmodule Ethui.Services.Anvil do
   end
 
   @impl GenServer
-  def handle_info(:boot, %{port: port, dir: dir} = state) do
+  def handle_info(:boot, %{port: port, dir: dir, chain_id: chain_id} = state) do
     pid = self()
 
     {:ok, proc} =
       MuonTrap.Daemon.start_link(
         anvil_bin(),
-        ["--port", to_string(port), "--state", "#{dir}/state.json", "--host", "0.0.0.0"],
+        [
+          "--port",
+          to_string(port),
+          "--state",
+          "#{dir}/state.json",
+          "--host",
+          "0.0.0.0",
+          "--chain-id",
+          to_string(chain_id)
+        ],
         logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
         # TODO maybe patch muontrap to have a separate stream for stderr
         stderr_to_stdout: true,
@@ -193,6 +204,12 @@ defmodule Ethui.Services.Anvil do
 
   defp anvil_bin do
     config() |> Keyword.fetch!(:anvil_bin)
+  end
+
+  defp chain_id do
+    prefix = config() |> Keyword.fetch!(:chain_id_prefix)
+    <<val::32>> = <<prefix::16, 31337::16>>
+    val
   end
 
   defp config do
