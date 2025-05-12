@@ -24,7 +24,7 @@ defmodule EthuiWeb.ProxyController do
     do: subgraph_generic(conn, params, slug, 8030)
 
   defp proxy_component(conn, params, {_slug, "ipfs"}),
-    do: ipfs(conn, IO.inspect(params))
+    do: ipfs(conn, params)
 
   defp proxy_component(%Plug.Conn{assigns: assigns} = conn, _params, _proxy) do
     Logger.error("cannot proxy #{inspect(assigns)}")
@@ -60,8 +60,6 @@ defmodule EthuiWeb.ProxyController do
   end
 
   defp ipfs(conn, %{"proxied_path" => proxied_path}) do
-    IO.inspect(conn)
-
     case Ethui.Services.Ipfs.ip() do
       {:ok, ip} ->
         forward(conn, "http://#{ip}:5001/#{Enum.join(proxied_path, "/")}")
