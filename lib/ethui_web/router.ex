@@ -29,6 +29,7 @@ defmodule EthuiWeb.Router do
   end
 
   pipeline :proxy do
+    plug CORSPlug, origin: ["*"]
     plug EthuiWeb.Plugs.StackSubdomain
   end
 
