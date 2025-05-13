@@ -1,0 +1,48 @@
+name: deploy stacks.ethui.dev
+
+on:
+  push:
+    branches:
+      - main
+      - deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      MIX_ENV: prod
+      SSH_HOST: ${{ secrets.DIGITALOCEAN_USER }}@${{ secrets.DIGITALOCEAN_HOST }}
+      DEPLOY_PATH: /home/${{ secrets.DIGITALOCEAN_USER }}/stacks
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: erlef/setup-beam@v1
+      with:
+        elixir-version: '1.18.3'
+        otp-version: 'OTP-27'
+
+    - run: mix deps.get
+    - run: mix compile
+    - run: mix release
+
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh/
+        echo "${{ secrets.DIGITALOCEAN_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan ${{ secrets.DIGITALOCEAN_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Upload release via rsync
+      run: |
+        rsync \
+          -az \
+          --delete \
+          _build/prod/rel/ethui/ \
+          $SSH_HOST:$DEPLOY_PATH
+
+    - name: Restart app
+      run: |
+        ssh $SSH_HOST 'cd $DEPLOY_PATH && echo "asd" && touch asd'
+
