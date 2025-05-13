@@ -10,10 +10,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    env:
-      MIX_ENV: prod
-      SSH_HOST: ${{ secrets.DIGITALOCEAN_USER }}@${{ secrets.DIGITALOCEAN_HOST }}
-      DEPLOY_PATH: /home/${{ secrets.DIGITALOCEAN_USER }}/stacks
+    environment: production
 
     steps:
     - uses: actions/checkout@v3
@@ -32,7 +29,7 @@ jobs:
         mkdir -p ~/.ssh/
         echo "${{ secrets.DIGITALOCEAN_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan ${{ secrets.DIGITALOCEAN_HOST }} >> ~/.ssh/known_hosts
+        ssh-keyscan $DIGITALOCEAN_HOST >> ~/.ssh/known_hosts
 
     - name: Upload release via rsync
       run: |
