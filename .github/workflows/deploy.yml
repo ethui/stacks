@@ -12,6 +12,9 @@ jobs:
 
     environment: production
 
+    env:
+      MIX_ENV: prod
+
     steps:
     - uses: actions/checkout@v3
 
