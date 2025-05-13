@@ -24,6 +24,8 @@ jobs:
     - run: mix compile
     - run: mix release
 
+    - run: ssh-keyscan stacks.ethui.dev
+    - run: ssh-keyscan $DIGITALOCEAN_HOST
     - name: Set up SSH
       run: |
         mkdir -p ~/.ssh/
