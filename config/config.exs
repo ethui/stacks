@@ -13,13 +13,11 @@ config :ethui,
   ecto_repos: [Ethui.Repo],
   generators: [timestamp_type: :utc_datetime]
 
-server_mode? = System.get_env("ETHUI_STACKS_SERVER_MODE") != nil
-
 config :ethui,
        Ethui.Repo,
        # ssl: true,
        pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-       adapter: if(server_mode?, do: Ecto.Adapters.Postgres, else: Ecto.Adapters.SQLite3)
+       adapter: Ecto.Adapters.SQLite3
 
 # Configures the endpoint
 config :ethui, EthuiWeb.Endpoint,
@@ -78,6 +76,7 @@ config :ethui, Ethui.Stacks,
   ipfs_image: "ipfs/kubo:v0.34.1",
   pg_image: "postgres:17.4",
   anvil_bin: System.get_env("ETHUI_STACKS_ANVIL_BIN", "anvil"),
+  docker_host: System.get_env("DOCKER_HOST", "172.17.0.1"),
   chain_id_prefix: 0x00EE
 
 # Import environment specific config. This must remain at the bottom
