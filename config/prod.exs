@@ -23,21 +23,21 @@ config :ethui, Ethui.Repo,
 
 system_config_root =
   case :os.type() do
-    {:unix, :darwin} -> Path.join(System.user_home!(), "Library/Application Support")
-    _ -> System.get_env("XDG_CONFIG_HOME") || Path.join(System.user_home!(), ".config")
+    {:unix, :darwin} -> Path.join([System.user_home!(), "Library/Application Support"])
+    _ -> System.get_env("XDG_CONFIG_HOME") || Path.join([System.user_home!(), ".config"])
   end
 
-config_root = Path.join(system_config_root, "ethui", "stacks")
+config_root = Path.join([system_config_root, "ethui", "stacks"])
 
 config :ethui,
        Ethui.Repo,
-       database: Path.join(config_root, "stacks.db")
+       database: Path.join([config_root, "stacks.db"])
 
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.
 
 config :ethui, Ethui.Stacks,
-  data_dir_root: Path.join(config_root, "stacks"),
-  pg_data_dir: Path.join(config_root, "pg"),
-  ipfs_data_dir: Path.join(config_root, "ipfs"),
+  data_dir_root: Path.join([config_root, "stacks"]),
+  pg_data_dir: Path.join([config_root, "pg"]),
+  ipfs_data_dir: Path.join([config_root, "ipfs"]),
   chain_id_prefix: 0x00EE
