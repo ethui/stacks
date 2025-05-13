@@ -31,7 +31,13 @@ config :ethui, EthuiWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Ethui.PubSub,
-  live_view: [signing_salt: "G8Rh0+AS"]
+  live_view: [signing_salt: "G8Rh0+AS"],
+  session_options: [
+    store: :cookie,
+    key: "_ethui_key",
+    signing_salt: "kEJ16v2a",
+    same_site: "Lax"
+  ]
 
 # Configures the mailer
 #

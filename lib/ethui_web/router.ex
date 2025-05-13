@@ -11,7 +11,7 @@ defmodule EthuiWeb.Router do
 
     plug Plug.MethodOverride
     plug Plug.Head
-    plug Plug.Session, EthuiWeb.Endpoint.session_options()
+    plug Plug.Session, Application.compile_env(:ethui, EthuiWeb.Endpoint)[:session_options]
   end
 
   pipeline :browser do
