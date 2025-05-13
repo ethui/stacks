@@ -24,14 +24,15 @@ jobs:
     - run: mix compile
     - run: mix release
 
+    - run: echo ${{ vars.DIGITALOCEAN_HOST }}
     - run: ssh-keyscan stacks.ethui.dev
-    - run: ssh-keyscan ${{ env.DIGITALOCEAN_HOST }}
+    - run: ssh-keyscan ${{ vars.DIGITALOCEAN_HOST }}
     - name: Set up SSH
       run: |
         mkdir -p ~/.ssh/
         echo "${{ secrets.DIGITALOCEAN_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan ${{ env.DIGITALOCEAN_HOST }} >> ~/.ssh/known_hosts
+        ssh-keyscan ${{ vars.DIGITALOCEAN_HOST }} >> ~/.ssh/known_hosts
 
     - name: Upload release via rsync
       run: |
@@ -39,9 +40,9 @@ jobs:
           -az \
           --delete \
           _build/prod/rel/ethui/ \
-          ${{ env.SSH_HOST }}:$DEPLOY_PATH
+          ${{ vars.SSH_HOST }}:$DEPLOY_PATH
 
     - name: Restart app
       run: |
-        ssh ${{ env.SSH_HOST }} 'cd ${{ env.DEPLOY_PATH }} && echo "asd" && touch asd'
+        ssh ${{ vars.SSH_HOST }} 'cd ${{ vars.DEPLOY_PATH }} && echo "asd" && touch asd'
 
