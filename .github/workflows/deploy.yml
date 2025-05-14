@@ -42,9 +42,9 @@ jobs:
           -az \
           --delete \
           _build/prod/rel/ethui/ \
-          ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}:$DEPLOY_PATH
+          ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}:${{ vars.DEPLOY_PATH }}
 
     - name: Restart app
       run: |
-        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} 'echo "asd" && touch asd'
+        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} './stacks/ethui/bin/ethui restart'
 
