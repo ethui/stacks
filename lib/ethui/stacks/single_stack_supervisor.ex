@@ -9,6 +9,8 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
 
   alias Ethui.Services.{Anvil, Graph}
 
+  @enable_graph Mix.env() == :test
+
   @type opts :: [
           slug: String.t(),
           anvil: Anvil.opts(),
@@ -29,10 +31,10 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
 
     # runnings subgraphs in test mode is not feasible, so we skip them
     children =
-      if Mix.env() == :test do
-        children
-      else
+      if @enable_graph do
         [{Graph, opts[:graph]} | children]
+      else
+        children
       end
 
     Supervisor.init(children, strategy: :one_for_one)
