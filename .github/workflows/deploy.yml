@@ -52,6 +52,12 @@ jobs:
           source env.sh
           $bin eval "Ethui.Release.db_create"
           $bin eval "Ethui.Release.migrate"
-          $bin restart
+
+          $bin pid
+          if [[ $? == 0]]; then 
+            $bin restart
+          else
+            $bin start
+          fi
         EOF
 
