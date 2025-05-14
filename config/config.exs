@@ -30,7 +30,9 @@ config :ethui, EthuiWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Ethui.PubSub,
-  live_view: [signing_salt: "G8Rh0+AS"],
+  live_view: [signing_salt: "G8Rh0+AS"]
+
+config :ethui,
   session_options: [
     store: :cookie,
     key: "_ethui_key",

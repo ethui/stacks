@@ -5,9 +5,17 @@ defmodule Ethui.Services.Ipfs do
   """
 
   use Ethui.Services.Docker,
-    image: Application.compile_env(:ethui, Ethui.Stacks)[:ipfs_image],
+    image: &__MODULE__.docker_image/0,
     named_args: [
       network: "ethui-stacks",
       name: "ethui-stacks-ipfs"
     ]
+
+  def docker_image do
+    config()[:ipfs_image]
+  end
+
+  defp config do
+    Application.get_env(:ethui, Ethui.Stacks)
+  end
 end

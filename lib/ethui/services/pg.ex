@@ -7,7 +7,7 @@ defmodule Ethui.Services.Pg do
   @password "postgres"
 
   use Ethui.Services.Docker,
-    image: Application.compile_env(:ethui, Ethui.Stacks)[:pg_image],
+    image: &__MODULE__.docker_image/0,
     named_args: [
       network: "ethui-stacks",
       name: "ethui-stacks-pg"
@@ -32,6 +32,10 @@ defmodule Ethui.Services.Pg do
     [
       "#{config[:pg_data_dir]}": "/var/lib/postgresql/data"
     ]
+  end
+
+  def docker_image do
+    config()[:pg_image]
   end
 
   defp config do

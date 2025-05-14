@@ -7,7 +7,7 @@ defmodule Ethui.Services.Graph do
   alias Ethui.Services.Pg
 
   use Ethui.Services.Docker,
-    image: Application.compile_env(:ethui, Ethui.Stacks)[:graph_node_image],
+    image: &__MODULE__.docker_image/0,
     name: &__MODULE__.start_link_name/1,
     named_args: &__MODULE__.named_args/1,
     env: &__MODULE__.env/1
@@ -81,6 +81,10 @@ defmodule Ethui.Services.Graph do
       ETHEREUM_ACESTOR_COUNT: "1",
       ethereum: "#{slug}:http://#{slug}.stacks.#{host_endpoint()}:4000"
     ]
+  end
+
+  def docker_image do
+    config()[:graph_node_image]
   end
 
   defp host_endpoint do
