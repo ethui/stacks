@@ -27,7 +27,7 @@ jobs:
     - run: mix compile
     - run: mix release
 
-    - uses: webfactory/ssh-agent@a6f90b1 # v0.9.1, hardcoded hash for security
+    - uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1, hardcoded hash for security
       with:
         ssh-private-key: ${{ secrets.DIGITALOCEAN_DEPLOY_KEY }}
 
