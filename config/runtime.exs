@@ -21,6 +21,19 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() == :prod do
+  system_config_root =
+    case :os.type() do
+      {:unix, :darwin} -> Path.join([System.user_home!(), "Library/Application Support"])
+      _ -> System.get_env("ETHUI_STACKS_DATA_ROOT") || Path.join([System.user_home!(), ".config"])
+    end
+
+  data_root =
+    System.get_env("ETHUI_STACKS_DATA_ROOT") || raise("missing env var ETHUI_STACKS_DATA_ROOT")
+
+  config :ethui,
+         Ethui.Repo,
+         database: Path.join([data_root, "db.sqlite3"])
+
   config :ethui, Ethui.Repo,
     # ssl: true,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
@@ -53,6 +66,12 @@ if config_env() == :prod do
       port: port
     ],
     secret_key_base: secret_key_base
+
+  config :ethui, Ethui.Stacks,
+    data_dir_root: Path.join([data_root, "stacks"]),
+    pg_data_dir: Path.join([data_root, "pg"]),
+    ipfs_data_dir: Path.join([data_root, "ipfs"]),
+    chain_id_prefix: 0x00EE
 
   # ## SSL Support
   #
