@@ -51,7 +51,7 @@ jobs:
           cd stacks.ethui.dev
           source env.sh
           echo $bin
-          $bin eval "Ethui.Release.create_db"
+          $bin eval "Ethui.Release.db_create"
           $bin eval "Ethui.Release.migrate"
           $bin restart
         EOF
