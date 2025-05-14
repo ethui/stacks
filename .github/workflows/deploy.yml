@@ -50,8 +50,8 @@ jobs:
         ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<EOF
           cd stacks.ethui.dev
           source env.sh
-          \$bin eval "Ethui.Release.create()"
-          \$bin eval "Ethui.Release.migrate()"
+          \$bin eval "Ethui.Release.create_db"
+          \$bin eval "Ethui.Release.migrate"
           \$bin restart
         EOF
 

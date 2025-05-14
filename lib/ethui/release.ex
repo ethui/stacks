@@ -1,7 +1,7 @@
 defmodule Ethui.Release do
   @app :ethui
 
-  def create do
+  def db_create do
     for repo <- repos() do
       case repo.__adapter__().storage_up(repo.config()) do
         :ok -> IO.puts("Database created")
