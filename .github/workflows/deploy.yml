@@ -34,15 +34,15 @@ jobs:
     - run: mkdir -p ~/.ssh/
     - run: ssh-keyscan ${{ vars.DIGITALOCEAN_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Upload release via rsync
-      run: |
-        rsync \
-          -az \
-          --delete \
-          _build/prod/rel/ethui/ \
-          ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}:$DEPLOY_PATH
+    # - name: Upload release via rsync
+    #   run: |
+    #     rsync \
+    #       -az \
+    #       --delete \
+    #       _build/prod/rel/ethui/ \
+    #       ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}:$DEPLOY_PATH
 
     - name: Restart app
       run: |
-        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} 'cd ${{ vars.DEPLOY_PATH }} && echo "asd" && touch asd'
+        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} 'cd echo "asd" && touch asd'
 
