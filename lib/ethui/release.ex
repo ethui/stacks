@@ -3,7 +3,7 @@ defmodule Ethui.Release do
 
   def create do
     for repo <- repos() do
-      case repo.__adapter__.storage_up(repo.config()) do
+      case repo.__adapter__().storage_up(repo.config()) do
         :ok -> Mix.shell().info("Database created")
         {:error, :already_up} -> Mix.shell().info("Database already created")
         {:error, term} -> Mix.raise("Error creating database: #{inspect(term)}")
