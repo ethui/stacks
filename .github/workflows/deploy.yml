@@ -50,6 +50,7 @@ jobs:
           source stacks.env.sh
           stacks=${{ vars.DEPLOY_PATH }}/bin/ethui
 
+          $stacks eval "Ethui.Release.create"
           $stacks eval "Ethui.Release.migrate"
           $stacks restart
         ENF
