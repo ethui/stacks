@@ -27,12 +27,12 @@ jobs:
     - run: mix compile
     - run: mix release
 
-    - name: Set up SSH
-      run: |
-        mkdir -p ~/.ssh/
-        echo "${{ secrets.DIGITALOCEAN_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan ${{ vars.DIGITALOCEAN_HOST }} >> ~/.ssh/known_hosts
+    - uses: webfactory/ssh-agent@a6f90b1 # v0.9.1, hardcoded hash for security
+      with:
+        ssh-private-key: ${{ secrets.DIGITALOCEAN_DEPLOY_KEY }}
+
+    - run: mkdir -p ~/.ssh/
+    - run: ssh-keyscan ${{ vars.DIGITALOCEAN_HOST }} >> ~/.ssh/known_hosts
 
     - name: Upload release via rsync
       run: |
