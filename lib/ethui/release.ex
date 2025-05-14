@@ -1,6 +1,16 @@
 defmodule Ethui.Release do
   @app :ethui
 
+  def create do
+    for repo <- repos() do
+      case repo.__adapter__.storage_up(repo.config()) do
+        :ok -> Mix.shell().info("Database created")
+        {:error, :already_up} -> Mix.shell().info("Database already created")
+        {:error, term} -> Mix.raise("Error creating database: #{inspect(term)}")
+      end
+    end
+  end
+
   def migrate do
     for repo <- repos() do
       Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :up, all: true))
