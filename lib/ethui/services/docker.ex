@@ -147,6 +147,7 @@ defmodule Ethui.Services.Docker do
         end
       end
 
+      defp apply_if_fun(fun, state) when is_function(fun, 0), do: fun.()
       defp apply_if_fun(fun, state) when is_function(fun, 1), do: fun.(state)
       defp apply_if_fun(other, _state), do: other
 
@@ -159,7 +160,6 @@ defmodule Ethui.Services.Docker do
 
         named_args = Enum.map(named_args, fn {k, v} -> "--#{k}=#{v}" end)
         flags = Enum.map(flags, fn f -> "--#{f}" end)
-        image = @opts[:image]
 
         ["run"] ++ named_args ++ env ++ volumes ++ flags ++ [image]
       end
