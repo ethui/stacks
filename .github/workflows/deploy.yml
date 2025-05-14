@@ -46,5 +46,5 @@ jobs:
 
     - name: Restart app
       run: |
-        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} './stacks/ethui/bin/ethui restart'
+        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} '${{ vars.DEPLOY_PATH}}/bin/ethui restart'
 
