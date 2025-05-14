@@ -31,18 +31,20 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.DIGITALOCEAN_DEPLOY_KEY }}
 
-    - run: mkdir -p ~/.ssh/
     - run: ssh-keyscan ${{ vars.DIGITALOCEAN_HOST }} >> ~/.ssh/known_hosts
 
-    # - name: Upload release via rsync
-    #   run: |
-    #     rsync \
-    #       -az \
-    #       --delete \
-    #       _build/prod/rel/ethui/ \
-    #       ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}:$DEPLOY_PATH
+    - name: Create deploy dir
+      run: ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} 'mkdir -p stacks'
+
+    - name: Upload
+      run: |
+        rsync \
+          -az \
+          --delete \
+          _build/prod/rel/ethui/ \
+          ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}:$DEPLOY_PATH
 
     - name: Restart app
       run: |
-        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} 'cd echo "asd" && touch asd'
+        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} 'echo "asd" && touch asd'
 
