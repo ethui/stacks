@@ -47,11 +47,12 @@ jobs:
     - name: Restart app
       run: |
         bin=${{ vars.DEPLOY_PATH }}/bin/ethui
-        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<EOF
+        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<-EOF
           cd stacks.ethui.dev
           source env.sh
-          \$bin eval "Ethui.Release.create_db"
-          \$bin eval "Ethui.Release.migrate"
-          \$bin restart
+          echo $bin
+          $bin eval "Ethui.Release.create_db"
+          $bin eval "Ethui.Release.migrate"
+          $bin restart
         EOF
 
