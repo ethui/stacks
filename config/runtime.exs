@@ -21,12 +21,6 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() == :prod do
-  system_config_root =
-    case :os.type() do
-      {:unix, :darwin} -> Path.join([System.user_home!(), "Library/Application Support"])
-      _ -> System.get_env("ETHUI_STACKS_DATA_ROOT") || Path.join([System.user_home!(), ".config"])
-    end
-
   data_root =
     System.get_env("ETHUI_STACKS_DATA_ROOT") || raise("missing env var ETHUI_STACKS_DATA_ROOT")
 
