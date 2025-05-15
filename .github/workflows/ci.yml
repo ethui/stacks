@@ -97,8 +97,8 @@ jobs:
     - name: Restart app
       run: |
         ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<-EOF
-          release_path=${{ vars.DEPLOY_PATH }}
-          new_release_path=${{ vars.DEPLOY_PATH }}-new
+          export release_path=${{ vars.DEPLOY_PATH }}
+          export new_release_path=${{ vars.DEPLOY_PATH }}-new
 
           echo "$release_path"
           cd stacks.ethui.dev
