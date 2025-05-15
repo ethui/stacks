@@ -112,14 +112,10 @@ jobs:
         ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<-EOF
           echo "cd"
           cd stacks.ethui.dev
-          echo "source"
           source env.sh
-          echo "stop"
-          $bin stop || true
-          echo "eval"
           $bin eval "Ethui.Release.db_create"
           $bin eval "Ethui.Release.migrate"
           echo "daemon"
-          $bin daemon
+          $bin stop; $bin daemon
         EOF
 
