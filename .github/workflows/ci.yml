@@ -16,20 +16,7 @@ jobs:
   # 
   test:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-
     env:
-      USER: postgres
-      PGPASSWORD: postgres
-      PGDATABASE_TEST: postgres
       MIX_ENV: test
 
     steps:
@@ -52,6 +39,7 @@ jobs:
 
     - run: mix deps.get
     - run: mix compile
+    - run: mix ecto.create
     - run: mix ecto.migrate
     - run: mix credo
     - run: mix test
@@ -111,19 +99,19 @@ jobs:
         ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<-EOF
           release_path=${{ vars.DEPLOY_PATH }}
           new_release_path=${{ vars.DEPLOY_PATH }}-new
-          bin=${{ vars.DEPLOY_PATH }}/bin/ethui
 
+          echo "$release_path"
           cd stacks.ethui.dev
           source env.sh
           echo "create"
-          $bin eval "Ethui.Release.db_create"
+          ./build/bin/ethui eval "Ethui.Release.db_create"
           echo "migrate"
-          $bin eval "Ethui.Release.migrate"
+          ./build/bin/ethui eval "Ethui.Release.migrate"
           echo "stop"
-          $bin stop || true
+          ./build/bin/ethui stop || true
           rm -rf $release_path
           mv $new_release_path $deploy_path
           echo "daemon"
-          $bin stop; $bin daemon
+          $bin daemon
         EOF
 
