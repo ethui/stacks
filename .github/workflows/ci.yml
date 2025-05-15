@@ -101,17 +101,14 @@ jobs:
           new_release_path=${{ vars.DEPLOY_PATH }}-new
 
           cd stacks.ethui.dev
-          bin=./build/bin/ethui
           source env.sh
-          echo "create"
-          ./build/bin/ethui eval "Ethui.Release.db_create"
-          echo "migrate"
-          ./build/bin/ethui eval "Ethui.Release.migrate"
-          echo "stop"
-          ./build/bin/ethui stop || true
+
+          out=$(./build/bin/ethui eval "Ethui.Release.before_release")
+          out=(./build/bin/ethui stop || true)
+
           rm -rf \$release_path
           mv \$new_release_path \$deploy_path
           echo "daemon"
-          $bin daemon
+          ./build/bin/ethui daemon
         EOF
 
