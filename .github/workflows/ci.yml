@@ -112,17 +112,9 @@ jobs:
         ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<-EOF
           cd stacks.ethui.dev
           source env.sh
-          $bin eval "Ethui.Release.db_create"
+          $bin stop
           $bin eval "Ethui.Release.migrate"
-
-          $bin pid
-          if [[ $? == 0]]; then 
-            echo restarting
-            $bin restart
-          else
-            echo starting
-            $bin start
-            echo $?
-          fi
+          $bin eval "Ethui.Release.migrate"
+          $bin daemon
         EOF
 
