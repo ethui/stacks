@@ -36,6 +36,8 @@ defmodule EthuiWeb.Endpoint do
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
+  plug Plug.SSL, rewrite_on: [:x_forwarded_proto], hsts: true
+
   plug EthuiWeb.Router
 
   def session_options do

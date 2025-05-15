@@ -21,8 +21,6 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() == :prod do
-  use_letsencrypt? = System.get_env("LETSENCRYPT_ENABLE") != nil
-
   data_root =
     System.get_env("DATA_ROOT") || raise("missing env var DATA_ROOT")
 
@@ -47,18 +45,15 @@ if config_env() == :prod do
       """
 
   host = System.get_env("PHX_HOST") || "stacks.ethui.dev"
+  port = System.get_env("PHX_PORT") || 4000
 
   config :ethui, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :ethui, EthuiWeb.Endpoint,
-    url: [host: host, port: 443, scheme: "https", sni_fun: &CertMagex.sni_fun/1],
+    http: [ip: {127, 0, 0, 1}, port: port],
+    url: [host: host, port: 443, scheme: "https"],
+    force_ssl: [rewrite_on: [:x_forwarded_proto]],
     secret_key_base: secret_key_base
-
-  if use_letsencrypt? do
-    config :certmagex,
-      user_email:
-        System.get_env("LETSENCRYPT_EMAIL") || raise("missing env var LETSENCRYPT_EMAIL")
-  end
 
   config :ethui, Ethui.Stacks,
     data_dir_root: Path.join([data_root, "stacks"]),
