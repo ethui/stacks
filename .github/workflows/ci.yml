@@ -108,10 +108,11 @@ jobs:
 
     - name: Restart app
       run: |
-        release_path=${{ vars.DEPLOY_PATH }}
-        new_release_path=${{ vars.DEPLOY_PATH }}-new
-        bin=${{ vars.DEPLOY_PATH }}/bin/ethui
         ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<-EOF
+          release_path=${{ vars.DEPLOY_PATH }}
+          new_release_path=${{ vars.DEPLOY_PATH }}-new
+          bin=${{ vars.DEPLOY_PATH }}/bin/ethui
+
           cd stacks.ethui.dev
           source env.sh
           echo "create"
