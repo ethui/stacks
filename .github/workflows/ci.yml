@@ -102,6 +102,7 @@ jobs:
 
           echo a "$release_path" b
           echo a "${{ vars.DEPLOY_PATH }}" b
+          echo a "\$release_path" b
           cd stacks.ethui.dev
           bin=./build/bin/ethui
           source env.sh
