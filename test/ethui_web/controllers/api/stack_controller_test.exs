@@ -22,6 +22,7 @@ defmodule EthuiWeb.Api.StackControllerTest do
         api_conn()
         |> post(~p"/stacks", %{slug: slug})
 
+      IO.inspect(conn)
       assert response(conn, 201)
     end
   end
