@@ -42,5 +42,6 @@ mv $new_release_path $release_path
 
 echo "starting daemon"
 $bin daemon
+sleep 5
 pid=$($bin pid)
 echo "new pid: $pid"
