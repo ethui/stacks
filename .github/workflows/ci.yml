@@ -104,17 +104,21 @@ jobs:
           -az \
           --delete \
           _build/prod/rel/ethui/ \
-          ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}:${{ vars.DEPLOY_PATH }}
+          ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}:${{ vars.DEPLOY_PATH }}-new
 
     - name: Restart app
       run: |
+        release_path=${{ vars.DEPLOY_PATH }}
+        new_release_path=${{ vars.DEPLOY_PATH }}-new
         bin=${{ vars.DEPLOY_PATH }}/bin/ethui
         ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<-EOF
-          echo "cd"
           cd stacks.ethui.dev
           source env.sh
           $bin eval "Ethui.Release.db_create"
           $bin eval "Ethui.Release.migrate"
+          $bin stop
+          rm -rf $release_path
+          mv $new_release_path $deploy_path
           echo "daemon"
           $bin stop; $bin daemon
         EOF
