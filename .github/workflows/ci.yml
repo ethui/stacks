@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MIX_ENV: test
+      SSH_URL: ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}
 
     steps:
     - uses: actions/checkout@v4
@@ -84,33 +85,18 @@ jobs:
     - run: ssh-keyscan ${{ vars.DIGITALOCEAN_HOST }} >> ~/.ssh/known_hosts
 
     - name: Create deploy dir
-      run: ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} 'mkdir -p stacks.ethui.dev'
+      run: ssh $SSH_URL 'mkdir -p stacks.ethui.dev'
 
     - name: Upload
       run: |
-        rsync \
-          -az \
-          --delete \
-          _build/prod/rel/ethui/ \
-          ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}:${{ vars.DEPLOY_PATH }}-new
+        rsync -az --delete _build/prod/rel/ethui/ \
+          $SSL_URL:${{ vars.DEPLOY_PATH }}-new
 
-    - name: Restart app
-      run: |
-        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<EOF
-          release_path=${{ vars.DEPLOY_PATH }}
-          new_release_path=${{ vars.DEPLOY_PATH }}-new
-          bin=${{ vars.DEPLOY_PATH }}/bin/ethui
+    - name: Upload release script
+      run: scp .github/scripts/deploy.sh $SSH_URL:/tmp/stacks-deploy.sh
 
-          cd stacks.ethui.dev
-          source env.sh
+    - name: Chmod deploy script
+      run: ssh $SSH_URL "chmod +x /tmp/stacks-deploy.sh"
 
-          out=\$(\$bin eval "Ethui.Release.before_release")
-          out=\$(\$bin stop || true)
-
-          rm -rf \$release_path
-          mv \$new_release_path \$release_path
-
-          echo "daemon"
-          \$bin daemon
-        EOF
-
+    - name: Run deploy script
+      run: ssh $SSH_URL "/tmp/stacks-deploy.sh"
