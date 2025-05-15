@@ -96,12 +96,13 @@ jobs:
 
     - name: Restart app
       run: |
-        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<-EOF
-          export release_path=${{ vars.DEPLOY_PATH }}
-          export new_release_path=${{ vars.DEPLOY_PATH }}-new
+        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<EOF
+          release_path=${{ vars.DEPLOY_PATH }}
+          new_release_path=${{ vars.DEPLOY_PATH }}-new
 
-          echo "$release_path"
+          echo a "$release_path" b
           cd stacks.ethui.dev
+          bin=./build/bin/ethui
           source env.sh
           echo "create"
           ./build/bin/ethui eval "Ethui.Release.db_create"
