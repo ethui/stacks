@@ -22,7 +22,14 @@ fi
 source env.sh
 
 $bin eval "Ethui.Release.before_release"
-$bin stop || true
+set +e
+$bin pid
+if [[ $? -ne 0 ]]; then
+    echo "ethui not running. not need to stop"
+else
+    $bin stop
+fi
+set -e
 
 rm -rf $release_path
 mv $new_release_path $release_path
