@@ -99,17 +99,18 @@ jobs:
         ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<EOF
           release_path=${{ vars.DEPLOY_PATH }}
           new_release_path=${{ vars.DEPLOY_PATH }}-new
+          bin=${{ vars.DEPLOY_PATH }}/bin/ethui
 
           cd stacks.ethui.dev
           source env.sh
 
-          out=$(./build/bin/ethui eval "Ethui.Release.before_release")
-          out=$(./build/bin/ethui stop || true)
+          out=\$(\$bin eval "Ethui.Release.before_release")
+          out=\$(\$bin stop || true)
 
           rm -rf \$release_path
           mv \$new_release_path \$release_path
 
           echo "daemon"
-          ./build/bin/ethui daemon
+          \$bin daemon
         EOF
 
