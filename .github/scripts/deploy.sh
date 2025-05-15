@@ -14,7 +14,7 @@ if [[ ! -f env.sh ]]; then
     exit 1
 fi
 
-if [[ ! -f $new_release_path ]]; then
+if [[ ! -d $new_release_path ]]; then
     echo "$new_release_path not found"
     exit 1
 fi
