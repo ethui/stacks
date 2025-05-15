@@ -82,7 +82,7 @@ config :ethui, Ethui.Stacks,
   graph_node_image: "graphprotocol/graph-node:f02dfa2",
   ipfs_image: "ipfs/kubo:v0.34.1",
   pg_image: "postgres:17.4",
-  anvil_bin: System.get_env("ETHUI_STACKS_ANVIL_BIN", "anvil"),
+  anvil_bin: System.get_env("ANVIL_BIN", "anvil"),
   docker_host: System.get_env("DOCKER_HOST", "172.17.0.1"),
   chain_id_prefix: 0x00EE
 

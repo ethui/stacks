@@ -1,4 +1,8 @@
 defmodule Ethui.Release do
+  @moduledoc """
+  Release-related tasks
+  """
+
   @app :ethui
 
   def db_create do
