@@ -113,7 +113,7 @@ jobs:
           cd stacks.ethui.dev
           source env.sh
           $bin stop || true
-          $bin eval "Ethui.Release.migrate"
+          $bin eval "Ethui.Release.db_create"
           $bin eval "Ethui.Release.migrate"
           $bin daemon
         EOF
