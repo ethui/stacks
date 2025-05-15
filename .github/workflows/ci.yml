@@ -94,29 +94,24 @@ jobs:
           _build/prod/rel/ethui/ \
           ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}:${{ vars.DEPLOY_PATH }}-new
 
-    - name: setup deploy script
-      run: |
-        cat <<-EOF > deploy.sh
-        #!/bin/bash
-        set -e
-        release_path=${{ vars.DEPLOY_PATH }}
-        new_release_path=${{ vars.DEPLOY_PATH }}-new
-        echo "a $release_path b"
-        echo "a $new_release_path b"
-        cd stacks.ethui.dev
-        bin=./build/bin/ethui
-        source env.sh
-        echo "stop"
-        $bin stop || true
-        echo "migrate"
-        ./build/bin/ethui eval "Ethui.Release.migrate"
-        echo "remove"
-        rm -rf $release_path
-        mv $new_release_path $release_path
-        echo "start"
-        $bin start
-        EOF
-
     - name: Restart app
       run: |
-        cat deploy.sh | ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}
+        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<EOF
+          release_path=${{ vars.DEPLOY_PATH }}
+          new_release_path=${{ vars.DEPLOY_PATH }}-new
+
+          cd stacks.ethui.dev
+          bin=./build/bin/ethui
+          source env.sh
+          echo "create"
+          ./build/bin/ethui eval "Ethui.Release.db_create"
+          echo "migrate"
+          ./build/bin/ethui eval "Ethui.Release.migrate"
+          echo "stop"
+          ./build/bin/ethui stop || true
+          rm -rf \$release_path
+          mv \$new_release_path \$deploy_path
+          echo "daemon"
+          $bin daemon
+        EOF
+
