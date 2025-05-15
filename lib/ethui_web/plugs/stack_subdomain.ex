@@ -33,6 +33,9 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
 
       ["stacks", slug, component] ->
         %{slug: slug, component: component}
+
+      _ ->
+        nil
     end
   end
 end
