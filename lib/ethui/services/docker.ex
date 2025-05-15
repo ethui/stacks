@@ -109,13 +109,14 @@ defmodule Ethui.Services.Docker do
       def handle_info(:boot, state) do
         pid = self()
 
+        image = apply_if_fun(@opts[:image], [])
         env = apply_if_fun(@opts[:env], state) || []
         named_args = apply_if_fun(@opts[:named_args], state) || []
         volumes = apply_if_fun(@opts[:volumes], state) || []
         flags = ["rm", "init"]
 
         args =
-          format_docker_args(env, named_args, volumes, flags)
+          format_docker_args(image, env, named_args, volumes, flags)
 
         if named_args[:name] do
           System.cmd("docker", ["rm", "-f", named_args[:name]])
@@ -146,10 +147,11 @@ defmodule Ethui.Services.Docker do
         end
       end
 
+      defp apply_if_fun(fun, state) when is_function(fun, 0), do: fun.()
       defp apply_if_fun(fun, state) when is_function(fun, 1), do: fun.(state)
       defp apply_if_fun(other, _state), do: other
 
-      defp format_docker_args(env, named_args, volumes, flags) do
+      defp format_docker_args(image, env, named_args, volumes, flags) do
         env =
           Enum.flat_map(env, fn {k, v} -> ["--env", "#{k}=#{v}"] end)
 
@@ -158,7 +160,6 @@ defmodule Ethui.Services.Docker do
 
         named_args = Enum.map(named_args, fn {k, v} -> "--#{k}=#{v}" end)
         flags = Enum.map(flags, fn f -> "--#{f}" end)
-        image = @opts[:image]
 
         ["run"] ++ named_args ++ env ++ volumes ++ flags ++ [image]
       end

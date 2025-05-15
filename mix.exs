@@ -19,7 +19,7 @@ defmodule Ethui.MixProject do
   def application do
     [
       mod: {Ethui.Application, []},
-      extra_applications: [:logger, :runtime_tools, :observer, :wx]
+      extra_applications: [:logger, :runtime_tools]
     ]
   end
 
@@ -61,6 +61,7 @@ defmodule Ethui.MixProject do
       {:phoenix_live_dashboard, "~> 0.8.3"},
       {:gettext, "~>0.26"},
       {:cors_plug, "~> 3.0"},
+      {:certmagex, "~> 1.0", only: :prod},
 
       # assets
       {:esbuild, "~> 0.9", runtime: Mix.env() == :dev},

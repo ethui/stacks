@@ -13,17 +13,14 @@ config :ethui,
   ecto_repos: [Ethui.Repo],
   generators: [timestamp_type: :utc_datetime]
 
-server_mode? = System.get_env("ETHUI_STACKS_SERVER_MODE") != nil
-
 config :ethui,
        Ethui.Repo,
        # ssl: true,
        pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-       adapter: if(server_mode?, do: Ecto.Adapters.Postgres, else: Ecto.Adapters.SQLite3)
+       adapter: Ecto.Adapters.SQLite3
 
 # Configures the endpoint
 config :ethui, EthuiWeb.Endpoint,
-  url: [host: "lvh.me"],
   # Bandit seems to cause issues under heavy load:
   # https://github.com/mtrudel/bandit/issues/438
   # the default is Cowboy2, so the below setting should stay commented out
@@ -34,6 +31,14 @@ config :ethui, EthuiWeb.Endpoint,
   ],
   pubsub_server: Ethui.PubSub,
   live_view: [signing_salt: "G8Rh0+AS"]
+
+config :ethui,
+  session_options: [
+    store: :cookie,
+    key: "_ethui_key",
+    signing_salt: "kEJ16v2a",
+    same_site: "Lax"
+  ]
 
 # Configures the mailer
 #
@@ -77,7 +82,8 @@ config :ethui, Ethui.Stacks,
   graph_node_image: "graphprotocol/graph-node:f02dfa2",
   ipfs_image: "ipfs/kubo:v0.34.1",
   pg_image: "postgres:17.4",
-  anvil_bin: System.get_env("ETHUI_STACKS_ANVIL_BIN", "anvil"),
+  anvil_bin: System.get_env("ANVIL_BIN", "anvil"),
+  docker_host: System.get_env("DOCKER_HOST", "172.17.0.1"),
   chain_id_prefix: 0x00EE
 
 # Import environment specific config. This must remain at the bottom

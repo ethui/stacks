@@ -16,6 +16,7 @@ config :ethui, Ethui.Repo,
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
 config :ethui, EthuiWeb.Endpoint,
+  url: [host: "lvh.me"],
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}, port: 4000],
@@ -86,8 +87,6 @@ config :swoosh, :api_client, false
 config :ethui, Ethui.Stacks,
   data_dir_root: "data/dev/stacks",
   pg_data_dir: "./data/dev/pg",
-  ipfs_url: "http://127.0.0.1:5001",
   ipfs_data_dir: "./data/dev/ipfs",
   # on macos, this should be set to host.docker.internal
-  docker_host: System.get_env("DOCKER_HOST", "172.17.0.1"),
   chain_id_prefix: 0x00DD

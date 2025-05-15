@@ -208,7 +208,7 @@ defmodule Ethui.Services.Anvil do
 
   defp chain_id do
     prefix = config() |> Keyword.fetch!(:chain_id_prefix)
-    <<val::32>> = <<prefix::16, 31337::16>>
+    <<val::32>> = <<prefix::16, 31_337::16>>
     val
   end
 

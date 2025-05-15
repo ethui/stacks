@@ -4,12 +4,7 @@ defmodule EthuiWeb.Endpoint do
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
-  @session_options [
-    store: :cookie,
-    key: "_ethui_key",
-    signing_salt: "kEJ16v2a",
-    same_site: "Lax"
-  ]
+  @session_options Application.compile_env(:ethui, :session_options)
 
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]],

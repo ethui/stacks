@@ -1,0 +1,128 @@
+name: Elixir CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  #
+  # run test suite
+  # 
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+
+    env:
+      USER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE_TEST: postgres
+      MIX_ENV: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: erlef/setup-beam@v1
+      with:
+        elixir-version: '1.18.3'
+        otp-version: 'OTP-27'
+
+    - uses: foundry-rs/foundry-toolchain@v1
+
+    - uses: actions/cache@v4
+      with:
+        path: |
+          deps
+          _build
+        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: ${{ runner.os }}-mix-
+
+    - run: mix deps.get
+    - run: mix compile
+    - run: mix ecto.migrate
+    - run: mix credo
+    - run: mix test
+
+  #
+  # builds public docker image
+  #
+  docker-publish:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v3
+
+  #
+  # deploy stacks.ethui.devices:
+  # 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/deploy'
+    environment: production
+
+    env:
+      MIX_ENV: prod
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: erlef/setup-beam@v1
+      with:
+        elixir-version: '1.18.3'
+        otp-version: 'OTP-27'
+
+    - run: mix deps.get
+    - run: mix compile
+    - run: mix release
+
+    - uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1, hardcoded hash for security
+      with:
+        ssh-private-key: ${{ secrets.DIGITALOCEAN_DEPLOY_KEY }}
+
+    - run: ssh-keyscan ${{ vars.DIGITALOCEAN_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Create deploy dir
+      run: ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} 'mkdir -p stacks.ethui.dev'
+
+    - name: Upload
+      run: |
+        rsync \
+          -az \
+          --delete \
+          _build/prod/rel/ethui/ \
+          ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }}:${{ vars.DEPLOY_PATH }}
+
+    - name: Restart app
+      run: |
+        bin=${{ vars.DEPLOY_PATH }}/bin/ethui
+        ssh ${{ vars.DIGITALOCEAN_USER }}@${{ vars.DIGITALOCEAN_HOST }} bash <<-EOF
+          cd stacks.ethui.dev
+          source env.sh
+          $bin eval "Ethui.Release.db_create"
+          $bin eval "Ethui.Release.migrate"
+
+          $bin pid
+          if [[ $? == 0]]; then 
+            echo restarting
+            $bin restart
+          else
+            echo starting
+            $bin start
+            echo $?
+          fi
+        EOF
+
