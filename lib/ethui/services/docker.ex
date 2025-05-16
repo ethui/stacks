@@ -119,7 +119,8 @@ defmodule Ethui.Services.Docker do
           format_docker_args(image, env, named_args, volumes, flags)
 
         if named_args[:name] do
-          System.cmd("docker", ["rm", "-f", named_args[:name]])
+          wait_for_removal(named_args[:name])
+          # System.cmd("docker", IO.inspect(["rm", "-f", named_args[:name]]))
         end
 
         # Process.flag(:trap_exit, true)
@@ -132,6 +133,20 @@ defmodule Ethui.Services.Docker do
           )
 
         {:noreply, %{state | proc: proc, container_name: named_args[:name]}}
+      end
+
+      defp wait_for_removal(name) do
+        case System.cmd("docker", ["rm", "-f", name], stderr_to_stdout: true) do
+          {_out, 0} ->
+            :ok
+
+          {_out, 1} ->
+            :timer.sleep(100)
+            wait_for_removal(name)
+
+          error ->
+            raise "Error while waiting for removal of container #{name}: #{inspect(error)}"
+        end
       end
 
       @impl GenServer

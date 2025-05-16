@@ -36,10 +36,6 @@ defmodule EthuiWeb.Endpoint do
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
-  if Mix.env() != :test do
-    plug Plug.SSL, rewrite_on: [:x_forwarded_proto], hsts: true
-  end
-
   plug EthuiWeb.Router
 
   def session_options do
