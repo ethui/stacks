@@ -12,7 +12,7 @@ defmodule EthuiWeb.ProxyController do
       ),
       do: proxy_component(conn, params, {slug, component})
 
-  defp reverse_proxy(conn, _params), do: conn |> send_resp(404, "Not found")
+  def reverse_proxy(conn, _params), do: conn |> send_resp(404, "Not found")
 
   defp proxy_component(conn, params, {slug, nil}), do: anvil(conn, params, slug)
 

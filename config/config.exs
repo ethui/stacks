@@ -78,6 +78,10 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# needed fot the docker image to run
+# https://github.com/elixir-sqlite/exqlite/issues/323
+config :exqlite, force_build: true
+
 config :ethui, Ethui.Stacks,
   graph_node_image: "graphprotocol/graph-node:f02dfa2",
   ipfs_image: "ipfs/kubo:v0.34.1",
