@@ -90,7 +90,7 @@ jobs:
     - name: Upload
       run: |
         rsync -az --delete _build/prod/rel/ethui/ \
-          $SSH_URL:${{ vars.DEPLOY_PATH }}-new
+          $SSH_URL:${{ vars.DEPLOY_PATH }}/build-new
 
     - name: Upload release script
       run: scp .github/scripts/deploy.sh $SSH_URL:/tmp/stacks-deploy.sh
