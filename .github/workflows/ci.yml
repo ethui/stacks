@@ -99,4 +99,4 @@ jobs:
       run: ssh $SSH_URL "chmod +x /tmp/stacks-deploy.sh"
 
     - name: Run deploy script
-      run: ssh $SSH_URL "/tmp/stacks-deploy.sh"
+      run: ssh $SSH_URL "/tmp/stacks-deploy.sh '${{ vars.DEPLOY_PATH }}'"
