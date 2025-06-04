@@ -2,7 +2,7 @@
 
 set -e
 
-root=/var/www/stacks.ethui.dev
+root=${1:-/var/www/stacks.ethui.dev}
 release_path=$root/build
 new_release_path=$root/build-new
 bin=$root/build/bin/ethui
