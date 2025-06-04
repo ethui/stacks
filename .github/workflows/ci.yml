@@ -66,8 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/deploy'
-    permissions:
-      packages: write
+    permissions: write-all
     environment: production
 
     env:
