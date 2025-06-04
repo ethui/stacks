@@ -23,7 +23,7 @@ fi
 
 source env.sh
 
-$bin eval "Ethui.Release.before_release"
+$bin eval "Ethui.Release.migrate"
 set +e
 pid=$($bin pid)
 if [[ $? -ne 0 ]]; then
