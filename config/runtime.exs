@@ -24,6 +24,8 @@ if config_env() == :prod do
   data_root =
     System.get_env("DATA_ROOT") || raise("missing env var DATA_ROOT")
 
+  is_dockerized? = System.get_env("ETHUI_STACKS_DOCKERIZED")
+
   config :ethui,
          Ethui.Repo,
          database: Path.join([data_root, "db.sqlite3"])
@@ -46,11 +48,12 @@ if config_env() == :prod do
 
   host = System.get_env("PHX_HOST") || "stacks.ethui.dev"
   port = System.get_env("PHX_PORT") || 4000
+  listen_ip = if is_dockerized?, do: {0, 0, 0, 0}, else: {127, 0, 0, 1}
 
   config :ethui, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :ethui, EthuiWeb.Endpoint,
-    http: [ip: {127, 0, 0, 1}, port: port],
+    http: [ip: listen_ip, port: port],
     url: [host: host, port: 443, scheme: "https"],
     force_ssl: [rewrite_on: [:x_forwarded_proto]],
     secret_key_base: secret_key_base

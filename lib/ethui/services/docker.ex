@@ -23,6 +23,7 @@ defmodule Ethui.Services.Docker do
     quote do
       use GenServer
       require Logger
+      import Ethui.Services.Docker.Utils
 
       @before_compile unquote(__MODULE__).BeforeCompile
 
@@ -100,7 +101,7 @@ defmodule Ethui.Services.Docker do
           send(s, {:logs, __MODULE__, @name, [line]})
         end
 
-        new_logs = :queue.in(line, logs) |> trim()
+        new_logs = :queue.in(line, logs) |> trim(@log_max_size)
 
         {:noreply, %{state | logs: new_logs}}
       end
@@ -119,7 +120,7 @@ defmodule Ethui.Services.Docker do
           format_docker_args(image, env, named_args, volumes, flags)
 
         if named_args[:name] do
-          System.cmd("docker", ["rm", "-f", named_args[:name]])
+          wait_for_removal(named_args[:name])
         end
 
         # Process.flag(:trap_exit, true)
@@ -146,31 +147,51 @@ defmodule Ethui.Services.Docker do
             {:stop, :normal, state}
         end
       end
+    end
+  end
 
-      defp apply_if_fun(fun, state) when is_function(fun, 0), do: fun.()
-      defp apply_if_fun(fun, state) when is_function(fun, 1), do: fun.(state)
-      defp apply_if_fun(other, _state), do: other
+  defmodule Utils do
+    @moduledoc """
+    Utility functions for Ethui.Services.Docker
+    """
 
-      defp format_docker_args(image, env, named_args, volumes, flags) do
-        env =
-          Enum.flat_map(env, fn {k, v} -> ["--env", "#{k}=#{v}"] end)
+    def apply_if_fun(fun, _state) when is_function(fun, 0), do: fun.()
+    def apply_if_fun(fun, state) when is_function(fun, 1), do: fun.(state)
+    def apply_if_fun(other, _state), do: other
 
-        volumes =
-          Enum.flat_map(volumes, fn {k, v} -> ["-v", "#{k}:#{v}"] end)
+    def wait_for_removal(name) do
+      case System.cmd("docker", ["rm", "-f", name], stderr_to_stdout: true) do
+        {_out, 0} ->
+          :ok
 
-        named_args = Enum.map(named_args, fn {k, v} -> "--#{k}=#{v}" end)
-        flags = Enum.map(flags, fn f -> "--#{f}" end)
+        {_out, 1} ->
+          :timer.sleep(100)
+          wait_for_removal(name)
 
-        ["run"] ++ named_args ++ env ++ volumes ++ flags ++ [image]
+        error ->
+          raise "Error while waiting for removal of container #{name}: #{inspect(error)}"
       end
+    end
 
-      defp trim(q) do
-        if :queue.len(q) > @log_max_size do
-          {{:value, _}, q} = :queue.out(q)
-          trim(q)
-        else
-          q
-        end
+    def format_docker_args(image, env, named_args, volumes, flags) do
+      env =
+        Enum.flat_map(env, fn {k, v} -> ["--env", "#{k}=#{v}"] end)
+
+      volumes =
+        Enum.flat_map(volumes, fn {k, v} -> ["-v", "#{k}:#{v}"] end)
+
+      named_args = Enum.map(named_args, fn {k, v} -> "--#{k}=#{v}" end)
+      flags = Enum.map(flags, fn f -> "--#{f}" end)
+
+      ["run"] ++ named_args ++ env ++ volumes ++ flags ++ [image]
+    end
+
+    def trim(q, limit) do
+      if :queue.len(q) > limit do
+        {{:value, _}, q} = :queue.out(q)
+        trim(q, limit)
+      else
+        q
       end
     end
   end
