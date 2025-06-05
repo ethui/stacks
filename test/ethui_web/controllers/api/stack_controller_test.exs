@@ -19,7 +19,7 @@ defmodule EthuiWeb.Api.StackControllerTest do
       slug = "slug"
 
       conn =
-        api_conn()
+        authenticated_api_conn()
         |> post(~p"/stacks", %{slug: slug})
 
       assert response(conn, 201)
@@ -28,7 +28,7 @@ defmodule EthuiWeb.Api.StackControllerTest do
 
   describe "delete/2" do
     test "deletes a stack" do
-      conn = api_conn()
+      conn = authenticated_api_conn()
       slug = "slug2"
 
       conn = conn |> post(~p"/stacks", %{slug: slug})
