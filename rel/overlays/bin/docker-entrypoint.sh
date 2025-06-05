@@ -3,7 +3,7 @@
 set -eu
 
 if [ -z "${DATA_ROOT:-}" ]; then
-  echo "DATA_ROOT not defined. set it to $HOME/.config/ethui/stacks, here $HOME is your docker host username"
+  echo "DATA_ROOT not defined. set it to \$HOME/.config/ethui/stacks, where \$HOME"
   exit 1
 fi
 
