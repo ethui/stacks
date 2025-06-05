@@ -33,7 +33,7 @@ defmodule EthuiWeb.ConnCase do
 
   setup tags do
     Ethui.DataCase.setup_sandbox(tags)
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
+    {:ok, conn: Phoenix.ConnTest.build_conn(), api_conn: api_conn()}
   end
 
   def api_conn do

@@ -40,6 +40,10 @@ defmodule Ethui.MixProject do
       {:floki, ">= 0.30.0", only: :test},
       {:exth, "~> 0.2.2", only: :test},
 
+      # authentication
+      {:bcrypt_elixir, "~> 3.0"},
+      {:joken, "~> 2.6"},
+
       # core
       {:swoosh, "~> 1.5"},
       {:finch, "~> 0.13"},
@@ -71,7 +75,9 @@ defmodule Ethui.MixProject do
        sparse: "optimized",
        app: false,
        compile: false,
-       depth: 1}
+       depth: 1},
+
+       {:tidewave, "~> 0.1", only: :dev}
     ]
   end
 

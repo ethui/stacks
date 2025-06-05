@@ -20,6 +20,11 @@ if System.get_env("PHX_SERVER") do
   config :ethui, EthuiWeb.Endpoint, server: true
 end
 
+# Configure JWT secret from environment variable or use default
+if jwt_secret = System.get_env("JWT_SECRET") do
+  config :ethui, :jwt_secret, jwt_secret
+end
+
 if config_env() == :prod do
   data_root =
     System.get_env("DATA_ROOT") || raise("missing env var DATA_ROOT")
