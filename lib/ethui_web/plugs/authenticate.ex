@@ -6,7 +6,15 @@ defmodule EthuiWeb.Plugs.Authenticate do
 
   def init(opts), do: opts
 
-  def call(conn, _opts) do
+  def call(conn, opts) do
+    if enabled?() do
+      do_call(conn, opts)
+    else
+      conn
+    end
+  end
+
+  defp do_call(conn, _opts) do
     case get_req_header(conn, "authorization") do
       ["Bearer " <> token] ->
         case Accounts.verify_token(token) do
@@ -26,5 +34,10 @@ defmodule EthuiWeb.Plugs.Authenticate do
         |> json(%{error: "Authorization header missing"})
         |> halt()
     end
+  end
+
+  def enabled? do
+    Application.get_env(:ethui, __MODULE__)[:enabled]
+    |> IO.inspect()
   end
 end

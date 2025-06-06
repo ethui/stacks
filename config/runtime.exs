@@ -25,11 +25,14 @@ if jwt_secret = System.get_env("JWT_SECRET") do
   config :ethui, :jwt_secret, jwt_secret
 end
 
+enable_auth? = !!System.get_env("ETHUI_STACKS_ENABLE_AUTH")
+config :ethui, EthuiWeb.Plugs.Authenticate, enabled: enable_auth?
+
 if config_env() == :prod do
   data_root =
     System.get_env("DATA_ROOT") || raise("missing env var DATA_ROOT")
 
-  is_dockerized? = System.get_env("ETHUI_STACKS_DOCKERIZED")
+  is_dockerized? = !!System.get_env("ETHUI_STACKS_DOCKERIZED")
 
   config :ethui,
          Ethui.Repo,

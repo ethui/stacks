@@ -42,8 +42,8 @@ defmodule EthuiWeb.Router do
     pipe_through [:base, :api]
 
     # Authentication endpoints
-    post "/auth/send-code", AuthController, :send_code
-    post "/auth/verify-code", AuthController, :verify_code
+    post "/auth/send-code", Api.AuthController, :send_code
+    post "/auth/verify-code", Api.AuthController, :verify_code
   end
 
   scope "/", EthuiWeb, host: "api." do
