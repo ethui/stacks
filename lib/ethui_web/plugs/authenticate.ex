@@ -38,6 +38,5 @@ defmodule EthuiWeb.Plugs.Authenticate do
 
   def enabled? do
     Application.get_env(:ethui, __MODULE__)[:enabled]
-    |> IO.inspect()
   end
 end
