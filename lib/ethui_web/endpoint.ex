@@ -36,6 +36,8 @@ defmodule EthuiWeb.Endpoint do
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
+  plug CORSPlug
+
   plug EthuiWeb.Router
 
   def session_options do
