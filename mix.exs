@@ -75,9 +75,7 @@ defmodule Ethui.MixProject do
        sparse: "optimized",
        app: false,
        compile: false,
-       depth: 1},
-
-       {:tidewave, "~> 0.1", only: :dev}
+       depth: 1}
     ]
   end
 
