@@ -43,3 +43,5 @@ config :ethui, Ethui.Stacks,
   pg_data_dir: "./data/test/pg"
 
 config :ethui, EthuiWeb.Plugs.Authenticate, enabled: true
+
+config :ethui, :jwt_secret, "wXJDWzfmRQpCnzYPnwYYvbWzkNKSIpZB"

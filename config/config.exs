@@ -90,9 +90,6 @@ config :ethui, Ethui.Stacks,
   docker_host: System.get_env("DOCKER_HOST", "172.17.0.1"),
   chain_id_prefix: 0x00EE
 
-# JWT configuration
-config :ethui, :jwt_secret, "wXJDWzfmRQpCnzYPnwYYvbWzkNKSIpZB"
-
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
