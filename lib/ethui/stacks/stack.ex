@@ -20,11 +20,4 @@ defmodule Ethui.Stacks.Stack do
     |> unique_constraint(:slug)
     |> foreign_key_constraint(:user_id)
   end
-
-  def update_changeset(stack, attrs) do
-    stack
-    |> cast(attrs, [:slug])
-    |> validate_required([:slug])
-    |> unique_constraint(:slug)
-  end
 end
