@@ -1,12 +1,16 @@
 defmodule Ethui.Accounts.User do
+  @moduledoc """
+  A user schema.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 
   schema "users" do
-    field :email, :string
-    field :verification_code, :string
-    field :verification_code_sent_at, :naive_datetime
-    field :verified_at, :naive_datetime
+    field(:email, :string)
+    field(:verification_code, :string)
+    field(:verification_code_sent_at, :naive_datetime)
+    field(:verified_at, :naive_datetime)
 
     timestamps()
   end
@@ -53,3 +57,4 @@ defmodule Ethui.Accounts.User do
     })
   end
 end
+
