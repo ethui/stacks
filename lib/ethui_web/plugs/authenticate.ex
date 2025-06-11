@@ -1,4 +1,8 @@
 defmodule EthuiWeb.Plugs.Authenticate do
+  @moduledoc """
+  Authenticates the user by checking the token in the Authorization header.
+  """
+
   import Plug.Conn
   import Phoenix.Controller
 
