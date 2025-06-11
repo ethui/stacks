@@ -90,3 +90,5 @@ config :ethui, Ethui.Stacks,
   ipfs_data_dir: "./data/dev/ipfs",
   # on macos, this should be set to host.docker.internal
   chain_id_prefix: 0x00DD
+
+config :ethui, :jwt_secret, "wXJDWzfmRQpCnzYPnwYYvbWzkNKSIpZB"

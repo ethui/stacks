@@ -33,7 +33,7 @@ defmodule EthuiWeb.ConnCase do
 
   setup tags do
     Ethui.DataCase.setup_sandbox(tags)
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
+    {:ok, conn: Phoenix.ConnTest.build_conn(), api_conn: api_conn()}
   end
 
   def api_conn do
@@ -42,5 +42,17 @@ defmodule EthuiWeb.ConnCase do
 
   def anvil_conn(slug) do
     Phoenix.ConnTest.build_conn(:post, "http://#{slug}.stacks.lvh.me", nil)
+  end
+
+  def authenticated_api_conn do
+    # Create a test user
+    {:ok, user} = Ethui.Accounts.send_verification_code("test@example.com")
+    
+    # Generate a JWT token for the user
+    {:ok, token} = Ethui.Accounts.generate_token(user)
+    
+    # Build API connection with Authorization header
+    Phoenix.ConnTest.build_conn(:post, "http://api.lvh.me", nil)
+    |> Plug.Conn.put_req_header("authorization", "Bearer #{token}")
   end
 end

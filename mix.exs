@@ -40,6 +40,10 @@ defmodule Ethui.MixProject do
       {:floki, ">= 0.30.0", only: :test},
       {:exth, "~> 0.2.2", only: :test},
 
+      # authentication
+      {:bcrypt_elixir, "~> 3.0"},
+      {:joken, "~> 2.6"},
+
       # core
       {:swoosh, "~> 1.5"},
       {:finch, "~> 0.13"},

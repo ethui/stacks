@@ -20,11 +20,19 @@ if System.get_env("PHX_SERVER") do
   config :ethui, EthuiWeb.Endpoint, server: true
 end
 
+# Configure JWT secret from environment variable or use default
+if jwt_secret = System.get_env("JWT_SECRET") do
+  config :ethui, :jwt_secret, jwt_secret
+end
+
+enable_auth? = !!System.get_env("ETHUI_STACKS_ENABLE_AUTH")
+config :ethui, EthuiWeb.Plugs.Authenticate, enabled: enable_auth?
+
 if config_env() == :prod do
   data_root =
     System.get_env("DATA_ROOT") || raise("missing env var DATA_ROOT")
 
-  is_dockerized? = System.get_env("ETHUI_STACKS_DOCKERIZED")
+  is_dockerized? = !!System.get_env("ETHUI_STACKS_DOCKERIZED")
 
   config :ethui,
          Ethui.Repo,
@@ -46,6 +54,13 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
+  jwt_secret =
+    System.get_env("JWT_SECRET") ||
+      raise """
+      environment variable JWT_SECRET is missing.
+      You can generate one by calling: mix phx.gen.secret
+      """
+
   host = System.get_env("PHX_HOST") || "stacks.ethui.dev"
   port = System.get_env("PHX_PORT") || 4000
   listen_ip = if is_dockerized?, do: {0, 0, 0, 0}, else: {127, 0, 0, 1}
@@ -63,6 +78,8 @@ if config_env() == :prod do
     pg_data_dir: Path.join([data_root, "pg"]),
     ipfs_data_dir: Path.join([data_root, "ipfs"]),
     chain_id_prefix: 0x00EE
+
+  config :ethui, :jwt_secret, jwt_secret
 
   # ## SSL Support
   #

@@ -28,6 +28,11 @@ defmodule EthuiWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :authenticated_api do
+    plug :accepts, ["json"]
+    plug EthuiWeb.Plugs.Authenticate
+  end
+
   pipeline :proxy do
     plug CORSPlug, origin: ["*"]
     plug EthuiWeb.Plugs.StackSubdomain
@@ -35,6 +40,14 @@ defmodule EthuiWeb.Router do
 
   scope "/", EthuiWeb, host: "api." do
     pipe_through [:base, :api]
+
+    # Authentication endpoints
+    post "/auth/send-code", Api.AuthController, :send_code
+    post "/auth/verify-code", Api.AuthController, :verify_code
+  end
+
+  scope "/", EthuiWeb, host: "api." do
+    pipe_through [:base, :authenticated_api]
 
     resources "/stacks", Api.StackController, param: "slug" do
       # get "/logs", StackController, :logs
