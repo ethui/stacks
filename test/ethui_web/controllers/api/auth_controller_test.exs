@@ -9,7 +9,7 @@ defmodule EthuiWeb.Api.AuthControllerTest do
     # Ensure auth is enabled for all tests unless overridden
     original_config = Application.get_env(:ethui, EthuiWeb.Plugs.Authenticate, [])
     Application.put_env(:ethui, EthuiWeb.Plugs.Authenticate, enabled: true)
-    
+
     on_exit(fn ->
       Application.put_env(:ethui, EthuiWeb.Plugs.Authenticate, original_config)
     end)
@@ -36,7 +36,7 @@ defmodule EthuiWeb.Api.AuthControllerTest do
     # Verify email was sent
     assert_email_sent(
       to: email,
-      subject: "Your verification code"
+      subject: "ethui verification code"
     )
 
     # Step 2: Verify code and get JWT token
@@ -58,9 +58,10 @@ defmodule EthuiWeb.Api.AuthControllerTest do
     refute updated_user.verification_code_sent_at
 
     # Step 3: Use token to access protected endpoint
-    conn = api_conn
-    |> put_req_header("authorization", "Bearer #{token}")
-    |> get("/stacks")
+    conn =
+      api_conn
+      |> put_req_header("authorization", "Bearer #{token}")
+      |> get("/stacks")
 
     # Should return successful response (not authentication error)
     assert conn.status == 200
@@ -99,9 +100,10 @@ defmodule EthuiWeb.Api.AuthControllerTest do
     ]
 
     for invalid_token <- invalid_tokens do
-      conn = api_conn
-      |> put_req_header("authorization", "Bearer #{invalid_token}")
-      |> get("/stacks")
+      conn =
+        api_conn
+        |> put_req_header("authorization", "Bearer #{invalid_token}")
+        |> get("/stacks")
 
       assert %{"error" => "Invalid token"} = json_response(conn, 401)
     end
@@ -116,15 +118,19 @@ defmodule EthuiWeb.Api.AuthControllerTest do
   test "malformed authorization header results in 401", %{api_conn: api_conn} do
     malformed_headers = [
       "InvalidFormat token",
-      "Basic dXNlcjpwYXNzd29yZA==",  # Basic auth instead of Bearer
-      "Bearer",  # Bearer without token
-      "Bearer "  # Bearer with just space
+      # Basic auth instead of Bearer
+      "Basic dXNlcjpwYXNzd29yZA==",
+      # Bearer without token
+      "Bearer",
+      # Bearer with just space
+      "Bearer "
     ]
 
     for header <- malformed_headers do
-      conn = api_conn
-      |> put_req_header("authorization", header)
-      |> get("/stacks")
+      conn =
+        api_conn
+        |> put_req_header("authorization", header)
+        |> get("/stacks")
 
       assert %{"error" => _} = json_response(conn, 401)
     end
@@ -137,14 +143,16 @@ defmodule EthuiWeb.Api.AuthControllerTest do
     claims = %{
       "sub" => 1,
       "email" => "test@example.com",
-      "exp" => System.system_time(:second) + 3600  # Valid expiration
+      # Valid expiration
+      "exp" => System.system_time(:second) + 3600
     }
 
     {:ok, invalid_token, _claims} = Joken.generate_and_sign(%{}, claims, wrong_signer)
 
-    conn = api_conn
-    |> put_req_header("authorization", "Bearer #{invalid_token}")
-    |> get("/stacks")
+    conn =
+      api_conn
+      |> put_req_header("authorization", "Bearer #{invalid_token}")
+      |> get("/stacks")
 
     assert %{"error" => "Invalid token"} = json_response(conn, 401)
   end
@@ -154,7 +162,7 @@ defmodule EthuiWeb.Api.AuthControllerTest do
       # Disable auth for these tests
       original_config = Application.get_env(:ethui, EthuiWeb.Plugs.Authenticate, [])
       Application.put_env(:ethui, EthuiWeb.Plugs.Authenticate, enabled: false)
-      
+
       on_exit(fn ->
         Application.put_env(:ethui, EthuiWeb.Plugs.Authenticate, original_config)
       end)
@@ -162,7 +170,9 @@ defmodule EthuiWeb.Api.AuthControllerTest do
       :ok
     end
 
-    test "can access protected endpoints without authentication when disabled", %{api_conn: api_conn} do
+    test "can access protected endpoints without authentication when disabled", %{
+      api_conn: api_conn
+    } do
       # Try to access protected endpoint without any authentication
       conn = api_conn |> get("/stacks")
 
@@ -173,20 +183,24 @@ defmodule EthuiWeb.Api.AuthControllerTest do
 
     test "can access protected endpoints with invalid token when disabled", %{api_conn: api_conn} do
       # Try to access protected endpoint with invalid token
-      conn = api_conn
-      |> put_req_header("authorization", "Bearer invalid.token")
-      |> get("/stacks")
+      conn =
+        api_conn
+        |> put_req_header("authorization", "Bearer invalid.token")
+        |> get("/stacks")
 
       # Should succeed (not return 401)
       assert conn.status == 200
       assert json_response(conn, 200)
     end
 
-    test "can access protected endpoints with malformed auth header when disabled", %{api_conn: api_conn} do
+    test "can access protected endpoints with malformed auth header when disabled", %{
+      api_conn: api_conn
+    } do
       # Try to access protected endpoint with malformed auth header
-      conn = api_conn
-      |> put_req_header("authorization", "NotBearer token")
-      |> get("/stacks")
+      conn =
+        api_conn
+        |> put_req_header("authorization", "NotBearer token")
+        |> get("/stacks")
 
       # Should succeed (not return 401)
       assert conn.status == 200
