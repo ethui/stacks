@@ -29,18 +29,21 @@ defmodule Ethui.Accounts do
   """
   def send_verification_code(email) do
     normalized_email = String.downcase(email)
+
     case get_user_by_email(normalized_email) do
       nil ->
         %User{}
         |> User.email_changeset(%{email: normalized_email})
         |> Repo.insert()
         |> case do
-          {:ok, user} -> 
+          {:ok, user} ->
             code = generate_verification_code()
             update_verification_code(user, code)
             send_verification_email(user, code)
             {:ok, user}
-          error -> error
+
+          error ->
+            error
         end
 
       user ->
@@ -59,7 +62,7 @@ defmodule Ethui.Accounts do
 
     if user && user.verification_code == code && not expired?(user.verification_code_sent_at, 1) do
       # Mark user as verified
-      {:ok, verified_user} = 
+      {:ok, verified_user} =
         user
         |> User.verify_changeset()
         |> Repo.update()
@@ -93,24 +96,8 @@ defmodule Ethui.Accounts do
   def send_verification_email(user, code) do
     import Swoosh.Email
 
-    email =
-      new()
-      |> to(user.email)
-      |> Swoosh.Email.from({"Ethui", "noreply@ethui.app"})
-      |> subject("Your verification code")
-      |> html_body("""
-      <h1>Your verification code</h1>
-      <p>Your 6-digit verification code is:</p>
-      <h2 style="font-size: 24px; font-weight: bold; letter-spacing: 2px;">#{code}</h2>
-      <p>This code will expire in 1 hour.</p>
-      """)
-      |> text_body("""
-      Your verification code is: #{code}
-      
-      This code will expire in 1 hour.
-      """)
-
-    Mailer.deliver(email)
+    Mailer.auth_code(user, code)
+    |> Mailer.deliver(email)
   end
 
   # Checks if a verification code has expired (1 hour limit).
@@ -128,13 +115,14 @@ defmodule Ethui.Accounts do
   """
   def generate_token(user) do
     signer = Joken.Signer.create("HS256", Application.fetch_env!(:ethui, :jwt_secret))
-    
+
     claims = %{
       "sub" => user.id,
       "email" => user.email,
-      "exp" => System.system_time(:second) + 60 * 60 * 24 * 7 # 7 days
+      # 7 days
+      "exp" => System.system_time(:second) + 60 * 60 * 24 * 7
     }
-    
+
     case Joken.generate_and_sign(%{}, claims, signer) do
       {:ok, token, _claims} -> {:ok, token}
       error -> error
@@ -146,12 +134,15 @@ defmodule Ethui.Accounts do
   """
   def verify_token(token) do
     signer = Joken.Signer.create("HS256", Application.fetch_env!(:ethui, :jwt_secret))
-    
+
     case Joken.verify_and_validate(%{}, token, signer) do
-      {:ok, claims} -> 
+      {:ok, claims} ->
         user = get_user!(claims["sub"])
         {:ok, user}
-      error -> error
+
+      error ->
+        error
     end
   end
 end
+
