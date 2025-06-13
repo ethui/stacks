@@ -8,7 +8,7 @@ defmodule Ethui.Mailer do
   def test do
     new()
     |> to("mpalhas@gmail.com")
-    |> from({"ethui", "noreply@ethui.dev"})
+    |> from(@from)
     |> subject("Test email")
     |> text_body("This is a test email")
     |> deliver()
