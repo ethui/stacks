@@ -96,7 +96,7 @@ defmodule Ethui.Accounts do
   """
   def send_verification_email(user, code) do
     Mailer.auth_code(user, code)
-    |> Mailer.deliver()
+    |> Mailer.deliver_later()
   end
 
   # Checks if a verification code has expired (1 hour limit).
