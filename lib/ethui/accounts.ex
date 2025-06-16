@@ -8,6 +8,8 @@ defmodule Ethui.Accounts do
   alias Ethui.Accounts.User
   alias Ethui.Mailer
 
+  require Logger
+
   ## Database getters
 
   @doc """
@@ -60,7 +62,8 @@ defmodule Ethui.Accounts do
   def verify_code_and_generate_token(email, code) do
     user = get_user_by_email(String.downcase(email))
 
-    if user && user.verification_code == code && not expired?(user.verification_code_sent_at, 1) do
+    if user && user.verification_code == to_string(code) &&
+         not expired?(user.verification_code_sent_at, 1) do
       # Mark user as verified
       {:ok, verified_user} =
         user
