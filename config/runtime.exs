@@ -84,7 +84,9 @@ if config_env() == :prod do
   config :ethui, Ethui.Mailer,
     adapter: Swoosh.Adapters.Mua,
     relay: System.get_env("MAILER_SMTP") || raise("missing env var MAILER_SMTP"),
-    port: System.get_env("MAILER_SMTP_PORT") || raise("missing env var MAILER_SMTP_PORT"),
+    port:
+      String.to_integer(System.get_env("MAILER_SMTP_PORT")) ||
+        raise("missing env var MAILER_SMTP_PORT"),
     auth: [
       username:
         System.get_env("MAILER_SMTP_USERNAME") || raise("missing env var MAILER_SMTP_USERNAME"),

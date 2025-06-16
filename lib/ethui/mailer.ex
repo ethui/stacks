@@ -3,16 +3,7 @@ defmodule Ethui.Mailer do
 
   import Swoosh.Email
 
-  @from {"ethui", "noreply@ethui.app"}
-
-  def test do
-    new()
-    |> to("mpalhas@gmail.com")
-    |> from(@from)
-    |> subject("Test email")
-    |> text_body("This is a test email")
-    |> deliver()
-  end
+  @from {"ethui", "noreply@ethui.dev"}
 
   def auth_code(user, code) do
     new()
