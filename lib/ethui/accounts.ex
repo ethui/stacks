@@ -8,8 +8,6 @@ defmodule Ethui.Accounts do
   alias Ethui.Accounts.User
   alias Ethui.Mailer
 
-  require Logger
-
   ## Database getters
 
   @doc """

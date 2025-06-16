@@ -36,11 +36,31 @@ defmodule EthuiWeb.Endpoint do
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
-  plug CORSPlug
+  if Mix.env() == :prod do
+    plug CORSPlug, origin: ~r/https?.*\/ethui.dev$/
+  else
+    plug CORSPlug, origin: ["*"]
+  end
 
   plug EthuiWeb.Router
 
   def session_options do
     @session_options
+  end
+
+  defp cors_origin(conn, _opts) do
+    if is_allowed_host(conn.host) do
+      ["https?://ethui.dev", "https?://localhost", "https?://*.lvh.me"]
+    end
+  end
+
+  if Mix.env() == :prod do
+    defp is_allowed_host(host) do
+      host in ["ethui.dev"] or String.ends_with?(host, ".ethui.dev")
+    end
+  else
+    defp is_allowed_host(host) do
+      host in ["localhost"] or String.ends_with?(host, ".lvh.me")
+    end
   end
 end
