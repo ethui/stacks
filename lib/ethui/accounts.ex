@@ -97,26 +97,8 @@ defmodule Ethui.Accounts do
   Sends a verification email with the 6-digit code.
   """
   def send_verification_email(user, code) do
-    import Swoosh.Email
-
-    email =
-      new()
-      |> to(user.email)
-      |> Swoosh.Email.from({"Ethui", "noreply@ethui.app"})
-      |> subject("Your verification code")
-      |> html_body("""
-      <h1>Your verification code</h1>
-      <p>Your 6-digit verification code is:</p>
-      <h2 style="font-size: 24px; font-weight: bold; letter-spacing: 2px;">#{code}</h2>
-      <p>This code will expire in 1 hour.</p>
-      """)
-      |> text_body("""
-      Your verification code is: #{code}
-
-      This code will expire in 1 hour.
-      """)
-
-    Mailer.deliver(email)
+    Mailer.auth_code(user, code)
+    |> Mailer.deliver()
   end
 
   # Checks if a verification code has expired (1 hour limit).
