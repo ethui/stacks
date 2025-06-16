@@ -47,20 +47,4 @@ defmodule EthuiWeb.Endpoint do
   def session_options do
     @session_options
   end
-
-  defp cors_origin(conn, _opts) do
-    if is_allowed_host(conn.host) do
-      ["https?://ethui.dev", "https?://localhost", "https?://*.lvh.me"]
-    end
-  end
-
-  if Mix.env() == :prod do
-    defp is_allowed_host(host) do
-      host in ["ethui.dev"] or String.ends_with?(host, ".ethui.dev")
-    end
-  else
-    defp is_allowed_host(host) do
-      host in ["localhost"] or String.ends_with?(host, ".lvh.me")
-    end
-  end
 end
