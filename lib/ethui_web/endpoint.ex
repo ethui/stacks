@@ -37,7 +37,7 @@ defmodule EthuiWeb.Endpoint do
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
   if Mix.env() == :prod do
-    plug CORSPlug, origin: ~r/https?.*\/ethui.dev$/
+    plug CORSPlug, origin: ~r/^https?:\/\/([a-z0-9-]+\.)?ethui\.dev$/
   else
     plug CORSPlug, origin: ["*"]
   end
