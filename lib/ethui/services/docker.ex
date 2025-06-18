@@ -119,6 +119,10 @@ defmodule Ethui.Services.Docker do
         args =
           format_docker_args(image, env, named_args, volumes, flags)
 
+        if named_args[:network] do
+          ensure_network_exists(named_args[:network])
+        end
+
         if named_args[:name] do
           wait_for_removal(named_args[:name])
         end
@@ -192,6 +196,13 @@ defmodule Ethui.Services.Docker do
         trim(q, limit)
       else
         q
+      end
+    end
+
+    def ensure_network_exists(network_name) do
+      case System.cmd("docker", ["network", "inspect", network_name]) do
+        {_, 0} -> :ok
+        {_, _} -> System.cmd("docker", ["network", "create", network_name])
       end
     end
   end
