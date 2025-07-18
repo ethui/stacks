@@ -11,10 +11,16 @@ defmodule EthuiWeb.Plugs.Authenticate do
   def init(opts), do: opts
 
   def call(conn, opts) do
-    if enabled?() do
-      do_call(conn, opts)
+    if local_mode?() do
+      # Assign a default user in local mode
+      default_user = %Ethui.Accounts.User{id: 1, email: "local@local"}
+      assign(conn, :current_user, default_user)
     else
-      conn
+      if enabled?() do
+        do_call(conn, opts)
+      else
+        conn
+      end
     end
   end
 
@@ -42,5 +48,9 @@ defmodule EthuiWeb.Plugs.Authenticate do
 
   def enabled? do
     Application.get_env(:ethui, __MODULE__)[:enabled] || false
+  end
+
+  defp local_mode? do
+    Application.get_env(:ethui, :local_mode, false)
   end
 end

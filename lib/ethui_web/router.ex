@@ -26,6 +26,7 @@ defmodule EthuiWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug EthuiWeb.Plugs.Authenticate
   end
 
   pipeline :authenticated_api do
