@@ -8,20 +8,22 @@ defmodule EthuiWeb.Api.StackController do
   def index(conn, _params) do
     user = conn.assigns[:current_user]
 
-    stacks = if user do
-      Repo.all(from s in Stack, where: s.user_id == ^user.id)
-    else
-      Repo.all(Stack)
-    end
+    stacks =
+      if user do
+        Repo.all(from(s in Stack, where: s.user_id == ^user.id))
+      else
+        Repo.all(Stack)
+      end
 
     running_slugs = Server.list()
 
-    stack_data = Enum.map(stacks, fn stack ->
-      %{
-        slug: stack.slug,
-        status: if(stack.slug in running_slugs, do: "running", else: "stopped")
-      }
-    end)
+    stack_data =
+      Enum.map(stacks, fn stack ->
+        %{
+          slug: stack.slug,
+          status: if(stack.slug in running_slugs, do: "running", else: "stopped")
+        }
+      end)
 
     json(conn, %{
       status: "success",
@@ -33,11 +35,12 @@ defmodule EthuiWeb.Api.StackController do
     user = conn.assigns[:current_user]
 
     # Add user_id to params if user is authenticated
-    stack_params = if user do
-      Map.put(params, "user_id", user.id)
-    else
-      params
-    end
+    stack_params =
+      if user do
+        Map.put(params, "user_id", user.id)
+      else
+        params
+      end
 
     with changeset <- Stack.create_changeset(stack_params),
          {:ok, stack} <- Repo.insert(changeset),

@@ -8,6 +8,10 @@ defmodule Ethui.Accounts do
   alias Ethui.Accounts.User
   alias Ethui.Mailer
 
+  @default_user_attrs %{
+    email: "local@local.com"
+  }
+
   ## Database getters
 
   @doc """
@@ -142,5 +146,26 @@ defmodule Ethui.Accounts do
       error ->
         error
     end
+  end
+
+  def get_default_user do
+    if local_mode?() do
+      case get_user_by_email(@default_user_attrs.email) do
+        nil -> create_default_user()
+        user -> {:ok, user}
+      end
+    else
+      {:error, :not_in_local_mode}
+    end
+  end
+
+  defp create_default_user do
+    %User{}
+    |> User.email_changeset(@default_user_attrs)
+    |> Repo.insert()
+  end
+
+  defp local_mode? do
+    Application.get_env(:ethui, :local_mode, false)
   end
 end

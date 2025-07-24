@@ -12,9 +12,16 @@ defmodule EthuiWeb.Plugs.Authenticate do
 
   def call(conn, opts) do
     if local_mode?() do
-      # Assign a default user in local mode
-      default_user = %Ethui.Accounts.User{id: 1, email: "local@local"}
-      assign(conn, :current_user, default_user)
+      case Accounts.get_default_user() do
+        {:ok, default_user} ->
+          assign(conn, :current_user, default_user)
+
+        {:error, _} ->
+          conn
+          |> put_status(:unauthorized)
+          |> json(%{error: "Invalid User"})
+          |> halt()
+      end
     else
       if enabled?() do
         do_call(conn, opts)

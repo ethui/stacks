@@ -128,6 +128,7 @@ defmodule Ethui.Services.Docker do
         end
 
         # Process.flag(:trap_exit, true)
+        #
 
         {:ok, proc} =
           MuonTrap.Daemon.start_link("docker", args,
