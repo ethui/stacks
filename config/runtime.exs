@@ -81,18 +81,23 @@ if config_env() == :prod do
 
   config :ethui, :jwt_secret, jwt_secret
 
-  config :ethui, Ethui.Mailer,
-    adapter: Swoosh.Adapters.Mua,
-    relay: System.get_env("MAILER_SMTP") || raise("missing env var MAILER_SMTP"),
-    port:
-      String.to_integer(System.get_env("MAILER_SMTP_PORT")) ||
-        raise("missing env var MAILER_SMTP_PORT"),
-    auth: [
-      username:
-        System.get_env("MAILER_SMTP_USERNAME") || raise("missing env var MAILER_SMTP_USERNAME"),
-      password:
-        System.get_env("MAILER_SMTP_PASSWORD") || raise("missing env var MAILER_SMTP_PASSWORD")
-    ],
-    ssl: false,
-    tls: :always
+  if System.get_env("LOCAL_MODE", "false") == "true" do
+    config :ethui, Ethui.Mailer, adapter: Swoosh.Adapters.Local
+    config :ethui, :local_mode, true
+  else
+    config :ethui, Ethui.Mailer,
+      adapter: Swoosh.Adapters.Mua,
+      relay: System.get_env("MAILER_SMTP") || raise("missing env var MAILER_SMTP"),
+      port:
+        String.to_integer(System.get_env("MAILER_SMTP_PORT")) ||
+          raise("missing env var MAILER_SMTP_PORT"),
+      auth: [
+        username:
+          System.get_env("MAILER_SMTP_USERNAME") || raise("missing env var MAILER_SMTP_USERNAME"),
+        password:
+          System.get_env("MAILER_SMTP_PASSWORD") || raise("missing env var MAILER_SMTP_PASSWORD")
+      ],
+      ssl: false,
+      tls: :always
+  end
 end
