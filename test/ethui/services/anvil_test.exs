@@ -50,7 +50,7 @@ defmodule Ethui.Services.AnvilTest do
         anvil_opts: %{"fork_url" => "https://eth-mainnet.g.alchemy.com/v2/demo"}
       )
 
-    Process.sleep(1000)
+    Process.sleep(10000)
 
     client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
 
