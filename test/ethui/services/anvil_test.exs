@@ -41,6 +41,37 @@ defmodule Ethui.Services.AnvilTest do
     assert {:error, %{reason: :econnrefused}} = err
   end
 
+  test "create an anvil process with optional argument" do
+    {:ok, anvil} =
+      Anvil.start_link(
+        ports: HttpPorts,
+        slug: "opt123",
+        hash: "hash",
+        anvil_opts: %{"fork_url" => "https://eth-mainnet.g.alchemy.com/v2/demo"}
+      )
+
+    Process.sleep(1000)
+
+    client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
+
+    resp =
+      Rpc.request("anvil_nodeInfo", [])
+      |> Rpc.send(client)
+
+    IO.inspect(resp, label: "Anvil response")
+
+    assert {:ok, %{"result" => %{"forkConfig" => _}}} = resp
+
+    Anvil.stop(anvil)
+    Process.sleep(100)
+
+    err =
+      Rpc.request("anvil_nodeInfo", [])
+      |> Rpc.send(client)
+
+    assert {:error, %{reason: :econnrefused}} = err
+  end
+
   test "creates multiple anvil processes" do
     anvils =
       for i <- 1..10 do

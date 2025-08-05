@@ -57,4 +57,3 @@ defmodule Ethui.Accounts.User do
     })
   end
 end
-
