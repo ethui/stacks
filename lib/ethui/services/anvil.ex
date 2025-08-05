@@ -123,19 +123,20 @@ defmodule Ethui.Services.Anvil do
         to_string(chain_id)
       ] ++ opts
 
-    with {:ok, proc} <-
-           MuonTrap.Daemon.start_link(
-             anvil_bin(),
-             anvil_args,
-             logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
-             # TODO maybe patch muontrap to have a separate stream for stderr
-             stderr_to_stdout: true,
-             exit_status_to_reason: & &1
-           ) do
-      {:noreply, %{state | proc: proc}}
-    else
+    case MuonTrap.Daemon.start_link(
+           anvil_bin(),
+           anvil_args,
+           logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
+           # TODO maybe patch muontrap to have a separate stream for stderr
+           stderr_to_stdout: true,
+           exit_status_to_reason: & &1
+         ) do
+      {:ok, proc} ->
+        {:noreply, %{state | proc: proc}}
+
       {:error, reason} ->
         Logger.error("Failed to start anvil: #{inspect(reason)}")
+
         {:stop, reason, state}
     end
   end

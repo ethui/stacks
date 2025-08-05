@@ -36,4 +36,6 @@ defmodule Ethui.Stacks.Stack do
     end)
     |> Enum.into(%{})
   end
+
+  defp filter_anvil_opts(_), do: %{}
 end
