@@ -58,8 +58,6 @@ defmodule Ethui.Services.AnvilTest do
       Rpc.request("anvil_nodeInfo", [])
       |> Rpc.send(client)
 
-    IO.inspect(resp, label: "Anvil response")
-
     assert {:ok, %{"result" => %{"forkConfig" => _}}} = resp
 
     Anvil.stop(anvil)
