@@ -12,9 +12,13 @@ defmodule Ethui.Services.Anvil do
 
   @type id :: pid | atom | {:via, atom, term}
 
+  @type allowed_value :: String.t() | number()
+  @type opts_map :: %{optional(String.t()) => allowed_value()}
+
   @type opts :: [
           slug: String.t(),
-          hash: String.t()
+          hash: String.t(),
+          anvil_opts: opts_map
         ]
 
   @type t :: %{
@@ -95,7 +99,8 @@ defmodule Ethui.Services.Anvil do
          dir: dir,
          slug: opts[:slug],
          log_subscribers: MapSet.new(),
-         chain_id: chain_id()
+         chain_id: chain_id(),
+         opts: opts_to_args(opts[:anvil_opts])
        }}
     else
       error -> error
@@ -103,29 +108,36 @@ defmodule Ethui.Services.Anvil do
   end
 
   @impl GenServer
-  def handle_info(:boot, %{port: port, dir: dir, chain_id: chain_id} = state) do
+  def handle_info(:boot, %{port: port, dir: dir, chain_id: chain_id, opts: opts} = state) do
     pid = self()
 
-    {:ok, proc} =
-      MuonTrap.Daemon.start_link(
-        anvil_bin(),
-        [
-          "--port",
-          to_string(port),
-          "--state",
-          "#{dir}/state.json",
-          "--host",
-          "0.0.0.0",
-          "--chain-id",
-          to_string(chain_id)
-        ],
-        logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
-        # TODO maybe patch muontrap to have a separate stream for stderr
-        stderr_to_stdout: true,
-        exit_status_to_reason: & &1
-      )
+    anvil_args =
+      [
+        "--port",
+        to_string(port),
+        "--state",
+        "#{dir}/state.json",
+        "--host",
+        "0.0.0.0",
+        "--chain-id",
+        to_string(chain_id)
+      ] ++ opts
 
-    {:noreply, %{state | proc: proc}}
+    with {:ok, proc} <-
+           MuonTrap.Daemon.start_link(
+             anvil_bin(),
+             anvil_args,
+             logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
+             # TODO maybe patch muontrap to have a separate stream for stderr
+             stderr_to_stdout: true,
+             exit_status_to_reason: & &1
+           ) do
+      {:noreply, %{state | proc: proc}}
+    else
+      {:error, reason} ->
+        Logger.error("Failed to start anvil: #{inspect(reason)}")
+        {:stop, reason, state}
+    end
   end
 
   @impl GenServer
@@ -215,4 +227,19 @@ defmodule Ethui.Services.Anvil do
   defp config do
     Application.get_env(:ethui, Ethui.Stacks)
   end
+
+  #
+  # utils
+  #
+
+  defp opts_to_args(nil), do: []
+
+  defp opts_to_args(opts) when is_map(opts) do
+    opts
+    |> Enum.flat_map(fn {key, val} ->
+      ["--" <> dashify(key), to_string(val)]
+    end)
+  end
+
+  defp dashify(key) when is_binary(key), do: String.replace(key, "_", "-")
 end
