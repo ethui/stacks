@@ -25,7 +25,7 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
   def start_stack(opts) do
     opts = [
       slug: opts[:slug],
-      anvil: [slug: opts[:slug], hash: opts[:hash]],
+      anvil: [slug: opts[:slug], hash: opts[:hash], anvil_opts: opts[:anvil_opts]],
       graph: [slug: opts[:slug], hash: opts[:hash]]
     ]
 
