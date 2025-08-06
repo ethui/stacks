@@ -56,12 +56,12 @@ defmodule Ethui.Services.AnvilTest do
 
     {:ok,
      %Exth.Rpc.Response.Success{
-       result: %{"forkConfig" => %{"forkBlockNumber" => forkBlockNumber}}
+       result: %{"forkConfig" => %{"forkBlockNumber" => fork_block_number}}
      }} =
       Rpc.request("anvil_nodeInfo", [])
       |> Rpc.send(client)
 
-    assert forkBlockNumber
+    assert fork_block_number
 
     Anvil.stop(anvil)
     Process.sleep(100)
