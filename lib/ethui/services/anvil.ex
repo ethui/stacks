@@ -100,7 +100,7 @@ defmodule Ethui.Services.Anvil do
          slug: opts[:slug],
          log_subscribers: MapSet.new(),
          chain_id: chain_id(),
-         opts: opts_to_args(opts[:anvil_opts])
+         args: opts_to_args(opts[:anvil_opts])
        }}
     else
       error -> error
@@ -108,7 +108,7 @@ defmodule Ethui.Services.Anvil do
   end
 
   @impl GenServer
-  def handle_info(:boot, %{port: port, dir: dir, chain_id: chain_id, opts: opts} = state) do
+  def handle_info(:boot, %{port: port, dir: dir, chain_id: chain_id, args: args} = state) do
     pid = self()
 
     anvil_args =
@@ -121,7 +121,7 @@ defmodule Ethui.Services.Anvil do
         "0.0.0.0",
         "--chain-id",
         to_string(chain_id)
-      ] ++ opts
+      ] ++ args
 
     case MuonTrap.Daemon.start_link(
            anvil_bin(),
