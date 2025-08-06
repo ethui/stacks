@@ -21,7 +21,10 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
   defp get_proxy_from_subdomain(%Conn{host: host}) do
     root_host = Endpoint.config(:url)[:host]
 
-    Logger.info("root_host: #{root_host}")
+    # in the hosted case, we want to keep `stacks` as part of the component. see the matching below
+    if root_host == "stacks.ethui.dev" do
+      root_host = "ethui.dev"
+    end
 
     components =
       if host in [root_host, "localhost", "127.0.0.1", "0.0.0.0"] do
@@ -29,8 +32,6 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
       else
         host |> String.replace(~r/.?#{root_host}/, "") |> String.split(".") |> Enum.reverse()
       end
-
-    Logger.info("components: #{inspect(components)}")
 
     case components do
       ["stacks", slug] ->
