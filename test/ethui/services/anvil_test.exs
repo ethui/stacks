@@ -47,18 +47,21 @@ defmodule Ethui.Services.AnvilTest do
         ports: HttpPorts,
         slug: "opt123",
         hash: "hash",
-        anvil_opts: %{"fork_url" => "https://eth-mainnet.g.alchemy.com/v2/demo"}
+        anvil_opts: %{"fork_url" => "wss://mainnet.gateway.tenderly.co"}
       )
 
     Process.sleep(10_000)
 
     client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
 
-    resp =
+    {:ok,
+     %Exth.Rpc.Response.Success{
+       result: %{"forkConfig" => %{"forkBlockNumber" => forkBlockNumber}}
+     }} =
       Rpc.request("anvil_nodeInfo", [])
       |> Rpc.send(client)
 
-    assert {:ok, %{"result" => %{"forkConfig" => _}}} = resp
+    assert forkBlockNumber
 
     Anvil.stop(anvil)
     Process.sleep(100)
