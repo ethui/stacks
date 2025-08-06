@@ -33,6 +33,10 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
         host |> String.replace(~r/.?#{root_host}/, "") |> String.split(".")
       end
 
+    Logger.debug("subdomain: #{inspect(host)}")
+    Logger.debug("root_host: #{inspect(root_host)}")
+    Logger.debug("subdomain components: #{inspect(components)}")
+
     case components do
       [slug, subdomain] when subdomain in ["local", "stacks"] ->
         %{slug: slug, component: nil}
