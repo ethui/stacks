@@ -1,7 +1,16 @@
 meta {
   name: api
+  seq: 1
 }
 
 headers {
   Content-Type: application/json
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{TOKEN}}
 }

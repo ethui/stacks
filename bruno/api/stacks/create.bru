@@ -6,10 +6,14 @@ meta {
 
 post {
   url: {{API}}/stacks?slug=demo
-  body: none
-  auth: inherit
+  body: json
+  auth: bearer
 }
 
 params:query {
   slug: demo
+}
+
+auth:bearer {
+  token: {{TOKEN}}
 }

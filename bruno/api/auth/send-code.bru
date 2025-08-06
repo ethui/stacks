@@ -1,0 +1,15 @@
+meta {
+  name: send-code
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{API}}/auth/send-code?email={{EMAIL}}
+  body: none
+  auth: none
+}
+
+params:query {
+  email: {{EMAIL}}
+}
