@@ -6,6 +6,7 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
   """
 
   import Plug.Conn
+  require Logger
 
   alias Plug.Conn
   alias EthuiWeb.Endpoint
