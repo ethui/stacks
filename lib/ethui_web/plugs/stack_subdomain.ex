@@ -30,22 +30,14 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
       if host in [root_host, "localhost", "127.0.0.1", "0.0.0.0"] do
         []
       else
-        host |> String.replace(~r/.?#{root_host}/, "") |> String.split(".") |> Enum.reverse()
+        host |> String.replace(~r/.?#{root_host}/, "") |> String.split(".")
       end
 
-    Logger.debug("subdomain components: #{inspect(components)}")
-
     case components do
-      ["stacks", slug] ->
+      [slug, subdomain] when subdomain in ["local", "stacks"] ->
         %{slug: slug, component: nil}
 
-      ["stacks", slug, component] ->
-        %{slug: slug, component: component}
-
-      ["local", slug] ->
-        %{slug: slug, component: nil}
-
-      ["local", slug, component] ->
+      [component, slug, subdomain] when subdomain in ["local", "stacks"] ->
         %{slug: slug, component: component}
 
       _ ->
