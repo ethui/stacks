@@ -20,7 +20,7 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
   defp get_proxy_from_subdomain(%Conn{host: host}) do
     root_host = Endpoint.config(:url)[:host]
 
-    IO.inspect(root_host)
+    Logger.info("root_host: #{root_host}")
 
     components =
       if host in [root_host, "localhost", "127.0.0.1", "0.0.0.0"] do
@@ -29,7 +29,7 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
         host |> String.replace(~r/.?#{root_host}/, "") |> String.split(".") |> Enum.reverse()
       end
 
-    IO.inspect(components)
+    Logger.info("components: #{inspect(components)}")
 
     case components do
       ["stacks", slug] ->
@@ -47,6 +47,5 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
       _ ->
         nil
     end
-    |> IO.inspect()
   end
 end
