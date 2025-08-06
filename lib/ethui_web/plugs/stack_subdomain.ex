@@ -22,9 +22,12 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
     root_host = Endpoint.config(:url)[:host]
 
     # in the hosted case, we want to keep `stacks` as part of the component. see the matching below
-    if root_host == "stacks.ethui.dev" do
-      root_host = "ethui.dev"
-    end
+    root_host =
+      if root_host == "stacks.ethui.dev" do
+        "ethui.dev"
+      else
+        root_host
+      end
 
     components =
       if host in [root_host, "localhost", "127.0.0.1", "0.0.0.0"] do
