@@ -5,7 +5,11 @@ meta {
 }
 
 post {
-  url: {{slug}}.{{STACKS}}
+  url: https://{{slug}}.{{STACKS}}
   body: none
   auth: inherit
+}
+
+vars:pre-request {
+  slug: demo
 }
