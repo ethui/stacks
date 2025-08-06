@@ -12,8 +12,8 @@ defmodule Ethui.Services.Anvil do
 
   @type id :: pid | atom | {:via, atom, term}
 
-  @type allowed_value :: String.t() | number()
-  @type opts_map :: %{optional(String.t()) => allowed_value()}
+  @type opts_value :: String.t() | number()
+  @type opts_map :: %{optional(String.t()) => opts_value()}
 
   @type opts :: [
           slug: String.t(),

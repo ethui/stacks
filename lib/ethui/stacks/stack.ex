@@ -6,7 +6,7 @@ defmodule Ethui.Stacks.Stack do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @allowed_anvil_opts ~w(fork_url fork_block_number fork_chain_id)
+  @allowed_anvil_opts ~w(fork_url fork_block_number)
 
   schema "stacks" do
     field(:slug, :string)
