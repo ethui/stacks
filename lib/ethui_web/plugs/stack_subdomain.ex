@@ -33,6 +33,8 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
         host |> String.replace(~r/.?#{root_host}/, "") |> String.split(".") |> Enum.reverse()
       end
 
+    Logger.debug("subdomain components: #{inspect(components)}")
+
     case components do
       ["stacks", slug] ->
         %{slug: slug, component: nil}
