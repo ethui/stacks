@@ -48,5 +48,5 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
 
   defp host, do: Endpoint.config(:url)[:host]
 
-  defp config, do: Application.get_env(Ethui.Stacks)
+  defp config, do: Application.get_env(:ethui, Ethui.Stacks)
 end
