@@ -81,7 +81,7 @@ if config_env() == :prod do
 
   config :ethui, :jwt_secret, jwt_secret
 
-  if enable_auth? do
+  if is_saas? do
     config :ethui, Ethui.Mailer,
       adapter: Swoosh.Adapters.Mua,
       relay: System.get_env("MAILER_SMTP") || raise("missing env var MAILER_SMTP"),
