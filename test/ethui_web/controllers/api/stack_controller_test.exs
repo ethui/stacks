@@ -44,6 +44,20 @@ defmodule EthuiWeb.Api.StackControllerTest do
 
       assert response(conn, 201)
     end
+
+    test "creates a stack with optional arguments" do
+      slug = "slug"
+
+      conn =
+        create_authenticated_conn()
+        |> post(~p"/stacks", %{
+          slug: slug,
+          anvil_opts: %{"fork_url" => "wss://mainnet.gateway.tenderly.co"},
+          graph_opts: %{"disabled" => true}
+        })
+
+      assert response(conn, 201)
+    end
   end
 
   describe "delete/2" do

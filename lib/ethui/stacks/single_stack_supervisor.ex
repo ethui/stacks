@@ -31,7 +31,7 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
 
     # runnings subgraphs in test mode is not feasible, so we skip them
     children =
-      if @enable_graph do
+      if @enable_graph and !!opts[:graph][:graph_opts][:disabled] do
         [{Graph, opts[:graph]} | children]
       else
         children

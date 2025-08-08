@@ -28,4 +28,16 @@ defmodule Ethui.Stacks.ServerTest do
     s2 |> Server.stop()
     assert Server.list() |> length == 1
   end
+
+  test "can start and stop a stack" do
+    stack = %Stack{slug: "test_stack"}
+
+    assert Server.list() |> length == 0
+
+    Server.start(stack)
+    assert Server.list() |> length == 1
+
+    Server.stop(stack)
+    assert Server.list() |> length == 0
+  end
 end
