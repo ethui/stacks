@@ -25,14 +25,13 @@ if jwt_secret = System.get_env("JWT_SECRET") do
   config :ethui, :jwt_secret, jwt_secret
 end
 
-enable_auth? = !!System.get_env("ETHUI_STACKS_ENABLE_AUTH")
-config :ethui, EthuiWeb.Plugs.Authenticate, enabled: enable_auth?
+is_saas? = !!System.get_env("ETHUI_STACKS_SAAS")
+
+config :ethui, EthuiWeb.Plugs.Authenticate, enabled: is_saas?
 
 if config_env() == :prod do
   data_root =
     System.get_env("DATA_ROOT") || raise("missing env var DATA_ROOT")
-
-  is_dockerized? = !!System.get_env("ETHUI_STACKS_DOCKERIZED")
 
   config :ethui,
          Ethui.Repo,
@@ -63,7 +62,7 @@ if config_env() == :prod do
 
   host = System.get_env("PHX_HOST") || "stacks.ethui.dev"
   port = System.get_env("PHX_PORT") || 4000
-  listen_ip = if is_dockerized?, do: {0, 0, 0, 0}, else: {127, 0, 0, 1}
+  listen_ip = if is_saas?, do: {127, 0, 0, 1}, else: {0, 0, 0, 0}
 
   config :ethui, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
@@ -74,6 +73,7 @@ if config_env() == :prod do
     secret_key_base: secret_key_base
 
   config :ethui, Ethui.Stacks,
+    is_saas?: is_saas?,
     data_dir_root: Path.join([data_root, "stacks"]),
     pg_data_dir: Path.join([data_root, "pg"]),
     ipfs_data_dir: Path.join([data_root, "ipfs"]),
@@ -81,7 +81,7 @@ if config_env() == :prod do
 
   config :ethui, :jwt_secret, jwt_secret
 
-  if enable_auth? do
+  if is_saas? do
     config :ethui, Ethui.Mailer,
       adapter: Swoosh.Adapters.Mua,
       relay: System.get_env("MAILER_SMTP") || raise("missing env var MAILER_SMTP"),
