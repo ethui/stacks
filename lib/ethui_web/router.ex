@@ -43,6 +43,7 @@ defmodule EthuiWeb.Router do
     # Authentication endpoints
     post "/auth/send-code", Api.AuthController, :send_code
     post "/auth/verify-code", Api.AuthController, :verify_code
+    get "/healthz", Api.HealthzController, :index
   end
 
   scope "/", EthuiWeb, host: "api." do
