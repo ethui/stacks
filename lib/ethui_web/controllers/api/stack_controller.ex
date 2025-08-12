@@ -2,6 +2,7 @@ defmodule EthuiWeb.Api.StackController do
   use EthuiWeb, :controller
 
   alias Ethui.Stacks.{Server, Stack}
+  alias Ethui.Stacks
   alias Ethui.Repo
   import Ecto.Query, only: [from: 2]
 
@@ -46,7 +47,15 @@ defmodule EthuiWeb.Api.StackController do
          {:ok, stack} <- Repo.insert(changeset),
          _ <- Server.start(stack) do
       conn
-      |> send_resp(201, "")
+      |> put_status(201)
+      |> json(%{
+        status: "success",
+        data: %{
+          slug: stack.slug,
+          urls: Stacks.get_urls(stack),
+          status: "running"
+        }
+      })
     else
       {:error, %Ecto.Changeset{} = changeset} ->
         conn

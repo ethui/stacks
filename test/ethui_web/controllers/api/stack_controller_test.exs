@@ -58,6 +58,16 @@ defmodule EthuiWeb.Api.StackControllerTest do
 
       assert response(conn, 201)
     end
+
+    test "creates a stack and returns urls" do
+      slug = "slug"
+
+      conn =
+        create_authenticated_conn()
+        |> post(~p"/stacks", %{slug: slug})
+
+      assert json_response(conn, 201)["urls"] != nil
+    end
   end
 
   describe "delete/2" do

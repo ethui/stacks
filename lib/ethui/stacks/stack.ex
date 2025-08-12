@@ -26,6 +26,7 @@ defmodule Ethui.Stacks.Stack do
     |> foreign_key_constraint(:user_id)
     |> update_change(:anvil_opts, &filter_opts(@allowed_anvil_opts, &1))
     |> update_change(:graph_opts, &filter_opts(@allowed_graph_opts, &1))
+    |> IO.inspect()
   end
 
   defp filter_opts(allowed_opts, opts) when is_map(opts) do
