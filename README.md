@@ -41,8 +41,8 @@ curl -X POST -d '{"slug": "foo"}' http://api.local.ethui.dev:4000/stacks
 
 ### 2. Access individual services via their subdomain
 
-- **<http://foo-local.ethui.dev>** (anvil node)
-- **<http://graph-foo-local.ethui.dev>** (subgraph queries)
-- **<http://graph-rpc-foo-local.ethui.dev>** (subgraph RPC client)
-- **<http://ipfs-foo-local.ethui.dev>** (IPFS)
-- **<http://foo-local.ethui.dev>** (explorer)
+- **<http://foo.local.ethui.dev>** (anvil node)
+- **<http://graph-foo.local.ethui.dev>** (subgraph queries)
+- **<http://graph-rpc-foo.local.ethui.dev>** (subgraph RPC client)
+- **<http://ipfs-foo.local.ethui.dev>** (IPFS)
+- **<http://foo.local.ethui.dev>** (explorer)

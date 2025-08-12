@@ -71,7 +71,7 @@ defmodule Ethui.Stacks do
   end
 
   def base_url(slug) do
-    slug <> "-" <> host()
+    slug <> "." <> host()
   end
 
   def host do
