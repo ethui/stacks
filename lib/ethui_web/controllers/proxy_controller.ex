@@ -9,8 +9,10 @@ defmodule EthuiWeb.ProxyController do
   def reverse_proxy(
         %Plug.Conn{assigns: %{proxy: %{slug: slug, component: component}}} = conn,
         params
-      ),
-      do: proxy_component(conn, params, {slug, component})
+      ) do
+    IO.inspect(slug, component)
+    proxy_component(conn, params, {slug, component})
+  end
 
   def reverse_proxy(conn, _params), do: conn |> send_resp(404, "Not found")
 

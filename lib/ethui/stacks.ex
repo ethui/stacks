@@ -35,17 +35,23 @@ defmodule Ethui.Stacks do
       graph_rpc_url: graph_rpc_url(stack.slug)
     }
 
-    # TODO 
-    # if stack.graph_opts.disabled do
-    #  urls
-    #  |> Map.put(:graph_url, graph_url(stack.slug))
-    #  |> Map.put(:graph_rpc_url, graph_rpc_url(stack.slug))
-    # end
+    IO.inspect(stack)
+
+    a = !stack.graph_opts["disabled"]
+
+    IO.inspect(a, label: "Graph enabled?")
+
+    if a do
+      urls
+      |> Map.put(:graph_url, graph_url(stack.slug))
+      |> Map.put(:graph_rpc_url, graph_rpc_url(stack.slug))
+    end
+
     urls
   end
 
   def rpc_url(slug) do
-    slug <> "-stacks.ethui.dev"
+    base_url(slug)
   end
 
   def graph_url(slug) do
@@ -61,7 +67,7 @@ defmodule Ethui.Stacks do
   end
 
   def explorer_url(slug) do
-    slug <> "-stacks.ethui.dev"
+    base_url(slug)
   end
 
   def base_url(slug) do
