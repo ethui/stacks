@@ -31,8 +31,8 @@ defmodule Ethui.Stacks.Stack do
   defp filter_opts(allowed_opts, opts) when is_map(opts) do
     opts
     |> Enum.filter(fn
-      {k, v} when is_binary(v) ->
-        k in allowed_opts and (is_boolean(v) or is_number(v) or is_binary(k))
+      {k, v} when is_binary(k) ->
+        k in allowed_opts and (is_boolean(v) or is_number(v) or is_binary(v))
 
       _ ->
         false
