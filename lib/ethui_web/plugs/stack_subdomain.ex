@@ -2,7 +2,8 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
   @moduledoc """
     Extracts the subdomain components from the request host for a stack reverse proxy
 
-  e.g.: "graph.my-stack.stacks.lvh.me" -> %{proxy: %{slug: "my-stack", component: "graph"}}
+  e.g.: "graph-my-stack.stacks.lvh.me" -> %{proxy: %{slug: "my-stack", component: "graph"}}
+  e.g.: "my-stack.stacks.lvh.me" -> %{proxy: %{slug: "my-stack", component: nil}}
   """
 
   import Plug.Conn
@@ -18,51 +19,47 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
     |> assign(:proxy, get_proxy_from_subdomain(conn))
   end
 
-  defp get_proxy_from_subdomain(%Conn{host: host}) do
-    root_host = get_root_host()
-
-    host
-    |> IO.inspect(label: "host")
-    |> extract_subdomain_parts(root_host)
-    |> IO.inspect(label: "2")
+  def get_proxy_from_subdomain(%Conn{host: request_host}) do
+    request_host
+    |> extract_subdomain_parts()
     |> parse_proxy_info()
-    |> IO.inspect(label: "parse proxy")
   end
 
-  defp get_root_host() do
-    if config()[:is_saas?] do
-      String.replace(host(), ~r/stacks\./, "")
-    else
-      host()
-    end
-  end
+  defp extract_subdomain_parts(request_host) do
+    root_domain = get_root_domain()
 
-  defp extract_subdomain_parts(host, root_host) do
     cond do
-      is_local_host?(host, root_host) ->
+      is_root_or_localhost?(request_host, root_domain) ->
         []
 
-      true ->
-        host
-        |> String.replace(~r/.?#{Regex.escape(root_host)}/, "")
+      String.ends_with?(request_host, root_domain) ->
+        request_host
+        |> String.replace(~r/\.#{Regex.escape(root_domain)}$/, "")
         |> String.split(".")
-        |> Enum.reject(&(&1 == ""))
+
+      true ->
+        []
     end
   end
 
-  defp is_local_host?(host, root_host) do
-    host in [root_host, "localhost", "127.0.0.1", "0.0.0.0"]
+  defp get_root_domain do
+    configured_host = host()
+
+    if config()[:is_saas?] do
+      String.replace(configured_host, ~r/^stacks\./, "")
+    else
+      configured_host
+    end
   end
 
-  # Parse subdomain components into proxy information
-  # tenant.local -> %{slug: "tenant", component: nil}  
-  # api-tenant.stacks -> %{slug: "tenant", component: "api"}
-  defp parse_proxy_info(parts) do
-    IO.inspect(parts, label: "parts")
+  defp is_root_or_localhost?(host, root_domain) do
+    host in [root_domain, "localhost", "127.0.0.1", "0.0.0.0"]
+  end
 
-    case parts do
-      [slug_part, env] when env in ["local", "stacks"] ->
-        parse_slug_and_component(slug_part)
+  defp parse_proxy_info(subdomain_parts) do
+    case subdomain_parts do
+      [slug, subdomain] when subdomain in ["stacks", "local"] ->
+        parse_slug_and_component(slug)
 
       _ ->
         nil

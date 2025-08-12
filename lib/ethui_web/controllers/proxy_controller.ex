@@ -10,7 +10,6 @@ defmodule EthuiWeb.ProxyController do
         %Plug.Conn{assigns: %{proxy: %{slug: slug, component: component}}} = conn,
         params
       ) do
-    IO.inspect(slug, component)
     proxy_component(conn, params, {slug, component})
   end
 
