@@ -1,30 +1,9 @@
 defmodule Ethui.Stacks do
-  alias Ethui.Stacks.{Server, Stack}
-  alias Ethui.Repo
-  import Ecto.Query, only: [from: 2]
+  @moduledoc """
+  Stacks context module
+  """
+
   alias EthuiWeb.Endpoint
-
-  def get_stack(user_id \\ nil, slug) do
-    query =
-      if user_id do
-        from(s in Stack, where: s.slug == ^slug and s.user_id == ^user_id)
-      else
-        from(s in Stack, where: s.slug == ^slug)
-      end
-
-    Repo.one(query)
-  end
-
-  def list_stacks(user_id \\ nil) do
-    query =
-      if user_id do
-        from(s in Stack, where: s.user_id == ^user_id)
-      else
-        Stack
-      end
-
-    Repo.all(query)
-  end
 
   def get_urls(stack) do
     urls = %{
@@ -65,10 +44,20 @@ defmodule Ethui.Stacks do
   end
 
   def base_url(slug) do
-    slug <> "." <> host()
+    slug <> subdomain() <> host()
+  end
+
+  def subdomain do
+    if config()[:is_saas?] do
+      ".stacks."
+    else
+      ".local."
+    end
   end
 
   def host do
     Endpoint.config(:url)[:host]
   end
+
+  defp config, do: Application.get_env(:ethui, Ethui.Stacks)
 end

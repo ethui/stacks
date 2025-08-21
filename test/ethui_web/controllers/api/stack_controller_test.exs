@@ -68,6 +68,18 @@ defmodule EthuiWeb.Api.StackControllerTest do
 
       assert json_response(conn, 201)["urls"] != nil
     end
+
+    test "returns 404 when stacks uses invalid slug" do
+      slugs = ["graph-test", "graph-rpc-test", "rpc-test", "ipfs-test"]
+
+      conn = create_authenticated_conn()
+
+      slugs
+      |> Enum.map(fn slug ->
+        conn = conn |> post(~p"/stacks", %{slug: slug})
+        assert json_response(conn, 403)["error"] == "unauthorized"
+      end)
+    end
   end
 
   describe "delete/2" do

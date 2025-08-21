@@ -29,7 +29,7 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
     root_domain = get_root_domain()
 
     cond do
-      is_root_or_localhost?(request_host, root_domain) ->
+      root_or_localhost?(request_host, root_domain) ->
         []
 
       String.ends_with?(request_host, root_domain) ->
@@ -52,7 +52,7 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
     end
   end
 
-  defp is_root_or_localhost?(host, root_domain) do
+  defp root_or_localhost?(host, root_domain) do
     host in [root_domain, "localhost", "127.0.0.1", "0.0.0.0"]
   end
 
