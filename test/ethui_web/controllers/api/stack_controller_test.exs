@@ -66,9 +66,7 @@ defmodule EthuiWeb.Api.StackControllerTest do
         create_authenticated_conn()
         |> post(~p"/stacks", %{slug: slug})
 
-      IO.inspect(conn)
-
-      assert json_response(conn, 201)["urls"] != nil
+      assert json_response(conn, 201)["data"]["urls"] != nil
     end
 
     test "returns 404 when stacks uses invalid slug" do
@@ -79,7 +77,9 @@ defmodule EthuiWeb.Api.StackControllerTest do
       slugs
       |> Enum.map(fn slug ->
         conn = conn |> post(~p"/stacks", %{slug: slug})
-        assert json_response(conn, 422)["error"] == "[slug: {\"has invalid format\"}]"
+
+        assert json_response(conn, 422)["error"] ==
+                 "[slug: {\"has invalid format\", [validation: :format]}]"
       end)
     end
   end
