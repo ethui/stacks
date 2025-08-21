@@ -66,6 +66,8 @@ defmodule EthuiWeb.Api.StackControllerTest do
         create_authenticated_conn()
         |> post(~p"/stacks", %{slug: slug})
 
+      IO.inspect(conn)
+
       assert json_response(conn, 201)["urls"] != nil
     end
 
@@ -77,7 +79,7 @@ defmodule EthuiWeb.Api.StackControllerTest do
       slugs
       |> Enum.map(fn slug ->
         conn = conn |> post(~p"/stacks", %{slug: slug})
-        assert json_response(conn, 403)["error"] == "unauthorized"
+        assert json_response(conn, 422)["error"] == "[slug: {\"has invalid format\"}]"
       end)
     end
   end
