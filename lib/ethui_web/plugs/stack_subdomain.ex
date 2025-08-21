@@ -20,9 +20,16 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
   end
 
   def get_proxy_from_subdomain(%Conn{host: request_host}) do
-    request_host
-    |> extract_subdomain_parts()
-    |> parse_proxy_info()
+    Logger.debug("request_host #{inspect(request_host)}")
+
+    a =
+      request_host
+      |> extract_subdomain_parts()
+      |> parse_proxy_info()
+
+    Logger.debug("other request #{inspect(a)}")
+
+    a
   end
 
   defp extract_subdomain_parts(request_host) do
