@@ -9,6 +9,8 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
 
   alias Ethui.Services.{Anvil, Graph}
 
+  @enable_graph Mix.env() == :test
+
   @type opts :: [
           slug: String.t(),
           anvil: Anvil.opts(),
@@ -41,6 +43,6 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
   defp enable_graph?(opts) do
     is_enabled = !opts[:graph][:graph_opts][:disabled]
 
-    Mix.env() == :test and is_enabled
+    @enable_graph and is_enabled
   end
 end
