@@ -6,8 +6,14 @@ defmodule Ethui.Stacks.Stack do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @allowed_anvil_opts ~w(fork_url fork_block_number)
-  @allowed_graph_opts ~w(disabled)
+  @anvil_schema %{
+    "fork_url" => :string,
+    "fork_block_number" => :integer
+  }
+
+  @graph_schema %{
+    "enabled" => :boolean
+  }
 
   schema "stacks" do
     field(:slug, :string)
@@ -25,21 +31,36 @@ defmodule Ethui.Stacks.Stack do
     |> validate_required([:slug])
     |> unique_constraint(:slug)
     |> foreign_key_constraint(:user_id)
-    |> update_change(:anvil_opts, &filter_opts(@allowed_anvil_opts, &1))
-    |> update_change(:graph_opts, &filter_opts(@allowed_graph_opts, &1))
+    |> update_change(:anvil_opts, &filter_opts(@anvil_schema, &1))
+    |> update_change(:graph_opts, &filter_opts(@graph_schema, &1))
   end
 
-  defp filter_opts(allowed_opts, opts) when is_map(opts) do
+  defp filter_opts(schema, opts) when is_map(opts) do
     opts
-    |> Enum.filter(fn
-      {k, v} when is_binary(k) ->
-        k in allowed_opts and (is_boolean(v) or is_number(v) or is_binary(v))
-
-      _ ->
-        false
+    |> Enum.reduce(%{}, fn {k, v}, acc ->
+      with true <- is_binary(k),
+           {:ok, casted} <- cast_value(schema[k], v) do
+        Map.put(acc, k, casted)
+      else
+        _ -> acc
+      end
     end)
-    |> Enum.into(%{})
   end
 
   defp filter_opts(_, _), do: %{}
+
+  defp cast_value(:string, v) when is_binary(v), do: {:ok, v}
+  defp cast_value(:integer, v) when is_integer(v), do: {:ok, v}
+
+  defp cast_value(:integer, v) when is_binary(v) do
+    case Integer.parse(v) do
+      {int, ""} -> {:ok, int}
+      _ -> :error
+    end
+  end
+
+  defp cast_value(:boolean, v) when is_boolean(v), do: {:ok, v}
+  defp cast_value(:boolean, "true"), do: {:ok, true}
+  defp cast_value(:boolean, "false"), do: {:ok, false}
+  defp cast_value(_, _), do: :error
 end

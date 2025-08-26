@@ -14,7 +14,7 @@ defmodule Ethui.Stacks do
       graph_rpc_url: graph_rpc_url(stack.slug)
     }
 
-    if !stack.graph_opts["disabled"] do
+    if !!stack.graph_opts["enabled"] do
       urls
       |> Map.put(:graph_url, graph_url(stack.slug))
       |> Map.put(:graph_rpc_url, graph_rpc_url(stack.slug))

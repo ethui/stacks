@@ -53,7 +53,7 @@ defmodule EthuiWeb.Api.StackControllerTest do
         |> post(~p"/stacks", %{
           slug: slug,
           anvil_opts: %{"fork_url" => "wss://mainnet.gateway.tenderly.co"},
-          graph_opts: %{"disabled" => true}
+          graph_opts: %{"enabled" => true}
         })
 
       assert response(conn, 201)
