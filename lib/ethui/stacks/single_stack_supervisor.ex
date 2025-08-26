@@ -39,6 +39,6 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
   end
 
   defp enable_graph?(opts) do
-    !opts[:graph][:graph_opts][:disabled]
+    !!opts[:graph][:graph_opts][:enabled]
   end
 end
