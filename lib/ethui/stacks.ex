@@ -22,27 +22,31 @@ defmodule Ethui.Stacks do
   end
 
   def rpc_url(slug) do
-    base_url(slug)
+    url(slug)
   end
 
   def graph_url(slug) do
-    "graph-" <> base_url(slug)
+    url("graph-", slug)
   end
 
   def graph_rpc_url(slug) do
-    "graph-rpc-" <> base_url(slug)
+    url("graph-rpc-", slug)
   end
 
   def ipfs_url(slug) do
-    "ipfs-" <> base_url(slug)
+    url("ipfs-", slug)
   end
 
   def explorer_url(slug) do
-    base_url(slug)
+    url(slug)
   end
 
-  def base_url(slug) do
+  def url(slug) do
     http_protocol() <> slug <> subdomain() <> host()
+  end
+
+  def url(component, slug) do
+    http_protocol() <> component <> slug <> subdomain() <> host()
   end
 
   def subdomain do
