@@ -9,9 +9,7 @@ defmodule Ethui.Stacks do
     urls = %{
       rpc_url: rpc_url(stack.slug),
       ipfs_url: ipfs_url(stack.slug),
-      explorer_url: explorer_url(stack.slug),
-      graph_url: graph_url(stack.slug),
-      graph_rpc_url: graph_rpc_url(stack.slug)
+      explorer_url: explorer_url(stack.slug)
     }
 
     if !!stack.graph_opts["enabled"] do
@@ -44,14 +42,20 @@ defmodule Ethui.Stacks do
   end
 
   def base_url(slug) do
-    slug <> subdomain() <> host()
+    http_protocol() <> slug <> subdomain() <> host()
   end
 
   def subdomain do
-    if config()[:is_saas?] do
-      ".stacks."
-    else
+    if !config()[:is_saas?] do
       ".local."
+    end
+  end
+
+  def http_protocol do
+    if config()[:is_saas?] do
+      "https://"
+    else
+      "http://"
     end
   end
 
