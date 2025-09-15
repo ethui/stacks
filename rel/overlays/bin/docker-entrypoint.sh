@@ -2,6 +2,9 @@
 
 set -eu
 
+echo "foo"
+anvil
+
 if [ -z "${DATA_ROOT:-}" ]; then
   echo "DATA_ROOT not defined. set it to \$HOME/.config/ethui/stacks, where \$HOME"
   exit 1
