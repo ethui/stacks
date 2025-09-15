@@ -16,13 +16,16 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
 
   def call(conn, _opts) do
     conn
-    |> assign(:proxy, get_proxy_from_subdomain(conn))
+    |> assign(:proxy, IO.inspect(get_proxy_from_subdomain(conn)))
   end
 
   def get_proxy_from_subdomain(%Conn{host: request_host}) do
     request_host
+    |> IO.inspect()
     |> extract_subdomain_parts()
-    |> parse_proxy_info()
+    |> IO.inspect()
+    |> parse_slug_and_component()
+    |> IO.inspect()
   end
 
   defp extract_subdomain_parts(request_host) do
@@ -35,7 +38,6 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
       String.ends_with?(request_host, root_domain) ->
         request_host
         |> String.replace(~r/\.#{Regex.escape(root_domain)}$/, "")
-        |> String.split(".")
 
       true ->
         []
@@ -54,16 +56,6 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
 
   defp root_or_localhost?(host, root_domain) do
     host in [root_domain, "localhost", "127.0.0.1", "0.0.0.0"]
-  end
-
-  defp parse_proxy_info(subdomain_parts) do
-    case subdomain_parts do
-      [slug, subdomain] when subdomain in ["stacks", "local"] ->
-        parse_slug_and_component(slug)
-
-      _ ->
-        nil
-    end
   end
 
   defp parse_slug_and_component(slug_part) do
