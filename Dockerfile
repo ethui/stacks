@@ -16,7 +16,7 @@ ARG OTP_VERSION=27.3.2
 ARG DEBIAN_VERSION=bullseye-20250407-slim
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
-ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
+ARG RUNNER_IMAGE="ubuntu:noble"
 
 FROM ${BUILDER_IMAGE} as builder
 
@@ -63,7 +63,7 @@ RUN mix release
 FROM ${RUNNER_IMAGE}
 
 RUN apt-get update -y && \
-  apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates libsqlite3-dev docker.io \
+  apt-get install -y libstdc++6 openssl libncurses6 locales ca-certificates libsqlite3-dev docker.io build-essential curl \
   && apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 # Set the locale
@@ -82,6 +82,11 @@ ENV MIX_ENV="prod"
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/ethui ./
 
+# Install foundry
+RUN curl -L https://foundry.paradigm.xyz | bash
+RUN ~/.foundry/bin/foundryup
+RUN cp ~/.foundry/bin/anvil /usr/local/bin/anvil
+
 EXPOSE 4000
 
 # If using an environment that doesn't automatically reap zombie processes, it is
@@ -89,5 +94,4 @@ EXPOSE 4000
 # above and adding an entrypoint. See https://github.com/krallin/tini for details
 # ENTRYPOINT ["/tini", "--"]
 
-CMD ["/entrypoint.sh"]
 CMD ["/app/bin/docker-entrypoint.sh"]
