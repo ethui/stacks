@@ -41,7 +41,7 @@ defmodule EthuiWeb.ConnCase do
   end
 
   def anvil_conn(slug) do
-    Phoenix.ConnTest.build_conn(:post, "http://#{slug}.stacks.lvh.me", nil)
+    Phoenix.ConnTest.build_conn(:post, "http://#{slug}.lvh.me", nil)
   end
 
   def authenticated_api_conn do

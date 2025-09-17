@@ -5,6 +5,7 @@ defmodule Ethui.Stacks.Stack do
 
   use Ecto.Schema
   import Ecto.Changeset
+  alias Ethui.Stacks
 
   @anvil_schema %{
     "fork_url" => :string,
@@ -27,7 +28,7 @@ defmodule Ethui.Stacks.Stack do
   def create_changeset(attrs) do
     %__MODULE__{}
     |> cast(attrs, [:slug, :user_id, :anvil_opts])
-    |> validate_format(:slug, ~r/^(?!(graph-|graph-rpc-|rpc-|ipfs-)).*$/)
+    |> validate_format(:slug, Stacks.reserved_slug_prefixes_regex())
     |> validate_required([:slug])
     |> unique_constraint(:slug)
     |> foreign_key_constraint(:user_id)

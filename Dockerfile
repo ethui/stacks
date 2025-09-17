@@ -11,11 +11,11 @@
 #   - https://pkgs.org/ - resource for finding needed packages
 #   - Ex: hexpm/elixir:1.18.3-erlang-27.3.2-debian-bullseye-20250407-slim
 #
-ARG ELIXIR_VERSION=1.18.3
-ARG OTP_VERSION=27.3.2
+ARG ELIXIR_VERSION=1.18.4
+ARG OTP_VERSION=28.0.4
 ARG DEBIAN_VERSION=bullseye-20250407-slim
 
-ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
+ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-ubuntu-noble-20250805"
 ARG RUNNER_IMAGE="ubuntu:noble"
 
 FROM ${BUILDER_IMAGE} as builder
@@ -63,7 +63,7 @@ RUN mix release
 FROM ${RUNNER_IMAGE}
 
 RUN apt-get update -y && \
-  apt-get install -y libstdc++6 openssl libncurses6 locales ca-certificates libsqlite3-dev docker.io build-essential curl \
+  apt-get install -y libstdc++6 openssl libssl-dev libncurses6 locales ca-certificates libsqlite3-dev docker.io build-essential curl \
   && apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 # Set the locale
