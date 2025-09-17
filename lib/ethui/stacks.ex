@@ -68,7 +68,7 @@ defmodule Ethui.Stacks do
   end
 
   defp graph_enabled?(stack) do
-    get_in(stack, [:graph_opts, "enabled"]) == true
+    !!stack.graph_opts["enabled"]
   end
 
   defp http_protocol do
