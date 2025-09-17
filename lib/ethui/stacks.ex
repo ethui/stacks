@@ -15,8 +15,7 @@ defmodule Ethui.Stacks do
   def reserved_slug_prefixes_regex do
     prefixes =
       reserved_slug_prefixes()
-      |> Enum.map(&Regex.escape/1)
-      |> Enum.join("-|")
+      |> Enum.map_join("-|", &Regex.escape/1)
 
     Regex.compile!("^(?!(" <> prefixes <> "-)).*$")
   end
@@ -73,14 +72,14 @@ defmodule Ethui.Stacks do
   end
 
   defp http_protocol do
-    if is_saas?(), do: "https://", else: "http://"
+    if saas?(), do: "https://", else: "http://"
   end
 
   defp host do
     Endpoint.config(:url)[:host]
   end
 
-  defp is_saas? do
+  defp saas? do
     config()[:is_saas?] || false
   end
 

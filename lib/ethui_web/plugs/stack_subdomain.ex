@@ -32,5 +32,5 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
     end
   end
 
-  defp host, do: Endpoint.config(:url)[:host] |> IO.inspect()
+  defp host, do: Endpoint.config(:url)[:host]
 end
