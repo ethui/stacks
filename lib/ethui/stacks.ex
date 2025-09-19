@@ -64,7 +64,7 @@ defmodule Ethui.Stacks do
   end
 
   defp build_url(component, slug) do
-    "#{http_protocol()}#{component}-#{slug}#{host()}"
+    "#{http_protocol()}#{component}-#{slug}.#{host()}"
   end
 
   defp graph_enabled?(stack) do
