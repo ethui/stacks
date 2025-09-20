@@ -28,6 +28,10 @@ defmodule Ethui.Stacks.Stack do
   def create_changeset(attrs) do
     %__MODULE__{}
     |> cast(attrs, [:slug, :user_id, :anvil_opts])
+    |> update_change(:slug, &String.downcase/1)
+    |> validate_format(:slug, ~r/^[a-z0-9\-]+$/,
+      message: "must contain only lowercase letters, numbers, and hyphens"
+    )
     |> validate_format(:slug, Stacks.reserved_slug_prefixes_regex())
     |> validate_required([:slug])
     |> unique_constraint(:slug)

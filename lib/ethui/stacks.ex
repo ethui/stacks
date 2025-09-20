@@ -60,7 +60,7 @@ defmodule Ethui.Stacks do
   def explorer_url(slug), do: build_url(slug)
 
   defp build_url(slug) do
-    "#{http_protocol()}#{slug}#{host()}"
+    "#{http_protocol()}#{slug}.#{host()}"
   end
 
   defp build_url(component, slug) do
