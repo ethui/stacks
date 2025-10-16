@@ -85,6 +85,7 @@ config :exqlite, force_build: true
 config :ethui, Ethui.Stacks,
   graph_node_image: "graphprotocol/graph-node:f02dfa2",
   ipfs_image: "ipfs/kubo:v0.34.1",
+  explorer_image: "ghcr.io/ethui/explorer:latest"
   pg_image: "postgres:17.4",
   anvil_bin: System.get_env("ANVIL_BIN", "anvil"),
   docker_host: System.get_env("DOCKER_HOST", "172.17.0.1"),
