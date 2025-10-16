@@ -8,11 +8,11 @@ defmodule Ethui.Services.Explorer do
     image: &__MODULE__.docker_image/0,
     named_args: [
       network: "ethui-stacks",
-      name: "ethui-stacks-ipfs"
+      name: "ethui-stacks-explorer"
     ]
 
   def docker_image do
-    config()[:ipfs_image]
+    config()[:explorer_image]
   end
 
   defp config do

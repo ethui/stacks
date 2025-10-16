@@ -15,7 +15,11 @@ defmodule EthuiWeb.ProxyController do
 
   def reverse_proxy(conn, _params), do: conn |> send_resp(404, "Not found")
 
-  defp proxy_component(conn, params, {slug, nil}), do: anvil(conn, params, slug)
+  defp proxy_component(%{method: "POST"} = conn, params, {slug, nil}),
+    do: anvil(conn, params, slug)
+
+  defp proxy_component(%{method: "GET"} = conn, params, {slug, nil}),
+    do: explorer_redirect(conn, params, slug)
 
   defp proxy_component(conn, params, {slug, "graph"}),
     do: subgraph_generic(conn, params, slug, 8000)
@@ -28,6 +32,9 @@ defmodule EthuiWeb.ProxyController do
 
   defp proxy_component(conn, params, {_slug, "ipfs"}),
     do: ipfs(conn, params)
+
+  defp proxy_component(conn, params, {_slug, "explorer"}),
+    do: explorer(conn, params)
 
   defp proxy_component(%Plug.Conn{assigns: assigns} = conn, _params, _proxy) do
     Logger.error("cannot proxy #{inspect(assigns)}")
@@ -46,6 +53,22 @@ defmodule EthuiWeb.ProxyController do
         conn
         |> put_status(:not_found)
         |> json(%{error: "Stack not found"})
+    end
+  end
+
+  defp explorer_redirect(conn, _params, _slug) do
+    conn |> redirect(external: "http://google.com")
+  end
+
+  defp explorer(conn, %{"proxied_path" => proxied_path}) do
+    case Ethui.Services.Explorer.ip() do
+      {:ok, ip} ->
+        forward(conn, "http://#{ip}:3000/#{Enum.join(proxied_path, "/")}")
+
+      _ ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Explorer not running"})
     end
   end
 
@@ -70,7 +93,7 @@ defmodule EthuiWeb.ProxyController do
       _ ->
         conn
         |> put_status(:not_found)
-        |> json(%{error: "Stack not found"})
+        |> json(%{error: "IPFS not found"})
     end
   end
 
