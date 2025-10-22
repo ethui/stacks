@@ -118,7 +118,7 @@ defmodule Ethui.Stacks.Server do
 
   @spec start_stack(map, t) :: {:ok, pid, t} | {:error, any}
   defp start_stack(
-         %{slug: slug, anvil_opts: anvil_opts, graph_opts: graph_opts, inserted_at: inserted_at},
+         %{id: id, slug: slug, anvil_opts: anvil_opts, graph_opts: graph_opts, inserted_at: inserted_at},
          %{instances: instances} = state
        ) do
     hash =
@@ -127,7 +127,7 @@ defmodule Ethui.Stacks.Server do
       |> binary_part(0, 8)
       |> String.downcase()
 
-    full_opts = [slug: slug, hash: hash, anvil_opts: anvil_opts, graph_opts: graph_opts]
+    full_opts = [id: id,  slug: slug, hash: hash, anvil_opts: anvil_opts, graph_opts: graph_opts]
     Logger.info("Starting stack #{slug}")
 
     case MultiStackSupervisor.start_stack(full_opts) do
