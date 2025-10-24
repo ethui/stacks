@@ -20,7 +20,7 @@ defmodule Ethui.Services.AnvilTest do
   end
 
   test "creates an anvil process" do
-    {:ok, anvil} = Anvil.start_link(ports: HttpPorts, slug: "slug123", hash: "hash")
+    {:ok, anvil} = Anvil.start_link(ports: HttpPorts, slug: "slug123", hash: "hash", id: 1)
     Process.sleep(1000)
 
     client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
@@ -47,7 +47,8 @@ defmodule Ethui.Services.AnvilTest do
         ports: HttpPorts,
         slug: "opt123",
         hash: "hash",
-        anvil_opts: %{"fork_url" => "wss://mainnet.gateway.tenderly.co"}
+        anvil_opts: %{"fork_url" => "wss://mainnet.gateway.tenderly.co"},
+        id: 1
       )
 
     Process.sleep(10_000)
@@ -76,7 +77,7 @@ defmodule Ethui.Services.AnvilTest do
   test "creates multiple anvil processes" do
     anvils =
       for i <- 1..10 do
-        {:ok, pid} = Anvil.start_link(ports: HttpPorts, slug: :"anvil_#{i}", hash: "hash")
+        {:ok, pid} = Anvil.start_link(ports: HttpPorts, slug: :"anvil_#{i}", hash: "hash", id: 1)
         Process.monitor(pid)
         pid
       end

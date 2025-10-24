@@ -21,7 +21,7 @@ defmodule EthuiWeb.ProxyControllerTest do
     test "proxies to anvil" do
       slug = "slug10"
 
-      s = %Stack{slug: slug}
+      s = %Stack{slug: slug, id: 1}
       Server.start(s)
       Process.sleep(100)
 

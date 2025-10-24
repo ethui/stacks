@@ -23,7 +23,6 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
 
   @spec start_stack(opts) :: {:ok, pid} | {:error, any}
   def start_stack(opts) do
-
     opts = [
       slug: opts[:slug],
       anvil: [id: opts[:id], slug: opts[:slug], hash: opts[:hash], anvil_opts: opts[:anvil_opts]],

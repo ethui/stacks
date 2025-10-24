@@ -18,8 +18,8 @@ defmodule Ethui.Stacks.ServerTest do
   end
 
   test "can orchestrate multiple anvils" do
-    s1 = %Stack{slug: "slug1"}
-    s2 = %Stack{slug: "slug2"}
+    s1 = %Stack{id: 1, slug: "slug1"}
+    s2 = %Stack{id: 2, slug: "slug2"}
 
     Server.start(s1)
     Server.start(s2)
@@ -30,7 +30,7 @@ defmodule Ethui.Stacks.ServerTest do
   end
 
   test "can start and stop a stack" do
-    stack = %Stack{slug: "test_stack"}
+    stack = %Stack{id: 1, slug: "test_stack"}
 
     assert Server.list() |> length == 0
 

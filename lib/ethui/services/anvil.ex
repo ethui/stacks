@@ -45,7 +45,6 @@ defmodule Ethui.Services.Anvil do
     {:via, Registry, {Ethui.Stacks.Registry, {slug, :anvil}}}
   end
 
-
   #
   # Client
 
@@ -78,8 +77,6 @@ defmodule Ethui.Services.Anvil do
     GenServer.cast(id, :stop)
   end
 
-
-
   #
   # Server
   #
@@ -94,7 +91,6 @@ defmodule Ethui.Services.Anvil do
          {:ok, port} <-
            Ethui.Stacks.HttpPorts.claim() do
       send(self(), :boot)
-
 
       {:ok,
        %{
@@ -157,7 +153,6 @@ defmodule Ethui.Services.Anvil do
         {:stop, :normal, state}
     end
   end
-  
 
   @impl GenServer
   def handle_call(:url, _from, %{port: port} = state) do
@@ -175,10 +170,6 @@ defmodule Ethui.Services.Anvil do
     GenServer.stop(proc)
     {:stop, :normal, state}
   end
-
-
-
-
 
   @impl GenServer
   def handle_cast({:log, line}, %{logs: logs, log_subscribers: subs} = state) do
@@ -209,14 +200,12 @@ defmodule Ethui.Services.Anvil do
     case File.rm_rf(state.dir) do
       {:ok, _files} ->
         :ok
-      
+
       {:error, reason, _} ->
         Logger.error("Failed to cleanup resource for slug #{state.slug}: #{inspect(reason)}")
         {:error, reason}
     end
   end
-
-
 
   defp trim(q) do
     if :queue.len(q) > @log_max_size do

@@ -44,7 +44,7 @@ defmodule EthuiWeb.Api.StackController do
       end
 
     with changeset <- Stack.create_changeset(stack_params),
-         {:ok, stack} <- Repo.insert(changeset), 
+         {:ok, stack} <- Repo.insert(changeset),
          _ <- Server.start(stack) do
       conn
       |> put_status(201)
