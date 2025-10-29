@@ -38,6 +38,16 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
     Supervisor.init(children, strategy: :one_for_one)
   end
 
+  def cleanup_anvil(stack) do
+    stack
+    |> Supervisor.which_children()
+    |> Enum.each(fn {_id, pid, _type, modules} ->
+      if Ethui.Services.Anvil in modules do
+        Anvil.stop(Anvil.name(pid))
+      end
+    end)
+  end
+
   defp enable_graph?(opts) do
     !!opts[:graph][:graph_opts][:enabled]
   end

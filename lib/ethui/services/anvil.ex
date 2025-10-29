@@ -18,7 +18,8 @@ defmodule Ethui.Services.Anvil do
   @type opts :: [
           slug: String.t(),
           hash: String.t(),
-          anvil_opts: opts_map
+          anvil_opts: opts_map,
+          id: Integer.t()
         ]
 
   @type t :: %{
@@ -99,7 +100,7 @@ defmodule Ethui.Services.Anvil do
          dir: dir,
          slug: opts[:slug],
          log_subscribers: MapSet.new(),
-         chain_id: chain_id(),
+         chain_id: chain_id(opts[:id]),
          args: opts_to_args(opts[:anvil_opts])
        }}
     else
@@ -165,6 +166,7 @@ defmodule Ethui.Services.Anvil do
 
   @impl GenServer
   def handle_cast(:stop, %{proc: proc} = state) do
+    remove_dir(state)
     GenServer.stop(proc)
     {:stop, :normal, state}
   end
@@ -194,6 +196,17 @@ defmodule Ethui.Services.Anvil do
     {:noreply, %{state | log_subscribers: MapSet.delete(subs, pid)}}
   end
 
+  def remove_dir(state) do
+    case File.rm_rf(state.dir) do
+      {:ok, _files} ->
+        :ok
+
+      {:error, reason, _} ->
+        Logger.error("Failed to cleanup resource for slug #{state.slug}: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
   defp trim(q) do
     if :queue.len(q) > @log_max_size do
       {{:value, _}, q} = :queue.out(q)
@@ -219,9 +232,10 @@ defmodule Ethui.Services.Anvil do
     config() |> Keyword.fetch!(:anvil_bin)
   end
 
-  defp chain_id do
+  defp chain_id(id) do
     prefix = config() |> Keyword.fetch!(:chain_id_prefix)
-    <<val::32>> = <<prefix::16, 31_337::16>>
+    <<val::32>> = <<prefix::16, id::16>>
+
     val
   end
 

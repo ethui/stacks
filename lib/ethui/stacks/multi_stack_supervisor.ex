@@ -25,7 +25,7 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
   def start_stack(opts) do
     opts = [
       slug: opts[:slug],
-      anvil: [slug: opts[:slug], hash: opts[:hash], anvil_opts: opts[:anvil_opts]],
+      anvil: [id: opts[:id], slug: opts[:slug], hash: opts[:hash], anvil_opts: opts[:anvil_opts]],
       graph: [slug: opts[:slug], hash: opts[:hash], graph_opts: opts[:graph_opts]]
     ]
 
@@ -34,6 +34,7 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
 
   @spec stop_stack(pid) :: :ok
   def stop_stack(stack) do
+    SingleStackSupervisor.cleanup_anvil(stack)
     DynamicSupervisor.terminate_child(__MODULE__, stack)
   end
 end
