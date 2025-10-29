@@ -31,6 +31,9 @@ defmodule Ethui.Stacks.Supervisor do
       # global Postgres service
       {Ethui.Services.Pg, []},
 
+      # owned instance of ethui-explorer
+      {Ethui.Services.Explorer, []},
+
       # services supervisor
       MultiStackSupervisor,
       Server
