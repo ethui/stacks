@@ -1,7 +1,7 @@
 defmodule Ethui.Services.Graph do
   @moduledoc """
-    GenServer that manages a single `node-graph` instace
-    This wraps a MuontipTrap Daemon
+    GenServer that manages a single `graph-node` instance
+    This wraps a MuonTrap Daemon
   """
 
   alias Ethui.Services.Pg
@@ -78,7 +78,7 @@ defmodule Ethui.Services.Graph do
       GRAPH_LOG: "info",
       EXTERNAL_HTTP_BASE_URL: "http://graph-#{slug}.#{host_endpoint()}:4000",
       ETHEREUM_REORG_THRESHOLD: "1",
-      ETHEREUM_ACESTOR_COUNT: "1",
+      ETHEREUM_ANCESTOR_COUNT: "1",
       ethereum: "#{slug}:http://#{slug}.#{host_endpoint()}:4000"
     ]
   end

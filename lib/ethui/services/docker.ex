@@ -1,7 +1,7 @@
 defmodule Ethui.Services.Docker do
   @moduledoc """
     GenServer that manages a single docker container
-    This wraps a MuontrapTrap Daemon
+    This wraps a MuonTrap Daemon
   """
 
   defmodule BeforeCompile do

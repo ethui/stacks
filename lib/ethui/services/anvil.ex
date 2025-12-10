@@ -1,8 +1,8 @@
 defmodule Ethui.Services.Anvil do
   @moduledoc """
-  GenServer that manages a single `anvil` instace
+  GenServer that manages a single `anvil` instance
 
-  This wraps a MuontipTrap Daemon
+  This wraps a MuonTrap Daemon
   """
 
   use GenServer
