@@ -16,6 +16,9 @@ jobs:
   #
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
     env:
       MIX_ENV: test
 
@@ -38,17 +41,17 @@ jobs:
           restore-keys: ${{ runner.os }}-mix-
 
       - name: Install dependencies
-        run: cd server && mix deps.get
+        run: mix deps.get
       - name: Compile
-        run: cd server && mix compile
+        run: mix compile
       - name: Create database
-        run: cd server && mix ecto.create
+        run: mix ecto.create
       - name: Run migrations
-        run: cd server && mix ecto.migrate
+        run: mix ecto.migrate
       - name: Run Credo
-        run: cd server && mix credo
+        run: mix credo
       - name: Run tests
-        run: cd server && mix test
+        run: mix test
 
   #
   # builds public docker image (multi-arch)
@@ -91,6 +94,9 @@ jobs:
     needs: test
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/deploy'
     environment: production
+    defaults:
+      run:
+        working-directory: server
 
     env:
       MIX_ENV: prod
@@ -104,11 +110,11 @@ jobs:
           otp-version: "OTP-27"
 
       - name: Install dependencies
-        run: cd server && mix deps.get
+        run: mix deps.get
       - name: Compile
-        run: cd server && mix compile
+        run: mix compile
       - name: Build release
-        run: cd server && mix release
+        run: mix release
 
       - uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1, hardcoded hash for security
         with:
