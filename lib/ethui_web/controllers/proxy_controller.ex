@@ -70,7 +70,7 @@ defmodule EthuiWeb.ProxyController do
       _ ->
         conn
         |> put_status(:not_found)
-        |> json(%{error: "Stack not found"})
+        |> json(%{error: "IPFS service not available"})
     end
   end
 

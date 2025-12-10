@@ -27,7 +27,7 @@ defmodule Ethui.Stacks.Stack do
 
   def create_changeset(attrs) do
     %__MODULE__{}
-    |> cast(attrs, [:slug, :user_id, :anvil_opts])
+    |> cast(attrs, [:slug, :user_id, :anvil_opts, :graph_opts])
     |> update_change(:slug, &String.downcase/1)
     |> validate_format(:slug, ~r/^[a-z][a-z0-9\-]*$/,
       message: "must contain only lowercase letters, numbers, and hyphens"
