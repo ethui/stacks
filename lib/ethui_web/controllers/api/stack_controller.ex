@@ -102,38 +102,4 @@ defmodule EthuiWeb.Api.StackController do
     end
   end
 
-  # def logs(conn, %{"pid" => pid_string}) do
-  #   # Convert the string PID back to a PID reference
-  #   pid =
-  #     try do
-  #       pid_string
-  #       |> String.replace_prefix("#PID<", "")
-  #       |> String.replace_suffix(">", "")
-  #       |> String.split(".")
-  #       |> Enum.map(&String.to_integer/1)
-  #       |> List.to_tuple()
-  #       |> :c.pid()
-  #     rescue
-  #       _ -> nil
-  #     end
-  #
-  #   if is_pid(pid) and Process.alive?(pid) do
-  #     logs = Ethui.Services.Anvil.logs(pid)
-  #
-  #     json(conn, %{
-  #       status: "success",
-  #       data: %{
-  #         pid: inspect(pid),
-  #         logs: logs
-  #       }
-  #     })
-  #   else
-  #     conn
-  #     |> put_status(404)
-  #     |> json(%{
-  #       status: "error",
-  #       error: "Invalid or non-existent anvil PID"
-  #     })
-  #   end
-  # end
 end

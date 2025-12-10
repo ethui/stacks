@@ -25,7 +25,7 @@ defmodule Ethui.Stacks do
 
   def parse_slug_and_component(slug_part) when is_binary(slug_part) do
     case String.split(slug_part, "-", parts: 2) do
-      # We need this check so slugs with a dash in them don't enter here incorrectly 
+      # We need this check so slugs with a dash in them don't enter here incorrectly
       [maybe_component, rest] when maybe_component in @components ->
         %{slug: rest, component: maybe_component}
 

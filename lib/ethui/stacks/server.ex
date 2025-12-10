@@ -161,7 +161,7 @@ defmodule Ethui.Stacks.Server do
     end
   end
 
-  defp start_all() do
+  defp start_all do
     Stack
     |> Repo.all()
     |> Enum.each(fn stack ->
