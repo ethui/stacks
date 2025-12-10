@@ -32,17 +32,23 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            deps
-            _build
-          key: ${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
+            server/deps
+            server/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('server/mix.lock') }}
           restore-keys: ${{ runner.os }}-mix-
 
-      - run: mix deps.get
-      - run: mix compile
-      - run: mix ecto.create
-      - run: mix ecto.migrate
-      - run: mix credo
-      - run: mix test
+      - name: Install dependencies
+        run: cd server && mix deps.get
+      - name: Compile
+        run: cd server && mix compile
+      - name: Create database
+        run: cd server && mix ecto.create
+      - name: Run migrations
+        run: cd server && mix ecto.migrate
+      - name: Run Credo
+        run: cd server && mix credo
+      - name: Run tests
+        run: cd server && mix test
 
   #
   # builds public docker image (multi-arch)
@@ -72,7 +78,7 @@ jobs:
 
       - uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./server
           push: true
           tags: ghcr.io/${{ github.repository }}:latest
           platforms: linux/amd64,linux/arm64
@@ -97,9 +103,12 @@ jobs:
           elixir-version: "1.18.3"
           otp-version: "OTP-27"
 
-      - run: mix deps.get
-      - run: mix compile
-      - run: mix release
+      - name: Install dependencies
+        run: cd server && mix deps.get
+      - name: Compile
+        run: cd server && mix compile
+      - name: Build release
+        run: cd server && mix release
 
       - uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1, hardcoded hash for security
         with:
@@ -112,7 +121,7 @@ jobs:
 
       - name: Upload
         run: |
-          rsync -az --delete _build/prod/rel/ethui/ \
+          rsync -az --delete server/_build/prod/rel/ethui/ \
             $SSH_URL:${{ vars.DEPLOY_PATH }}/build-new
 
       - name: Upload release script

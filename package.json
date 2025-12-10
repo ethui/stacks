@@ -1,0 +1,24 @@
+{
+  "name": "ethui-stacks",
+  "version": "1.0.0",
+  "description": "A self-hosted, open-source API for web3 stacks",
+  "private": true,
+  "scripts": {
+    "dev:server": "cd server && mix phx.server",
+    "setup": "cd server && mix setup && mix ecto.create && mix ecto.migrate"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ethui/stacks.git"
+  },
+  "keywords": [
+    "web3",
+    "ethereum",
+    "anvil",
+    "subgraph",
+    "ipfs",
+    "blockchain"
+  ],
+  "author": "ethui",
+  "license": "MIT"
+}

@@ -24,4 +24,9 @@ in
     sqlite
     watchman
   ];
+
+  scripts = {
+    dev.exec = "cd server && mix phx.server";
+    setup.exec = "cd server && mix setup && mix ecto.create && mix ecto.migrate";
+  };
 }
