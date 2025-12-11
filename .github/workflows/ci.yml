@@ -131,7 +131,7 @@ jobs:
             $SSH_URL:${{ vars.DEPLOY_PATH }}/build-new
 
       - name: Upload release script
-        run: scp .github/scripts/deploy.sh $SSH_URL:/tmp/stacks-deploy.sh
+        run: scp ../.github/scripts/deploy.sh $SSH_URL:/tmp/stacks-deploy.sh
 
       - name: Chmod deploy script
         run: ssh $SSH_URL "chmod +x /tmp/stacks-deploy.sh"
