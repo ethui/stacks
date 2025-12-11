@@ -12,6 +12,11 @@ server/priv/static/assets/app.js
 node_modules/
 *.log
 
+# pnpm
+.pnpm-store/
+.pnpm-debug.log*
+pnpm-lock.yaml
+
 # Elixir
 erl_crash.dump
 *.ez
