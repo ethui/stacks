@@ -23,5 +23,12 @@ in
   packages = with pkgs; [
     sqlite
     watchman
+    nodePackages.pnpm
   ];
+
+  scripts = {
+    dev.exec = "cd server && mix phx.server";
+    setup.exec = "cd server && mix setup && mix ecto.create && mix ecto.migrate";
+    setup-all.exec = "pnpm install && cd server && mix setup && mix ecto.create && mix ecto.migrate";
+  };
 }

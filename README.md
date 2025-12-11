@@ -18,7 +18,41 @@ Use it to:
 - set up a private or public testnet for your projects
 - create a shared environment without all the hassles fo public testnets
 
+## Project Structure
+
+This monorepo contains:
+
+- **`server/`** - Elixir/Phoenix API server
+- **`frontend/`** - React/TypeScript frontend application
+- **`bruno/`** - API testing collection
+
 ## Running locally
+
+### Server (API)
+
+```bash
+cd server
+mix setup              # Install dependencies
+mix ecto.create        # Create database
+mix ecto.migrate       # Run migrations
+mix phx.server         # Start server
+```
+
+Or use the setup script:
+```bash
+npm run setup          # Install deps + setup database
+npm run dev:server     # Start server
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Docker (Full Stack)
 
 ```bash
 docker build -t ethui-stacks .
