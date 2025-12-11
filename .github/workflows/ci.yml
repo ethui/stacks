@@ -127,7 +127,7 @@ jobs:
 
       - name: Upload
         run: |
-          rsync -az --delete server/_build/prod/rel/ethui/ \
+          rsync -az --delete _build/prod/rel/ethui/ \
             $SSH_URL:${{ vars.DEPLOY_PATH }}/build-new
 
       - name: Upload release script
