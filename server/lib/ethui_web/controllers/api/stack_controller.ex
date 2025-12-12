@@ -32,6 +32,28 @@ defmodule EthuiWeb.Api.StackController do
     })
   end
 
+  def show(conn, %{"slug" => slug}) do
+    user = conn.assigns[:current_user]
+
+    with %Stack{} = stack <- Repo.get_by(Stack, slug: slug),
+         :ok <- authorize_user_access(user, stack) do
+      json(conn, %{
+        status: "success",
+        data: %{
+          slug: stack.slug,
+          urls: Stacks.get_urls(stack),
+          status: if(Server.is_slug_running?(slug), do: "running", else: "stopped")
+        }
+      })
+    else
+      nil ->
+        conn |> put_status(404) |> json(%{status: "error", error: "not found"})
+
+      {:error, :unauthorized} ->
+        conn |> put_status(403) |> json(%{status: "error", error: "unauthorized"})
+    end
+  end
+
   def create(conn, params) do
     user = conn.assigns[:current_user]
 

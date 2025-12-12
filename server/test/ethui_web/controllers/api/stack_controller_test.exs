@@ -198,4 +198,16 @@ defmodule EthuiWeb.Api.StackControllerTest do
       assert "public-stack2" in stack_slugs
     end
   end
+
+  describe "stacks/:slug" do
+    test "returns a stack", %{conn: conn} do
+      stack = %Stack{id: 1, slug: "test-stack"}
+      Server.start(stack)
+
+      conn = conn |> get(~p"/stacks/#{stack.slug}")
+      assert conn.status == 200
+      response_data = json_response(conn, 200)["data"]
+      assert response_data["slug"] == stack.slug
+    end
+  end
 end

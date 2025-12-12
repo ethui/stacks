@@ -40,4 +40,17 @@ defmodule Ethui.Stacks.ServerTest do
     Server.stop(stack)
     assert Server.list() |> length == 0
   end
+
+  describe "is_running?/1" do
+    test "returns true if the stack is running" do
+      stack = %Stack{id: 1, slug: "test_stack"}
+      Server.start(stack)
+      assert Server.is_running?(stack)
+    end
+
+    test "returns false if the stack is not running" do
+      stack = %Stack{id: 1, slug: "test_stack"}
+      assert not Server.is_running?(stack)
+    end
+  end
 end
