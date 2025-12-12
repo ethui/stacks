@@ -35,6 +35,12 @@ defmodule Ethui.Stacks.Server do
     GenServer.call(__MODULE__, :list)
   end
 
+  @doc "Check if a stack with the given slug is running"
+  @spec is_slug_running?(slug) :: boolean
+  def is_slug_running?(slug) do
+    GenServer.call(__MODULE__, {:is_slug_running, slug})
+  end
+
   def start(%Stack{} = stack) do
     GenServer.cast(__MODULE__, {:start, stack})
   end
@@ -90,6 +96,11 @@ defmodule Ethui.Stacks.Server do
   @impl GenServer
   def handle_call(:list, _from, %{instances: instances} = state) do
     {:reply, Map.keys(instances), state}
+  end
+
+  @impl GenServer
+  def handle_call({:is_slug_running, slug}, _from, %{instances: instances} = state) do
+    {:reply, Map.has_key?(instances, slug), state}
   end
 
   @impl GenServer
