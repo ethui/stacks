@@ -16,6 +16,9 @@ jobs:
   #
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
     env:
       MIX_ENV: test
 
@@ -32,17 +35,23 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            deps
-            _build
-          key: ${{ runner.os }}-mix-${{ hashFiles('mix.lock') }}
+            server/deps
+            server/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('server/mix.lock') }}
           restore-keys: ${{ runner.os }}-mix-
 
-      - run: mix deps.get
-      - run: mix compile
-      - run: mix ecto.create
-      - run: mix ecto.migrate
-      - run: mix credo
-      - run: mix test
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Compile
+        run: mix compile
+      - name: Create database
+        run: mix ecto.create
+      - name: Run migrations
+        run: mix ecto.migrate
+      - name: Run Credo
+        run: mix credo
+      - name: Run tests
+        run: mix test
 
   #
   # builds public docker image (multi-arch)
@@ -72,7 +81,7 @@ jobs:
 
       - uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./server
           push: true
           tags: ghcr.io/${{ github.repository }}:latest
           platforms: linux/amd64,linux/arm64
@@ -85,6 +94,9 @@ jobs:
     needs: test
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/deploy'
     environment: production
+    defaults:
+      run:
+        working-directory: server
 
     env:
       MIX_ENV: prod
@@ -97,9 +109,12 @@ jobs:
           elixir-version: "1.18.3"
           otp-version: "OTP-27"
 
-      - run: mix deps.get
-      - run: mix compile
-      - run: mix release
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Compile
+        run: mix compile
+      - name: Build release
+        run: mix release
 
       - uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1, hardcoded hash for security
         with:
@@ -116,7 +131,7 @@ jobs:
             $SSH_URL:${{ vars.DEPLOY_PATH }}/build-new
 
       - name: Upload release script
-        run: scp .github/scripts/deploy.sh $SSH_URL:/tmp/stacks-deploy.sh
+        run: scp ../.github/scripts/deploy.sh $SSH_URL:/tmp/stacks-deploy.sh
 
       - name: Chmod deploy script
         run: ssh $SSH_URL "chmod +x /tmp/stacks-deploy.sh"
