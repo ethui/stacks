@@ -2,19 +2,19 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface AuthState {
-  accessKey: string | null;
+  jwt: string | null;
   isAuthenticated: boolean;
-  login: (accessKey: string) => void;
+  login: (jwt: string) => void;
   logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      accessKey: null,
+      jwt: null,
       isAuthenticated: false,
-      login: (accessKey: string) => set({ accessKey, isAuthenticated: true }),
-      logout: () => set({ accessKey: null, isAuthenticated: false }),
+      login: (jwt: string) => set({ jwt, isAuthenticated: true }),
+      logout: () => set({ jwt: null, isAuthenticated: false }),
     }),
     {
       name: "ethui-stacks-auth",
