@@ -2,7 +2,7 @@ import axios from "axios";
 import { useAuthStore } from "~/store/auth";
 
 export const api = axios.create({
-  baseURL: "https://api.stacks.ethui.dev",
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
   },
