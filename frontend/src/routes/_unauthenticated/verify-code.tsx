@@ -6,8 +6,9 @@ import { ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { EthuiLogoButton } from "~/components/EthuiLogoButton";
-import { VerificationCodeInput } from "~/components/VerificationCodeInput";
 import { useVerifyCode } from "~/hooks/useAuth";
+
+const CODE_LENGTH = 6;
 
 export const Route = createFileRoute("/_unauthenticated/verify-code")({
   validateSearch: z.object({
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/_unauthenticated/verify-code")({
 });
 
 const verifySchema = z.object({
-  code: z.string().length(6, "Code must be 6 digits"),
+  code: z.string().length(CODE_LENGTH, `Code must be ${CODE_LENGTH} digits`),
 });
 
 type VerifyFormData = z.infer<typeof verifySchema>;
@@ -61,15 +62,25 @@ function RouteComponent() {
         <Form
           form={form}
           onSubmit={handleSubmit}
-          className="space-y-6 items-center flex flex-1 flex-col"
+          className="space-y-6 items-center justify-center flex flex-1 flex-col"
         >
-          <VerificationCodeInput name="code" disabled={isVerifying} />
+          <Form.OTP
+            name="code"
+            maxLength={CODE_LENGTH}
+            disabled={isVerifying || form.formState.isSubmitting}
+            onComplete={form.handleSubmit(handleSubmit)}
+            className="flex flex-col items-center justify-center"
+          />
           <div className="space-y-3 items-center flex flex-col">
             <Button
               type="submit"
               className="w-full"
               size="lg"
-              disabled={isVerifying || code.length !== 6}
+              disabled={
+                isVerifying ||
+                form.formState.isSubmitting ||
+                code.length !== CODE_LENGTH
+              }
             >
               Verify Code
             </Button>
