@@ -16,8 +16,6 @@ defmodule EthuiWeb.Api.StackController do
         Repo.all(Stack)
       end
 
-    # running_slugs = Server.list()
-
     stack_data =
       Enum.map(stacks, fn stack ->
         Stacks.get_info(stack)
