@@ -145,6 +145,87 @@ defmodule EthuiWeb.Api.StackControllerTest do
       refute "user1-stack1" in stack_slugs
       refute "user1-stack2" in stack_slugs
     end
+
+    test "returns expected fields and optional anvil_opts" do
+      conn = create_authenticated_conn()
+
+      conn |> post(~p"/stacks", %{slug: "plain-stack"})
+
+      conn
+      |> post(~p"/stacks", %{
+        slug: "anvil-stack",
+        anvil_opts: %{
+          "fork_url" => "https://eth.llamarpc.com",
+          "fork_block_number" => 24_026_490
+        }
+      })
+
+      conn = get(conn, ~p"/stacks")
+      response = json_response(conn, 200)
+      stacks = response["data"]
+
+
+      assert conn.status == 200
+      assert response["status"] == "success"
+      assert length(stacks) == 2
+
+      for stack <- stacks do
+        assert Map.has_key?(stack, "status")
+        assert Map.has_key?(stack, "slug")
+        assert Map.has_key?(stack, "inserted_at")
+        assert Map.has_key?(stack, "updated_at")
+        assert Map.has_key?(stack, "chain_id")
+        assert Map.has_key?(stack, "explorer_url")
+        assert Map.has_key?(stack, "ipfs_url")
+        assert Map.has_key?(stack, "rpc_url")
+
+        if stack["slug"] == "anvil-stack" do
+          assert %{
+                   "fork_url" => _,
+                   "fork_block_number" => _
+                 } = stack["anvil_opts"]
+        else
+          refute Map.has_key?(stack, "anvil_opts")
+        end
+      end
+    end
+  end
+
+  describe "show/2" do
+    test "returns expected fields" do
+      slug = "demo1"
+
+      conn =
+        create_authenticated_conn()
+        |> post(~p"/stacks", %{
+          slug: slug,
+          anvil_opts: %{
+            "fork_url" => "https://eth.llamarpc.com",
+            "fork_block_number" => 24_026_490
+          }
+        })
+
+      conn = get(conn, ~p"/stacks/#{slug}")
+      assert conn.status == 200
+
+      response = json_response(conn, 200)
+      assert response["status"] == "success"
+
+      stack = response["data"]
+
+      assert stack["slug"] == slug
+      assert stack["status"] == "running"
+      assert is_integer(stack["inserted_at"])
+      assert is_integer(stack["updated_at"])
+      assert is_integer(stack["chain_id"])
+      assert is_binary(stack["explorer_url"])
+      assert is_binary(stack["ipfs_url"])
+      assert is_binary(stack["rpc_url"])
+      assert %{
+               "fork_url" => "https://eth.llamarpc.com",
+               "fork_block_number" => 24_026_490
+             } = stack["anvil_opts"]
+    end
   end
 
   describe "backward compatibility when authentication is disabled" do
