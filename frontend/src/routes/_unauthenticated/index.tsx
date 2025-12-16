@@ -1,55 +1,45 @@
-import { EthuiLogo } from "@ethui/ui/components/ethui-logo";
 import { Form } from "@ethui/ui/components/form";
 import { Button } from "@ethui/ui/components/shadcn/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { GitFork, Globe, Layers, Zap } from "lucide-react";
-import { type FieldValues, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useAuthStore } from "~/store/auth";
+import { EthuiLogoButton } from "~/components/EthuiLogoButton";
+import { useSendCode } from "~/hooks/useAuth";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_unauthenticated/")({
   component: RouteComponent,
 });
 
 const loginSchema = z.object({
-  accessKey: z.string().min(1, "Access key is required"),
+  email: z.string().email("Invalid email address"),
 });
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 function RouteComponent() {
   const navigate = useNavigate();
-  const login = useAuthStore((s) => s.login);
-
-  const form = useForm({
+  const { mutateAsync: sendCode, isPending: isSendingCode } = useSendCode();
+  const form = useForm<LoginFormData>({
     mode: "onBlur",
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      accessKey: "",
+      email: "",
     },
   });
 
-  const handleSubmit = (data: FieldValues) => {
-    login(data.accessKey);
-    navigate({ to: "/dashboard" });
+  const handleSubmit = async (data: LoginFormData) => {
+    await sendCode(data);
+    navigate({ to: "/verify-code", search: { email: data.email } });
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-accent p-8">
       <div className="w-full max-w-lg animate-fade-in space-y-8 opacity-0">
-        <div className="animation-delay-200 flex animate-fade-in justify-center opacity-0">
-          <button
-            className="cursor-pointer transition-transform duration-200 hover:scale-105"
-            onClick={() =>
-              window.open("https://ethui.dev/", "_blank", "noopener,noreferrer")
-            }
-            title="Visit ethui.dev"
-            type="button"
-          >
-            <EthuiLogo size={96} />
-          </button>
-        </div>
+        <EthuiLogoButton />
 
-        <div className="animation-delay-400 animate-fade-in space-y-3 text-center opacity-0">
+        <div className="animate-fade-in space-y-3 text-center opacity-0">
           <h1 className="font-bold text-4xl text-foreground">ethui Stacks</h1>
           <p className="text-lg text-muted-foreground">
             On-demand Anvil nodes in the cloud. Spin up isolated Ethereum
@@ -57,8 +47,7 @@ function RouteComponent() {
           </p>
         </div>
 
-        {/* Features */}
-        <div className="animation-delay-500 animate-fade-in grid grid-cols-2 gap-4 opacity-0">
+        <div className="animate-fade-in grid grid-cols-2 gap-4 opacity-0">
           <FeatureCard
             icon={<Zap className="h-5 w-5 text-primary" />}
             title="Instant Deploy"
@@ -81,31 +70,22 @@ function RouteComponent() {
           />
         </div>
 
-        <div className="animation-delay-600 animate-fade-in opacity-0">
+        <div className="animate-fade-in opacity-0">
           <Form form={form} onSubmit={handleSubmit} className="space-y-4">
             <Form.Text
-              name="accessKey"
-              placeholder="Enter your access key"
+              name="email"
+              placeholder="Enter your email"
               className="w-full text-center"
             />
-            <Button type="submit" className="w-full" size="lg">
-              Connect to Stacks
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={isSendingCode}
+            >
+              Send Code
             </Button>
           </Form>
-        </div>
-
-        <div className="animation-delay-800 animate-fade-in text-center opacity-0">
-          <p className="text-muted-foreground text-sm">
-            Don't have an access key?{" "}
-            <a
-              href="https://ethui.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary underline-offset-4 hover:underline"
-            >
-              Request access
-            </a>
-          </p>
         </div>
       </div>
     </div>

@@ -12,6 +12,7 @@ import React, { Suspense } from "react";
 
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { NotFound } from "~/components/NotFound";
+import Toast from "~/components/Toast";
 import appCss from "~/styles/app.css?url";
 import { seo } from "~/utils/seo";
 
@@ -102,6 +103,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <ReactQueryDevtools buttonPosition="bottom-left" />
         </Suspense>
         <Scripts />
+        <Toast />
       </body>
     </html>
   );

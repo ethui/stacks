@@ -9,21 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnauthenticatedRouteImport } from './routes/_unauthenticated'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as UnauthenticatedIndexRouteImport } from './routes/_unauthenticated/index'
+import { Route as UnauthenticatedVerifyCodeRouteImport } from './routes/_unauthenticated/verify-code'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard/index'
 import { Route as AuthenticatedDashboardNewRouteImport } from './routes/_authenticated/dashboard/new'
 import { Route as AuthenticatedDashboardSlugRouteImport } from './routes/_authenticated/dashboard/$slug'
 
+const UnauthenticatedRoute = UnauthenticatedRouteImport.update({
+  id: '/_unauthenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const UnauthenticatedIndexRoute = UnauthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => UnauthenticatedRoute,
 } as any)
+const UnauthenticatedVerifyCodeRoute =
+  UnauthenticatedVerifyCodeRouteImport.update({
+    id: '/verify-code',
+    path: '/verify-code',
+    getParentRoute: () => UnauthenticatedRoute,
+  } as any)
 const AuthenticatedDashboardIndexRoute =
   AuthenticatedDashboardIndexRouteImport.update({
     id: '/dashboard/',
@@ -44,46 +56,69 @@ const AuthenticatedDashboardSlugRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/verify-code': typeof UnauthenticatedVerifyCodeRoute
+  '/': typeof UnauthenticatedIndexRoute
   '/dashboard/$slug': typeof AuthenticatedDashboardSlugRoute
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/verify-code': typeof UnauthenticatedVerifyCodeRoute
+  '/': typeof UnauthenticatedIndexRoute
   '/dashboard/$slug': typeof AuthenticatedDashboardSlugRoute
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/_unauthenticated': typeof UnauthenticatedRouteWithChildren
+  '/_unauthenticated/verify-code': typeof UnauthenticatedVerifyCodeRoute
+  '/_unauthenticated/': typeof UnauthenticatedIndexRoute
   '/_authenticated/dashboard/$slug': typeof AuthenticatedDashboardSlugRoute
   '/_authenticated/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard/$slug' | '/dashboard/new' | '/dashboard'
+  fullPaths:
+    | '/verify-code'
+    | '/'
+    | '/dashboard/$slug'
+    | '/dashboard/new'
+    | '/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard/$slug' | '/dashboard/new' | '/dashboard'
+  to:
+    | '/verify-code'
+    | '/'
+    | '/dashboard/$slug'
+    | '/dashboard/new'
+    | '/dashboard'
   id:
     | '__root__'
-    | '/'
     | '/_authenticated'
+    | '/_unauthenticated'
+    | '/_unauthenticated/verify-code'
+    | '/_unauthenticated/'
     | '/_authenticated/dashboard/$slug'
     | '/_authenticated/dashboard/new'
     | '/_authenticated/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  UnauthenticatedRoute: typeof UnauthenticatedRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_unauthenticated': {
+      id: '/_unauthenticated'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof UnauthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -91,12 +126,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_unauthenticated/': {
+      id: '/_unauthenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof UnauthenticatedIndexRouteImport
+      parentRoute: typeof UnauthenticatedRoute
+    }
+    '/_unauthenticated/verify-code': {
+      id: '/_unauthenticated/verify-code'
+      path: '/verify-code'
+      fullPath: '/verify-code'
+      preLoaderRoute: typeof UnauthenticatedVerifyCodeRouteImport
+      parentRoute: typeof UnauthenticatedRoute
     }
     '/_authenticated/dashboard/': {
       id: '/_authenticated/dashboard/'
@@ -138,9 +180,23 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface UnauthenticatedRouteChildren {
+  UnauthenticatedVerifyCodeRoute: typeof UnauthenticatedVerifyCodeRoute
+  UnauthenticatedIndexRoute: typeof UnauthenticatedIndexRoute
+}
+
+const UnauthenticatedRouteChildren: UnauthenticatedRouteChildren = {
+  UnauthenticatedVerifyCodeRoute: UnauthenticatedVerifyCodeRoute,
+  UnauthenticatedIndexRoute: UnauthenticatedIndexRoute,
+}
+
+const UnauthenticatedRouteWithChildren = UnauthenticatedRoute._addFileChildren(
+  UnauthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  UnauthenticatedRoute: UnauthenticatedRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
