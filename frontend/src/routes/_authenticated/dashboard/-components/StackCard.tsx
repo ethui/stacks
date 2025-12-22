@@ -74,7 +74,7 @@ function StackCardHeader({ stack, onDelete }: StackCardHeaderProps) {
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete(stack.slug)}
-              className="text-destructive"
+              className="text-destructive cursor-pointer"
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete

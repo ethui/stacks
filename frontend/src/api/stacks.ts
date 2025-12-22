@@ -64,5 +64,13 @@ export const stacks = {
       throw error;
     }
   },
-  delete: (slug: string): Promise<void> => api.delete(`/stacks/${slug}`),
+  delete: async (slug: string) => {
+    try {
+      const res = await api.delete(`/stacks/${slug}`);
+      return res.data;
+    } catch (error) {
+      console.error("Failed to delete stack:", error);
+      throw error;
+    }
+  },
 };
