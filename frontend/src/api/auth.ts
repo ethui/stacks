@@ -24,7 +24,8 @@ export type SendCodeResponse = z.infer<typeof sendCodeResponseSchema>;
 export type VerifyCodeResponse = z.infer<typeof verifyCodeResponseSchema>;
 
 export const auth = {
-  sendCode: (data: SendCodeRequest) => api.post("/auth/send-code", data),
+  sendCode: (data: SendCodeRequest) =>
+    api.post("/auth/send-code", data).then((res) => res.data),
   verifyCode: (data: VerifyCodeRequest): Promise<VerifyCodeResponse> =>
-    api.post("/auth/verify-code", data),
+    api.post("/auth/verify-code", data).then((res) => res.data),
 };

@@ -8,7 +8,6 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: () => {
     const { isAuthenticated } = useAuthStore.getState();
 
-    console.log("isAuthenticated", isAuthenticated);
     if (!isAuthenticated) {
       throw redirect({ to: "/" });
     }

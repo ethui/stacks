@@ -18,6 +18,29 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
+const FEATURES = [
+  {
+    icon: Zap,
+    title: "Instant Deploy",
+    description: "Spin up nodes in seconds",
+  },
+  {
+    icon: GitFork,
+    title: "Fork Networks",
+    description: "Fork mainnet or any chain",
+  },
+  {
+    icon: Globe,
+    title: "Subgraph Ready",
+    description: "Built-in Graph indexing",
+  },
+  {
+    icon: Layers,
+    title: "Explorer",
+    description: "Integrated block explorer",
+  },
+];
+
 function RouteComponent() {
   const navigate = useNavigate();
   const { mutateAsync: sendCode, isPending: isSendingCode } = useSendCode();
@@ -48,26 +71,14 @@ function RouteComponent() {
         </div>
 
         <div className="animate-fade-in grid grid-cols-2 gap-4 opacity-0">
-          <FeatureCard
-            icon={<Zap className="h-5 w-5 text-primary" />}
-            title="Instant Deploy"
-            description="Spin up nodes in seconds"
-          />
-          <FeatureCard
-            icon={<GitFork className="h-5 w-5 text-primary" />}
-            title="Fork Networks"
-            description="Fork mainnet or any chain"
-          />
-          <FeatureCard
-            icon={<Globe className="h-5 w-5 text-primary" />}
-            title="Subgraph Ready"
-            description="Built-in Graph indexing"
-          />
-          <FeatureCard
-            icon={<Layers className="h-5 w-5 text-primary" />}
-            title="Explorer"
-            description="Integrated block explorer"
-          />
+          {FEATURES.map((feature) => (
+            <FeatureCard
+              key={feature.title}
+              icon={<feature.icon className="h-5 w-5 text-primary" />}
+              title={feature.title}
+              description={feature.description}
+            />
+          ))}
         </div>
 
         <div className="animate-fade-in opacity-0">
