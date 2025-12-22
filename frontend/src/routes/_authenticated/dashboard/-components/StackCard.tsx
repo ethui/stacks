@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@ethui/ui/components/shadcn/dropdown-menu";
+
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -65,14 +66,15 @@ function StackCardHeader({ stack, onDelete }: StackCardHeaderProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
+            {/* TODO: Needs to be implemented */}
+            <DropdownMenuItem asChild disabled={true}>
               <Link to="/dashboard/$slug" params={{ slug: stack.slug }}>
                 View Details
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete(stack.slug)}
-              className="text-destructive"
+              className="text-destructive cursor-pointer"
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
@@ -110,7 +112,9 @@ function ForkIndicator({ stack }: ForkIndicatorProps) {
         <>
           <GitFork className="h-4 w-4 text-muted-foreground" />
           <span className="truncate font-mono text-muted-foreground text-xs">
-            Forked from block #{stack.anvil_opts.fork_block_number}
+            {stack.anvil_opts.fork_block_number
+              ? `Forked from block ${stack.anvil_opts.fork_block_number}`
+              : "Forked from latest block"}
           </span>
         </>
       ) : (
@@ -133,12 +137,16 @@ function UrlList({ stack }: UrlListProps) {
   return (
     <div className="divide-y divide-border rounded-md border border-border bg-accent/30 px-3">
       <UrlRow label="RPC" url={stack.rpc_url} />
+      {stack.anvil_opts?.fork_url && (
+        <UrlRow label="Fork RPC" url={stack.anvil_opts.fork_url} />
+      )}
       {/* TODO: Use the actual explorer URL */}
       <UrlRow
         label="Explorer"
         url={`https://explorer.ethui.dev/rpc/${btoa(stack.rpc_url)}`}
         isExternal
       />
+
       {stack.graph_url && (
         <UrlRow label="Subgraph" url={stack.graph_url} isExternal />
       )}
@@ -172,7 +180,7 @@ interface UrlRowProps {
 
 function UrlRow({ label, url, isExternal }: UrlRowProps) {
   return (
-    <div className="group flex items-center justify-between py-1">
+    <div className="group flex cursor-default items-center justify-between py-1">
       <span className="text-muted-foreground text-xs">{label}</span>
       <div className="flex items-center gap-0.5">
         <ClickToCopy text={url} className="p-1">

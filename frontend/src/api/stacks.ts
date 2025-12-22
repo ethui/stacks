@@ -10,7 +10,7 @@ export const stackSchema = z.object({
   anvil_opts: z
     .object({
       fork_url: z.string(),
-      fork_block_number: z.number(),
+      fork_block_number: z.number().optional(),
     })
     .optional(),
   graph_url: z.string().optional(),
@@ -21,13 +21,13 @@ export const stackSchema = z.object({
 
 export const createStackInputSchema = z.object({
   slug: z.string(),
-  anvilOpts: z
+  anvil_opts: z
     .object({
-      forkUrl: z.string().optional(),
-      forkBlockNumber: z.number().optional(),
+      fork_url: z.string().optional(),
+      fork_block_number: z.number().optional(),
     })
     .optional(),
-  graphOpts: z
+  graph_opts: z
     .object({
       enabled: z.boolean().optional(),
     })
@@ -38,11 +38,39 @@ export type Stack = z.infer<typeof stackSchema>;
 export type CreateStackInput = z.infer<typeof createStackInputSchema>;
 
 export const stacks = {
-  list: (): Promise<Stack[]> =>
-    api.get("/stacks").then((res) => z.array(stackSchema).parse(res.data.data)),
-  get: (slug: string): Promise<Stack> =>
-    api.get(`/stacks/${slug}`).then((res) => stackSchema.parse(res.data)),
-  create: (data: CreateStackInput): Promise<Stack> =>
-    api.post("/stacks", data).then((res) => stackSchema.parse(res.data)),
-  delete: (slug: string): Promise<void> => api.delete(`/stacks/${slug}`),
+  list: async () => {
+    try {
+      const res = await api.get("/stacks");
+      return z.array(stackSchema).parse(res.data.data);
+    } catch (error) {
+      console.error("Failed to fetch stacks list:", error);
+      throw error;
+    }
+  },
+  get: async (slug: string) => {
+    try {
+      const res = await api.get(`/stacks/${slug}`);
+      return stackSchema.parse(res.data);
+    } catch (error) {
+      console.error("Failed to fetch stack:", error);
+      throw error;
+    }
+  },
+  create: async (data: CreateStackInput) => {
+    try {
+      await api.post("/stacks", data);
+    } catch (error) {
+      console.error("Failed to create stack:", error);
+      throw error;
+    }
+  },
+  delete: async (slug: string) => {
+    try {
+      const res = await api.delete(`/stacks/${slug}`);
+      return res.data;
+    } catch (error) {
+      console.error("Failed to delete stack:", error);
+      throw error;
+    }
+  },
 };

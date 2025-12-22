@@ -1,7 +1,9 @@
 import { Button } from "@ethui/ui/components/shadcn/button";
 import { Skeleton } from "@ethui/ui/components/shadcn/skeleton";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Layers, Plus } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { stacks } from "~/api/stacks";
 import { EmptyState } from "~/components/EmptyState";
 import { useListStacks } from "~/hooks/useStacks";
@@ -15,13 +17,19 @@ const SKELETON_ITEMS = Array.from({ length: 6 }, (_, i) => i);
 
 function DashboardPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: stacksList, isLoading } = useListStacks();
 
-  const { data: stacksList, isLoading, refetch } = useListStacks();
-
-  const handleDelete = async (slug: string) => {
-    await stacks.delete(slug);
-    refetch();
-  };
+  const { mutate: deleteStack } = useMutation({
+    mutationFn: stacks.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["stacks"] });
+      toast.success("Stack deleted successfully");
+    },
+    onError: () => {
+      toast.error("Failed to delete stack");
+    },
+  });
 
   return (
     <div className="container mx-auto max-w-6xl px-6 py-8">
@@ -50,7 +58,7 @@ function DashboardPage() {
       ) : stacksList && stacksList.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {stacksList.map((stack) => (
-            <StackCard key={stack.slug} stack={stack} onDelete={handleDelete} />
+            <StackCard key={stack.slug} stack={stack} onDelete={deleteStack} />
           ))}
         </div>
       ) : (
