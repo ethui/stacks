@@ -17,8 +17,7 @@ import { ArrowLeft, Database, GitFork, Layers, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { createStack } from "~/api/stacks";
-import type { CreateStackInput } from "~/types/stack";
+import { stacks, type CreateStackInput } from "~/api/stacks";
 
 export const Route = createFileRoute("/_authenticated/dashboard/new")({
   component: NewStackPage,
@@ -64,7 +63,7 @@ function NewStackPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (input: CreateStackInput) => createStack(input),
+    mutationFn: (input: CreateStackInput) => stacks.create(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stacks"] });
       navigate({ to: "/dashboard" });
@@ -101,7 +100,6 @@ function NewStackPage() {
   return (
     <div className="flex min-h-[calc(100vh-64px)] items-start justify-center px-6 py-12">
       <div className="w-full max-w-xl">
-        {/* Header */}
         <div className="mb-6 animate-fade-in opacity-0">
           <Button
             variant="ghost"
@@ -113,7 +111,6 @@ function NewStackPage() {
           </Button>
         </div>
 
-        {/* Single Card Form */}
         <Card className="animation-delay-100 animate-fade-in-up rounded-xl shadow-lg opacity-0">
           <CardHeader className="pb-4 text-center">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
@@ -145,7 +142,6 @@ function NewStackPage() {
 
               <Separator />
 
-              {/* Fork Network Toggle */}
               <div className="space-y-4 w-full">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
@@ -211,7 +207,6 @@ function NewStackPage() {
 
               <Separator />
 
-              {/* Subgraph Toggle */}
               <div className="w-full space-y-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
@@ -245,7 +240,6 @@ function NewStackPage() {
 
               <Separator />
 
-              {/* Actions */}
               <div className="flex gap-3 pt-2">
                 <Button
                   type="button"
