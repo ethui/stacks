@@ -21,7 +21,6 @@ export function useVerifyCode() {
   return useMutation({
     mutationFn: (data: VerifyCodeRequest) => auth.verifyCode(data),
     onSuccess: (data) => {
-      console.log(data);
       login(data.token);
       toast.success("Code verified");
     },

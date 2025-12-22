@@ -14,7 +14,6 @@ export const useAuthStore = create<AuthState>()(
       jwt: null,
       isAuthenticated: false,
       login: (jwt: string) => {
-        console.log("login", jwt);
         set({ jwt, isAuthenticated: true });
       },
       logout: () => set({ jwt: null, isAuthenticated: false }),
