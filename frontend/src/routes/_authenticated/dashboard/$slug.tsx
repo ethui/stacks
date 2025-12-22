@@ -14,6 +14,8 @@ export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
   component: StackDetailPage,
 });
 
+const SKELETON_ITEMS = Array.from({ length: 6 }, (_, i) => i);
+
 function StackDetailPage() {
   const { slug } = Route.useParams();
   const navigate = useNavigate();
@@ -37,10 +39,9 @@ function StackDetailPage() {
       <div className="container mx-auto max-w-5xl px-6 py-8">
         <Skeleton className="mb-8 h-10 w-48" />
         <div className="grid gap-6 md:grid-cols-2">
-          <Skeleton className="h-64 rounded-lg" />
-          <Skeleton className="h-64 rounded-lg" />
-          <Skeleton className="h-64 rounded-lg" />
-          <Skeleton className="h-64 rounded-lg" />
+          {SKELETON_ITEMS.map((id) => (
+            <Skeleton key={`skeleton-${id}`} className="h-64 rounded-lg" />
+          ))}
         </div>
       </div>
     );
