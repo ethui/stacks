@@ -3,6 +3,7 @@ defmodule Ethui.Stacks do
   Stacks context module
   """
   alias EthuiWeb.Endpoint
+  alias Ethui.Stacks.Server
 
   @components ~w(graph graph-rpc graph-status ipfs)
   @reserved ~w(rpc)
@@ -34,6 +35,30 @@ defmodule Ethui.Stacks do
     end
   end
 
+  def get_info(stack) do
+    running_slugs = Server.list()
+
+    urls = get_urls(stack)
+
+    info =
+      Map.merge(
+        %{
+          slug: stack.slug,
+          status: if(stack.slug in running_slugs, do: "running", else: "stopped"),
+          chain_id: chain_id(stack.id),
+          inserted_at: stack.inserted_at |> DateTime.to_unix(),
+          updated_at: stack.updated_at |> DateTime.to_unix()
+        },
+        urls
+      )
+
+    if anvil_opts?(stack) do
+      Map.merge(info, %{anvil_opts: stack.anvil_opts})
+    else
+      info
+    end
+  end
+
   def get_urls(stack) do
     base_urls = %{
       rpc_url: rpc_url(stack.slug),
@@ -59,6 +84,13 @@ defmodule Ethui.Stacks do
   def ipfs_url(slug), do: build_url("ipfs", slug)
   def explorer_url(slug), do: build_url(slug)
 
+  def chain_id(id) do
+    prefix = config() |> Keyword.fetch!(:chain_id_prefix)
+    <<val::32>> = <<prefix::16, id::16>>
+
+    val
+  end
+
   defp build_url(slug) do
     "#{http_protocol()}#{slug}.#{host()}"
   end
@@ -69,6 +101,10 @@ defmodule Ethui.Stacks do
 
   defp graph_enabled?(stack) do
     !!stack.graph_opts["enabled"]
+  end
+
+  defp anvil_opts?(stack) do
+    map_size(stack.anvil_opts) > 0
   end
 
   defp http_protocol do

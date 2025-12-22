@@ -7,6 +7,7 @@ defmodule Ethui.Services.Anvil do
 
   use GenServer
   require Logger
+  alias Ethui.Stacks
 
   @log_max_size 10_000
 
@@ -100,7 +101,7 @@ defmodule Ethui.Services.Anvil do
          dir: dir,
          slug: opts[:slug],
          log_subscribers: MapSet.new(),
-         chain_id: chain_id(opts[:id]),
+         chain_id: Stacks.chain_id(opts[:id]),
          args: opts_to_args(opts[:anvil_opts])
        }}
     else
@@ -230,13 +231,6 @@ defmodule Ethui.Services.Anvil do
 
   defp anvil_bin do
     config() |> Keyword.fetch!(:anvil_bin)
-  end
-
-  defp chain_id(id) do
-    prefix = config() |> Keyword.fetch!(:chain_id_prefix)
-    <<val::32>> = <<prefix::16, id::16>>
-
-    val
   end
 
   defp config do
