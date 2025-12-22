@@ -43,4 +43,3 @@ export function ForkConfigCard({ stack }: ForkConfigCardProps) {
     </Card>
   );
 }
-

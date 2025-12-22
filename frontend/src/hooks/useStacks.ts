@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { stacks, type CreateStackInput } from "~/api/stacks";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type CreateStackInput, stacks } from "~/api/stacks";
 
 export function useListStacks() {
   return useQuery({

@@ -36,4 +36,3 @@ export function ConnectionCard({ stack }: ConnectionCardProps) {
     </Card>
   );
 }
-

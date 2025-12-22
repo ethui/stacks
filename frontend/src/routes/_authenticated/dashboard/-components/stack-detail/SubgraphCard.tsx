@@ -41,4 +41,3 @@ export function SubgraphCard({ stack }: SubgraphCardProps) {
     </Card>
   );
 }
-

@@ -11,6 +11,8 @@ export const Route = createFileRoute("/_authenticated/dashboard/")({
   component: DashboardPage,
 });
 
+const SKELETON_ITEMS = Array.from({ length: 6 }, (_, i) => i);
+
 function DashboardPage() {
   const navigate = useNavigate();
 
@@ -41,8 +43,8 @@ function DashboardPage() {
 
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-64 rounded-lg" />
+          {SKELETON_ITEMS.map((id) => (
+            <Skeleton key={`skeleton-${id}`} className="h-64 rounded-lg" />
           ))}
         </div>
       ) : stacksList && stacksList.length > 0 ? (

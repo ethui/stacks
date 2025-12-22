@@ -133,7 +133,12 @@ function UrlList({ stack }: UrlListProps) {
   return (
     <div className="divide-y divide-border rounded-md border border-border bg-accent/30 px-3">
       <UrlRow label="RPC" url={stack.rpc_url} />
-      <UrlRow label="Explorer" url={stack.explorer_url} isExternal />
+      {/* TODO: Use the actual explorer URL */}
+      <UrlRow
+        label="Explorer"
+        url={`https://explorer.ethui.dev/rpc/${btoa(stack.rpc_url)}`}
+        isExternal
+      />
       {stack.graph_url && (
         <UrlRow label="Subgraph" url={stack.graph_url} isExternal />
       )}
@@ -153,7 +158,7 @@ function StackCardFooter({ stack }: StackCardFooterProps) {
         Running
       </span>
       <span className="text-muted-foreground text-xs">
-        {formatDistanceToNow(new Date(stack.inserted_at))} ago
+        {formatDistanceToNow(new Date(stack.inserted_at * 1000))} ago
       </span>
     </div>
   );
@@ -170,14 +175,8 @@ function UrlRow({ label, url, isExternal }: UrlRowProps) {
     <div className="group flex items-center justify-between py-1">
       <span className="text-muted-foreground text-xs">{label}</span>
       <div className="flex items-center gap-0.5">
-        <ClickToCopy text={url}>
-          <button
-            type="button"
-            className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            title={`Copy ${label} URL`}
-          >
-            <Copy className="h-3.5 w-3.5" />
-          </button>
+        <ClickToCopy text={url} className="p-1">
+          <Copy className="h-3.5 w-3.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" />
         </ClickToCopy>
         {isExternal && (
           <a

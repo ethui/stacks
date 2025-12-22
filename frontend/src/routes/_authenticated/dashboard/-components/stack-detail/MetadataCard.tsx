@@ -35,4 +35,3 @@ export function MetadataCard({ stack }: MetadataCardProps) {
     </Card>
   );
 }
-

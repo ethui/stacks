@@ -17,7 +17,7 @@ import { ArrowLeft, Database, GitFork, Layers, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { stacks, type CreateStackInput } from "~/api/stacks";
+import { type CreateStackInput, stacks } from "~/api/stacks";
 
 export const Route = createFileRoute("/_authenticated/dashboard/new")({
   component: NewStackPage,

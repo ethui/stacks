@@ -15,8 +15,8 @@ export const stackSchema = z.object({
     .optional(),
   graph_url: z.string().optional(),
   ipfs_url: z.string().optional(),
-  inserted_at: z.string(),
-  updated_at: z.string(),
+  inserted_at: z.number(),
+  updated_at: z.number(),
 });
 
 export const createStackInputSchema = z.object({
@@ -38,8 +38,11 @@ export type Stack = z.infer<typeof stackSchema>;
 export type CreateStackInput = z.infer<typeof createStackInputSchema>;
 
 export const stacks = {
-  list: (): Promise<Stack[]> => api.get("/stacks"),
-  get: (slug: string): Promise<Stack> => api.get(`/stacks/${slug}`),
-  create: (data: CreateStackInput): Promise<Stack> => api.post("/stacks", data),
+  list: (): Promise<Stack[]> =>
+    api.get("/stacks").then((res) => z.array(stackSchema).parse(res.data.data)),
+  get: (slug: string): Promise<Stack> =>
+    api.get(`/stacks/${slug}`).then((res) => stackSchema.parse(res.data)),
+  create: (data: CreateStackInput): Promise<Stack> =>
+    api.post("/stacks", data).then((res) => stackSchema.parse(res.data)),
   delete: (slug: string): Promise<void> => api.delete(`/stacks/${slug}`),
 };
