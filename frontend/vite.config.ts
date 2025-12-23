@@ -24,5 +24,6 @@ export default defineConfig({
     tanstackStart(),
     tailwindcss(),
     viteReact(),
+    nitroV2Plugin(nitroConfig),
   ],
 });
