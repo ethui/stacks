@@ -38,7 +38,6 @@ export function StackCard({ stack, onDelete }: StackCardProps) {
     </Card>
   );
 }
-
 interface StackCardHeaderProps {
   stack: Stack;
   onDelete: (slug: string) => void;
@@ -183,8 +182,13 @@ function UrlRow({ label, url, isExternal }: UrlRowProps) {
     <div className="group flex cursor-default items-center justify-between py-1">
       <span className="text-muted-foreground text-xs">{label}</span>
       <div className="flex items-center gap-0.5">
-        <ClickToCopy text={url} className="p-1">
-          <Copy className="h-3.5 w-3.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" />
+        <ClickToCopy
+          text={url}
+          className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <span className="flex items-center justify-center">
+            <Copy className="h-3.5 w-3.5" />
+          </span>
         </ClickToCopy>
         {isExternal && (
           <a

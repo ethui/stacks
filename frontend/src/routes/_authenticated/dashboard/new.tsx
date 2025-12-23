@@ -40,7 +40,11 @@ const stackFormSchema = z.object({
 type StackFormData = z.infer<typeof stackFormSchema>;
 
 const PRESET_NETWORKS = [
-  { name: "Ethereum", url: "https://eth.llamarpc.com", chainId: 1 },
+  {
+    name: "Ethereum",
+    url: "https://gateway.tenderly.co/public/mainnet",
+    chainId: 1,
+  },
   { name: "Arbitrum One", url: "https://arb1.arbitrum.io/rpc", chainId: 42161 },
   { name: "OP Mainnet", url: "https://mainnet.optimism.io", chainId: 10 },
   { name: "Base", url: "https://mainnet.base.org", chainId: 8453 },
@@ -80,12 +84,13 @@ function NewStackPage() {
   const handleSubmit = (data: StackFormData) => {
     const input = createStackInputSchema.parse({
       slug: data.slug,
-      anvil_opts: enableFork
-        ? {
-            fork_url: data.forkUrl,
-            fork_block_number: data.forkBlockNumber,
-          }
-        : undefined,
+      anvil_opts:
+        enableFork && data.forkUrl
+          ? {
+              fork_url: data.forkUrl,
+              fork_block_number: data.forkBlockNumber,
+            }
+          : undefined,
       graph_opts: enableGraph ? { enabled: true } : undefined,
     });
 
