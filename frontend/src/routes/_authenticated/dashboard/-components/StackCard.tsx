@@ -186,9 +186,7 @@ function UrlRow({ label, url, isExternal }: UrlRowProps) {
           text={url}
           className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          <span className="flex items-center justify-center">
-            <Copy className="h-3.5 w-3.5" />
-          </span>
+          <Copy className="h-3.5 w-3.5" />
         </ClickToCopy>
         {isExternal && (
           <a
