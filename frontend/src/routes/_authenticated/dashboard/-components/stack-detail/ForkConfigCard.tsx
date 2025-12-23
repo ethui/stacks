@@ -31,7 +31,7 @@ export function ForkConfigCard({ stack }: ForkConfigCardProps) {
             />
             <DetailRow
               label="Fork Block"
-              value={`#${stack.anvil_opts.fork_block_number.toLocaleString()}`}
+              value={`#${stack.anvil_opts.fork_block_number?.toLocaleString()}`}
             />
           </>
         ) : (
