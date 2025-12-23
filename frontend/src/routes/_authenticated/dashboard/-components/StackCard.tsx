@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@ethui/ui/components/shadcn/dropdown-menu";
+import { cn } from "@ethui/ui/lib/utils";
 
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
@@ -157,11 +158,24 @@ interface StackCardFooterProps {
 }
 
 function StackCardFooter({ stack }: StackCardFooterProps) {
+  const isStackRunning = stack.status === "running";
   return (
     <div className="flex items-center justify-between border-border border-t pt-3">
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1 font-medium text-green-600 text-xs">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
-        Running
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium text-xs",
+          isStackRunning
+            ? "bg-green-500/10 text-green-600"
+            : "bg-red-500/10 text-red-600",
+        )}
+      >
+        <span
+          className={cn(
+            "h-1.5 w-1.5 animate-pulse rounded-full bg-green-500",
+            isStackRunning ? "bg-green-500" : "bg-red-500",
+          )}
+        />
+        {isStackRunning ? "Running" : "Stopped"}
       </span>
       <span className="text-muted-foreground text-xs">
         {formatDistanceToNow(new Date(stack.inserted_at * 1000))} ago

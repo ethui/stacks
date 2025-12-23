@@ -3,7 +3,7 @@ import { api } from "./axios";
 
 export const stackSchema = z.object({
   slug: z.string(),
-  status: z.enum(["running", "error"]),
+  status: z.enum(["running", "stopped"]),
   chain_id: z.number(),
   rpc_url: z.string(),
   explorer_url: z.string(),
