@@ -13,7 +13,7 @@ import { useAuthStore } from "~/store/auth";
 
 export function Topbar() {
   const navigate = useNavigate();
-  const { logout, accessKey } = useAuthStore();
+  const { logout } = useAuthStore();
 
   const handleLogout = () => {
     logout();
@@ -24,14 +24,8 @@ export function Topbar() {
     navigate({ to: "/dashboard" });
   };
 
-  // Mask access key for display
-  const maskedKey = accessKey
-    ? `${accessKey.slice(0, 4)}...${accessKey.slice(-4)}`
-    : "";
-
   return (
     <nav className="flex w-full flex-row items-center justify-between border-b border-border/50 bg-accent px-6 py-4">
-      {/* Left: Logo + Title */}
       <button
         type="button"
         onClick={handleLogoClick}
@@ -51,9 +45,6 @@ export function Topbar() {
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
               <User className="h-4 w-4 text-primary" />
             </div>
-            <span className="font-mono text-muted-foreground text-xs">
-              {maskedKey}
-            </span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
