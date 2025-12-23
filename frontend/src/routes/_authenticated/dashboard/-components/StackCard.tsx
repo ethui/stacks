@@ -1,4 +1,4 @@
-import { ClickToCopy } from "@ethui/ui/components/click-to-copy";
+import { ClickToCopy } from "~/components/ClickToCopy";
 import { Button } from "@ethui/ui/components/shadcn/button";
 import {
   Card,
@@ -16,7 +16,6 @@ import {
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import {
-  Copy,
   ExternalLink,
   GitFork,
   Layers,
@@ -184,10 +183,8 @@ function UrlRow({ label, url, isExternal }: UrlRowProps) {
       <div className="flex items-center gap-0.5">
         <ClickToCopy
           text={url}
-          className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <Copy className="h-3.5 w-3.5" />
-        </ClickToCopy>
+          className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
+        />
         {isExternal && (
           <a
             href={url}
