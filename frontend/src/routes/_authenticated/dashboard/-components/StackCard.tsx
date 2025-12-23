@@ -1,4 +1,4 @@
-import { CopyButton } from "~/components/CopyButton";
+import { ClickToCopy } from "~/components/ClickToCopy";
 import { Button } from "@ethui/ui/components/shadcn/button";
 import {
   Card,
@@ -181,9 +181,9 @@ function UrlRow({ label, url, isExternal }: UrlRowProps) {
     <div className="group flex cursor-default items-center justify-between py-1">
       <span className="text-muted-foreground text-xs">{label}</span>
       <div className="flex items-center gap-0.5">
-        <CopyButton
+        <ClickToCopy
           text={url}
-          className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer"
         />
         {isExternal && (
           <a
