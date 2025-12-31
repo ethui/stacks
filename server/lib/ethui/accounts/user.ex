@@ -5,12 +5,16 @@ defmodule Ethui.Accounts.User do
 
   use Ecto.Schema
   import Ecto.Changeset
+  alias Ethui.Stacks.Stack
 
   schema "users" do
     field(:email, :string)
     field(:verification_code, :string)
     field(:verification_code_sent_at, :naive_datetime)
     field(:verified_at, :naive_datetime)
+
+    has_many(:stacks, Stack)
+    has_many(:api_key, through: [:stacks, :api_key])
 
     timestamps()
   end

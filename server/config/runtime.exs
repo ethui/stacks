@@ -28,6 +28,7 @@ end
 is_saas? = !!System.get_env("ETHUI_STACKS_SAAS")
 
 config :ethui, EthuiWeb.Plugs.Authenticate, enabled: is_saas?
+config :ethui, EthuiWeb.Plugs.ApiKeyAuth, enabled: is_saas?
 
 if config_env() == :prod do
   data_root =
