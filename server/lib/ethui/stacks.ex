@@ -4,7 +4,9 @@ defmodule Ethui.Stacks do
   """
   alias EthuiWeb.Endpoint
   alias Ethui.Stacks.Server
+  alias Ethui.Stacks.Stack
 
+  alias Ethui.Repo
   @components ~w(graph graph-rpc graph-status ipfs)
   @reserved ~w(rpc)
 
@@ -89,6 +91,11 @@ defmodule Ethui.Stacks do
     <<val::32>> = <<prefix::16, id::16>>
 
     val
+  end
+
+  @doc "Gets a stack by ID"
+  def get_stack(id) do
+    Repo.get(Stack, id)
   end
 
   defp build_url(slug) do

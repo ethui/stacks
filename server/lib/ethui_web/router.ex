@@ -35,6 +35,7 @@ defmodule EthuiWeb.Router do
 
   pipeline :proxy do
     plug EthuiWeb.Plugs.StackSubdomain
+    plug EthuiWeb.Plugs.ApiKeyAuth
   end
 
   scope "/", EthuiWeb, host: "api." do
@@ -51,6 +52,10 @@ defmodule EthuiWeb.Router do
 
     resources "/stacks", Api.StackController, param: "slug" do
       # get "/logs", StackController, :logs
+      #
+      post "/api-keys", ApiKeyController, :create
+      get "/api-keys", ApiKeyController, :show
+      delete "/api-keys", ApiKeyController, :delete
     end
   end
 
