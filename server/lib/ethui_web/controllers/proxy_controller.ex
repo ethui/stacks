@@ -10,10 +10,80 @@ defmodule EthuiWeb.ProxyController do
         %Plug.Conn{assigns: %{proxy: %{slug: slug, component: component}}} = conn,
         params
       ) do
-    proxy_component(conn, params, {slug, component})
+    if websocket_upgrade?(conn) do
+      websocket_proxy(conn, params, {slug, component})
+    else
+      proxy_component(conn, params, {slug, component})
+    end
   end
 
   def reverse_proxy(conn, _params), do: conn |> send_resp(404, "Not found")
+
+  defp websocket_upgrade?(conn) do
+    case Plug.Conn.get_req_header(conn, "upgrade") do
+      ["websocket"] -> true
+      ["WebSocket"] -> true
+      _ -> false
+    end
+  end
+
+  defp websocket_proxy(conn, params, {slug, component}) do
+    case get_target_url(slug, component, params) do
+      {:ok, target_url} ->
+        conn
+        |> WebSockAdapter.upgrade(EthuiWeb.WebSocketProxy, %{target_url: target_url},
+          timeout: 60_000
+        )
+
+      {:error, reason} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: reason})
+    end
+  end
+
+  defp get_target_url(slug, nil, _params) do
+    case Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}) do
+      [{pid, _}] ->
+        case Anvil.url(pid) do
+          url when not is_nil(url) -> {:ok, url}
+          _ -> {:error, "Stack not found"}
+        end
+
+      _ ->
+        {:error, "Stack not found"}
+    end
+  end
+
+  defp get_target_url(slug, "graph", _params) do
+    get_subgraph_url(slug, 8000)
+  end
+
+  defp get_target_url(slug, "graph-rpc", _params) do
+    get_subgraph_url(slug, 8020)
+  end
+
+  defp get_target_url(slug, "graph-status", _params) do
+    get_subgraph_url(slug, 8030)
+  end
+
+  defp get_target_url(_slug, "ipfs", _params) do
+    case Ethui.Services.Ipfs.ip() do
+      {:ok, ip} -> {:ok, "http://#{ip}:5001"}
+      _ -> {:error, "IPFS service not available"}
+    end
+  end
+
+  defp get_target_url(_slug, _component, _params) do
+    {:error, "Unknown component"}
+  end
+
+  defp get_subgraph_url(slug, port) do
+    case Graph.ip_from_slug(slug) do
+      {:ok, ip} -> {:ok, "http://#{ip}:#{port}"}
+      _ -> {:error, "Stack not found"}
+    end
+  end
 
   defp proxy_component(conn, params, {slug, nil}), do: anvil(conn, params, slug)
 
