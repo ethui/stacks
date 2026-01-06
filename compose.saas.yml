@@ -8,7 +8,7 @@ services:
     environment:
       - MIX_ENV=prod
       - PHX_HOST=stacks.n62.casa
-      - DATA_ROOT=/app/data
+      - DATA_ROOT=/data
       - ETHUI_STACKS_ENABLE_AUTH=1
       - ETHUI_STACKS_SAAS=1
       - SECRET_KEY_BASE=${SECRET_KEY_BASE}
@@ -20,6 +20,7 @@ services:
     volumes:
       - ./server/data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
+      - data:/data
     # depends_on:
     #   - postgres
 
@@ -34,8 +35,9 @@ services:
   #   volumes:
   #     - postgres_data:/var/lib/postgresql/data
 
-# volumes:
-#   postgres_data:
+volumes:
+  data:
+  # postgres_data:
 
 networks:
   stacks:
