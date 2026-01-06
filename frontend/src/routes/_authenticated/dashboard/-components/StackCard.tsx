@@ -1,4 +1,3 @@
-import { ClickToCopy } from "~/components/ClickToCopy";
 import { Button } from "@ethui/ui/components/shadcn/button";
 import {
   Card,
@@ -13,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@ethui/ui/components/shadcn/dropdown-menu";
 import { cn } from "@ethui/ui/lib/utils";
+import { ClickToCopy } from "~/components/ClickToCopy";
 
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
