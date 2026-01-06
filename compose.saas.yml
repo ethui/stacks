@@ -7,6 +7,7 @@ services:
       - "4000:4000"
     environment:
       - MIX_ENV=prod
+      - PHX_HOST=stacks.n62.casa
       - DATA_ROOT=/app/data
       - ETHUI_STACKS_ENABLE_AUTH=1
       - ETHUI_STACKS_SAAS=1
