@@ -6,6 +6,15 @@ import {
   CardTitle,
 } from "@ethui/ui/components/shadcn/card";
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@ethui/ui/components/shadcn/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -23,6 +32,7 @@ import {
   MoreVertical,
   Trash2,
 } from "lucide-react";
+import { useState } from "react";
 import type { Stack } from "~/api/stacks";
 
 interface StackCardProps {
@@ -44,44 +54,99 @@ interface StackCardHeaderProps {
 }
 
 function StackCardHeader({ stack, onDelete }: StackCardHeaderProps) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    onDelete(stack.slug);
+    setIsDeleteDialogOpen(false);
+  };
+
   return (
-    <CardHeader className="pb-3">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-            <Layers className="h-4 w-4 text-primary" />
+    <>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+              <Layers className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">{stack.slug}</CardTitle>
+              <p className="font-mono text-muted-foreground text-xs">
+                Chain ID: {stack.chain_id}
+              </p>
+            </div>
           </div>
-          <div>
-            <CardTitle className="text-lg">{stack.slug}</CardTitle>
-            <p className="font-mono text-muted-foreground text-xs">
-              Chain ID: {stack.chain_id}
-            </p>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {/* TODO: Needs to be implemented */}
+              <DropdownMenuItem asChild disabled={true}>
+                <Link to="/dashboard/$slug" params={{ slug: stack.slug }}>
+                  View Details
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleDeleteClick}
+                className="text-destructive cursor-pointer"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {/* TODO: Needs to be implemented */}
-            <DropdownMenuItem asChild disabled={true}>
-              <Link to="/dashboard/$slug" params={{ slug: stack.slug }}>
-                View Details
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete(stack.slug)}
-              className="text-destructive cursor-pointer"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </CardHeader>
+      </CardHeader>
+      <DeleteStackDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        stackSlug={stack.slug}
+        onConfirm={handleConfirmDelete}
+      />
+    </>
+  );
+}
+
+interface DeleteStackDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  stackSlug: string;
+  onConfirm: () => void;
+}
+
+function DeleteStackDialog({
+  open,
+  onOpenChange,
+  stackSlug,
+  onConfirm,
+}: DeleteStackDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete this stack?</DialogTitle>
+          <DialogDescription>
+            This will permanently delete the stack "{stackSlug}" and all
+            associated data. This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button variant="destructive" onClick={onConfirm}>
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
