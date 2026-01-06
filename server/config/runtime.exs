@@ -68,7 +68,7 @@ if config_env() == :prod do
 
   config :ethui, EthuiWeb.Endpoint,
     http: [ip: listen_ip, port: port],
-    url: [host: host, port: 443, scheme: "https"],
+    url: [host: host, port: 80, scheme: "http"],
     force_ssl: [rewrite_on: [:x_forwarded_proto]],
     secret_key_base: secret_key_base
 
