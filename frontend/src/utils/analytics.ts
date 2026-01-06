@@ -35,4 +35,3 @@ export function trackEvent(
 export function trackPageView(page: string) {
   trackEvent("page_view", { page });
 }
-
