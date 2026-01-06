@@ -18,7 +18,7 @@ ARG DEBIAN_VERSION=bullseye-20250407-slim
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-ubuntu-noble-20250805"
 ARG RUNNER_IMAGE="ubuntu:noble"
 
-FROM ${BUILDER_IMAGE} as builder
+FROM ${BUILDER_IMAGE} AS builder
 
 # install build dependencies
 RUN apt-get update -y && apt-get install -y build-essential git \
