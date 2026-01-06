@@ -23,7 +23,7 @@ function DashboardPage() {
   const { data: stacksList, isLoading } = useListStacks();
 
   useEffect(() => {
-    trackPageView("dashboard-load");
+    trackPageView("dashboard");
   }, []);
 
   const { mutate: deleteStack } = useMutation({
