@@ -3,10 +3,12 @@ import { Skeleton } from "@ethui/ui/components/shadcn/skeleton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Layers, Plus } from "lucide-react";
+import { useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { stacks } from "~/api/stacks";
 import { EmptyState } from "~/components/EmptyState";
 import { useListStacks } from "~/hooks/useStacks";
+import { trackPageView } from "~/utils/analytics";
 import { StackCard } from "./-components/StackCard";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
@@ -19,6 +21,10 @@ function DashboardPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: stacksList, isLoading } = useListStacks();
+
+  useEffect(() => {
+    trackPageView("dashboard-load");
+  }, []);
 
   const { mutate: deleteStack } = useMutation({
     mutationFn: stacks.delete,
