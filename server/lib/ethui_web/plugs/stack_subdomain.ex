@@ -18,6 +18,7 @@ defmodule EthuiWeb.Plugs.StackSubdomain do
   end
 
   defp extract_slug_part(request_host) do
+    IO.inspect(request_host)
     root_host = host()
 
     cond do
