@@ -64,7 +64,7 @@ if config_env() == :prod do
 
   host = System.get_env("PHX_HOST") || "stacks.ethui.dev"
   port = System.get_env("PHX_PORT") || 4000
-  listen_ip = if is_saas?, do: {127, 0, 0, 1}, else: {0, 0, 0, 0}
+  listen_ip = {0, 0, 0, 0}
 
   config :ethui, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
