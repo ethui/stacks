@@ -8,25 +8,33 @@ services:
     environment:
       - MIX_ENV=prod
       - DATA_ROOT=/app/data
+      - ETHUI_STACKS_ENABLE_AUTH=1
+      - ETHUI_STACKS_SAAS=1
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - JWT_SECRET=${JWT_SECRET}
+      - MAILER_SMTP=${MAILER_SMTP}
+      - MAILER_SMTP_PORT=${MAILER_SMTP_PORT}
+      - MAILER_SMTP_USERNAME=${MAILER_SMTP_USERNAME}
+      - MAILER_SMTP_PASSWORD=${MAILER_SMTP_PASSWORD}
     volumes:
       - ./server/data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      - postgres
+    # depends_on:
+    #   - postgres
 
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: ethui_dev
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  # postgres:
+  #   image: postgres:15
+  #   environment:
+  #     POSTGRES_DB: ethui_dev
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
 
-volumes:
-  postgres_data:
+# volumes:
+#   postgres_data:
 
 networks:
   stacks:
