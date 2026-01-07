@@ -22,10 +22,19 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - data:/data
     labels:
+      # custom rules for *.stacks.ethui.dev
       - "traefik.enable=true"
       - "traefik.http.routers.ethui-stacks.rule=HostRegexp(`^[a-z0-9-]+\\.stacks2\\.ethui\\.dev$`)"
       - "traefik.http.routers.ethui-stacks.entrypoints=web"
       - "traefik.http.routers.ethui-stacks.service=ethui-stacks-hkdbss-1-web"
+
+      # ssl support for *.stacks.ethui.dev
+      - 'traefik.http.routers.ethui-stacks-secure.rule=HostRegexp(`^[a-z0-9-]+\.stacks2\.ethui\.dev$`)'
+      - 'traefik.http.routers.ethui-stacks-secure.entrypoints=websecure'
+      - 'traefik.http.routers.ethui-stacks-secure.service=ethui-stacks-hkdbss-1-web'
+      - 'traefik.http.routers.ethui-stacks-secure.tls.certresolver=letsencrypt-dns'
+      - 'traefik.http.routers.ethui-stacks-secure.tls.domains[0].main=stacks2.ethui.dev'
+      - 'traefik.http.routers.ethui-stacks-secure.tls.domains[0].sans=*.stacks2.ethui.dev'
     # depends_on:
     #   - postgres
 
