@@ -25,7 +25,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.ethui-stacks.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.stacks2.ethui.dev`)"
       - "traefik.http.routers.ethui-stacks.entrypoints=web"
-      - "traefik.http.services.ethui-stacks.loadbalancer.server.port=4000"
+      - "traefik.http.routers.ethui-stacks.service=ethui-stacks-hkdbss-1-web"
     # depends_on:
     #   - postgres
 
