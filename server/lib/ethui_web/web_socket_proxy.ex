@@ -1,6 +1,10 @@
 defmodule EthuiWeb.WebSocketProxy do
   require Logger
 
+  @moduledoc """
+    Handles websocket connections and forwards the requests to the appropriate components
+  """
+
   @behaviour WebSock
 
   @impl WebSock
@@ -22,12 +26,10 @@ defmodule EthuiWeb.WebSocketProxy do
 
   @impl WebSock
 
-  def handle_in({data, [opcode: type]} = msg, state) do
-    msg |> IO.inspect(label: "in")
+  def handle_in({data, [opcode: type]}, state) do
     frame = {type, data}
 
-    frame |> IO.inspect(label: "in2")
-    :gun.ws_send(state.gun_pid, state.stream_ref, frame) |> IO.inspect(label: "gun send")
+    :gun.ws_send(state.gun_pid, state.stream_ref, frame)
 
     {:ok, state}
   end
