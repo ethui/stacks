@@ -21,6 +21,11 @@ services:
       - ./server/data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
       - data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ethui-stacks.rule=Host(`api.stacks2.ethui.dev`) || HostRegexp(`{subdomain:[a-z0-9-]+}.stacks2.ethui.dev`)"
+      - "traefik.http.routers.ethui-stacks.entrypoints=web"
+      - "traefik.http.services.ethui-stacks.loadbalancer.server.port=4000"
     # depends_on:
     #   - postgres
 
