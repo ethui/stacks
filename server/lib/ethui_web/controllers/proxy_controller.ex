@@ -79,11 +79,10 @@ defmodule EthuiWeb.ProxyController do
   end
 
   defp websocket_upgrade?(conn) do
-    case Plug.Conn.get_req_header(conn, "upgrade") do
-      ["websocket"] -> true
-      ["WebSocket"] -> true
-      _ -> false
-    end
+    conn
+    |> Plug.Conn.get_req_header("upgrade")
+    |> Enum.map(&String.downcase/1)
+    |> Enum.member?("websocket")
   end
 
   defp websocket_proxy(conn, url) do
