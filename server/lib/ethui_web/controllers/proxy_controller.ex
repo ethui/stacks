@@ -34,7 +34,7 @@ defmodule EthuiWeb.ProxyController do
     if websocket_upgrade?(conn) do
       websocket_proxy(conn, url)
     else
-      forward(conn, url)
+      http_proxy(conn, url)
     end
   end
 
@@ -89,7 +89,7 @@ defmodule EthuiWeb.ProxyController do
     WebSockAdapter.upgrade(conn, EthuiWeb.WebSocketProxy, %{target_url: url}, timeout: 60_000)
   end
 
-  defp forward(conn, url) do
+  defp http_proxy(conn, url) do
     proxied_path = Map.get(conn.path_params, "proxied_path", [])
     base_proxy_path = proxy_path(conn.path_info, proxied_path)
 
