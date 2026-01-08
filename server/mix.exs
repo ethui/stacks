@@ -78,7 +78,11 @@ defmodule Ethui.MixProject do
        sparse: "optimized",
        app: false,
        compile: false,
-       depth: 1}
+       depth: 1},
+
+      # Websocket
+      {:websock_adapter, "~> 0.5"},
+      {:gun, "~> 2.0"}
     ]
   end
 
