@@ -9,7 +9,6 @@ services:
       - MIX_ENV=prod
       - PHX_HOST=${PHX_HOST}
       - DATA_ROOT=/data
-      - ETHUI_STACKS_ENABLE_AUTH=1
       - ETHUI_STACKS_SAAS=1
       - SECRET_KEY_BASE=${SECRET_KEY_BASE}
       - JWT_SECRET=${JWT_SECRET}
