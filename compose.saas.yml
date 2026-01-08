@@ -1,0 +1,43 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - MIX_ENV=prod
+      - PHX_HOST=${PHX_HOST}
+      - DATA_ROOT=/data
+      - ETHUI_STACKS_SAAS=1
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - JWT_SECRET=${JWT_SECRET}
+      - MAILER_SMTP=${MAILER_SMTP}
+      - MAILER_SMTP_PORT=${MAILER_SMTP_PORT}
+      - MAILER_SMTP_USERNAME=${MAILER_SMTP_USERNAME}
+      - MAILER_SMTP_PASSWORD=${MAILER_SMTP_PASSWORD}
+    volumes:
+      - data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - data:/data
+    labels:
+      # custom rules for *.stacks.ethui.dev
+      - "traefik.enable=true"
+      - "traefik.http.routers.ethui-stacks.rule=HostRegexp(`^[a-z0-9-]+\\.stacks\\.ethui\\.dev$`)"
+      - "traefik.http.routers.ethui-stacks.entrypoints=web"
+      - "traefik.http.routers.ethui-stacks.service=ethui-stacks-hkdbss-1-web"
+
+      # ssl support for *.stacks.ethui.dev
+      - 'traefik.http.routers.ethui-stacks-secure.rule=HostRegexp(`^[a-z0-9-]+\.stacks\.ethui\.dev$`)'
+      - 'traefik.http.routers.ethui-stacks-secure.entrypoints=websecure'
+      - 'traefik.http.routers.ethui-stacks-secure.service=ethui-stacks-hkdbss-1-web'
+      - 'traefik.http.routers.ethui-stacks-secure.tls.certresolver=letsencrypt-dns'
+      - 'traefik.http.routers.ethui-stacks-secure.tls.domains[0].main=stacks.ethui.dev'
+      - 'traefik.http.routers.ethui-stacks-secure.tls.domains[0].sans=*.stacks.ethui.dev'
+
+volumes:
+  data:
+
+networks:
+  stacks:
+    name: ethui-stacks
