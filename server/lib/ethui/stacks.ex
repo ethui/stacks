@@ -61,9 +61,15 @@ defmodule Ethui.Stacks do
 
   def get_urls(stack) do
     base_urls = %{
+      # deprecated, delete later
       rpc_url: rpc_url(stack.slug),
       ipfs_url: ipfs_url(stack.slug),
-      explorer_url: explorer_url(stack.slug)
+      explorer_url: explorer_url(stack.slug),
+
+      # new ones
+      http_rpc: http_rpc_url(stack.slug),
+      ws_rpc: ws_rpc_url(stack.slug),
+      explorer: explorer_url(stack.slug)
     }
 
     if graph_enabled?(stack) do
@@ -77,12 +83,13 @@ defmodule Ethui.Stacks do
     end
   end
 
-  def rpc_url(slug), do: build_url(slug)
-  def graph_url(slug), do: build_url("graph", slug)
-  def graph_rpc_url(slug), do: build_url("graph-rpc", slug)
-  def graph_status(slug), do: build_url("graph-status", slug)
-  def ipfs_url(slug), do: build_url("ipfs", slug)
-  def explorer_url(slug), do: build_url(slug)
+  def http_rpc_url(slug), do: build_http_url(slug)
+  def ws_rpc_url(slug), do: build_ws_url(slug)
+  def graph_url(slug), do: build_http_url("graph", slug)
+  def graph_rpc_url(slug), do: build_http_url("graph-rpc", slug)
+  def graph_status(slug), do: build_http_url("graph-status", slug)
+  def ipfs_url(slug), do: build_http_url("ipfs", slug)
+  def explorer_url(slug), do: build_http_url(slug)
 
   def chain_id(id) do
     prefix = config() |> Keyword.fetch!(:chain_id_prefix)
@@ -91,12 +98,16 @@ defmodule Ethui.Stacks do
     val
   end
 
-  defp build_url(slug) do
-    "#{http_protocol()}#{slug}.#{host()}"
+  defp build_ws_url(slug) do
+    "#{ws()}#{slug}.#{host()}"
   end
 
-  defp build_url(component, slug) do
-    "#{http_protocol()}#{component}-#{slug}.#{host()}"
+  defp build_http_url(slug) do
+    "#{http()}#{slug}.#{host()}"
+  end
+
+  defp build_http_url(component, slug) do
+    "#{http()}#{component}-#{slug}.#{host()}"
   end
 
   defp graph_enabled?(stack) do
@@ -107,8 +118,12 @@ defmodule Ethui.Stacks do
     map_size(stack.anvil_opts) > 0
   end
 
-  defp http_protocol do
+  defp http do
     if saas?(), do: "https://", else: "http://"
+  end
+
+  defp ws do
+    if saas?(), do: "wss://", else: "ws://"
   end
 
   defp host do
