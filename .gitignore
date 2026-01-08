@@ -35,3 +35,4 @@ test-data/
 .DS_Store
 Thumbs.db
 .env*.local
+.claude
