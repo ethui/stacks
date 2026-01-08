@@ -21,6 +21,7 @@ defmodule Ethui.Stacks.Stack do
     field(:anvil_opts, :map, default: %{})
     field(:graph_opts, :map, default: %{})
     belongs_to(:user, Ethui.Accounts.User)
+    has_one(:api_key, Ethui.Accounts.ApiKey)
 
     timestamps(type: :utc_datetime)
   end

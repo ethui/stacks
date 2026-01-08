@@ -4,6 +4,13 @@ defmodule Ethui.Stacks do
   """
   alias EthuiWeb.Endpoint
   alias Ethui.Stacks.Server
+  alias Ethui.Stacks.Stack
+  alias Ethui.Accounts
+  alias Ethui.Accounts.User
+  alias Ethui.Accounts.ApiKey
+
+  alias Ethui.Repo
+  import Ecto.Query, only: [from: 2]
 
   @components ~w(graph graph-rpc graph-status ipfs)
   @reserved ~w(rpc)
@@ -61,28 +68,28 @@ defmodule Ethui.Stacks do
 
   def get_urls(stack) do
     base_urls = %{
-      rpc_url: rpc_url(stack.slug),
-      ipfs_url: ipfs_url(stack.slug),
-      explorer_url: explorer_url(stack.slug)
+      rpc_url: rpc_url(stack.slug, stack.api_key),
+      ipfs_url: ipfs_url(stack.slug, stack.api_key),
+      explorer_url: explorer_url(stack.slug, stack.api_key)
     }
 
     if graph_enabled?(stack) do
       Map.merge(base_urls, %{
-        graph_url: graph_url(stack.slug),
-        graph_rpc_url: graph_rpc_url(stack.slug),
-        graph_status: graph_status(stack.slug)
+        graph_url: graph_url(stack.slug, stack.api_key),
+        graph_rpc_url: graph_rpc_url(stack.slug, stack.api_key),
+        graph_status: graph_status(stack.slug, stack.api_key)
       })
     else
       base_urls
     end
   end
 
-  def rpc_url(slug), do: build_url(slug)
-  def graph_url(slug), do: build_url("graph", slug)
-  def graph_rpc_url(slug), do: build_url("graph-rpc", slug)
-  def graph_status(slug), do: build_url("graph-status", slug)
-  def ipfs_url(slug), do: build_url("ipfs", slug)
-  def explorer_url(slug), do: build_url(slug)
+  def rpc_url(slug, api_key), do: build_url(slug, api_key)
+  def graph_url(slug, api_key), do: build_url("graph", slug, api_key)
+  def graph_rpc_url(slug, api_key), do: build_url("graph-rpc", slug, api_key)
+  def graph_status(slug, api_key), do: build_url("graph-status", slug, api_key)
+  def ipfs_url(slug, api_key), do: build_url("ipfs", slug, api_key)
+  def explorer_url(slug, api_key), do: build_url(slug, api_key)
 
   def chain_id(id) do
     prefix = config() |> Keyword.fetch!(:chain_id_prefix)
@@ -91,11 +98,85 @@ defmodule Ethui.Stacks do
     val
   end
 
-  defp build_url(slug) do
+  @doc "Gets a stack by ID"
+  def get_stack(id) do
+    Repo.get(Stack, id)
+  end
+
+  def get_stack_by_slug(slug) do
+    Repo.get_by(Stack, slug: slug)
+    |> Repo.preload(:api_key)
+  end
+
+  def list_stacks(user) do
+    if user do
+      Repo.all(from(s in Stack, where: s.user_id == ^user.id))
+      |> Repo.preload(:api_key)
+    else
+      Repo.all(Stack)
+    end
+  end
+
+  def create_stack(nil, params) do
+    Stack.create_changeset(params)
+    |> Repo.insert()
+  end
+
+  def create_stack(user, params) do
+    params = Map.put(params, "user_id", user.id)
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(
+      :stack,
+      Stack.create_changeset(params)
+    )
+    |> Ecto.Multi.run(:api_key, fn _repo, %{stack: stack} ->
+      Accounts.create_api_key(stack)
+    end)
+    |> Ecto.Multi.run(:stack_with_api_key, fn repo, %{stack: stack} ->
+      {:ok, repo.preload(stack, :api_key)}
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{stack: stack}} ->
+        {:ok, stack}
+
+      {:error, _, changeset, _} ->
+        {:error, changeset}
+    end
+  end
+
+  def get_user_stack_by_slug(nil, slug) do
+    Repo.get_by(Stack, slug: slug)
+    |> Repo.preload(:api_key)
+  end
+
+  def get_user_stack_by_slug(%User{id: user_id}, slug) do
+    get_user_stack_by_slug(user_id, slug)
+  end
+
+  def get_user_stack_by_slug(user_id, slug) do
+    Repo.get_by(Stack, slug: slug, user_id: user_id)
+    |> Repo.preload(:api_key)
+  end
+
+  def delete_stack(stack) do
+    Repo.delete(stack)
+  end
+
+  defp build_url(slug, %ApiKey{} = api_key) do
+    "#{http_protocol()}#{slug}.#{host()}/#{api_key.token}"
+  end
+
+  defp build_url(slug, _) do
     "#{http_protocol()}#{slug}.#{host()}"
   end
 
-  defp build_url(component, slug) do
+  defp build_url(component, slug, %ApiKey{} = api_key) do
+    "#{http_protocol()}#{component}-#{slug}.#{host()}/#{api_key.token}"
+  end
+
+  defp build_url(component, slug, _) do
     "#{http_protocol()}#{component}-#{slug}.#{host()}"
   end
 
