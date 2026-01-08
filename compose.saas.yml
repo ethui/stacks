@@ -18,7 +18,7 @@ services:
       - MAILER_SMTP_USERNAME=${MAILER_SMTP_USERNAME}
       - MAILER_SMTP_PASSWORD=${MAILER_SMTP_PASSWORD}
     volumes:
-      - ./server/data:/app/data
+      - data:/data
       - /var/run/docker.sock:/var/run/docker.sock
       - data:/data
     labels:
@@ -35,23 +35,9 @@ services:
       - 'traefik.http.routers.ethui-stacks-secure.tls.certresolver=letsencrypt-dns'
       - 'traefik.http.routers.ethui-stacks-secure.tls.domains[0].main=stacks.ethui.dev'
       - 'traefik.http.routers.ethui-stacks-secure.tls.domains[0].sans=*.stacks.ethui.dev'
-    # depends_on:
-    #   - postgres
-
-  # postgres:
-  #   image: postgres:15
-  #   environment:
-  #     POSTGRES_DB: ethui_dev
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: postgres
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
 
 volumes:
   data:
-  # postgres_data:
 
 networks:
   stacks:
