@@ -4,9 +4,16 @@ defmodule Ethui.Stacks do
   """
   alias EthuiWeb.Endpoint
   alias Ethui.Stacks.Server
+  alias Ethui.Stacks.Stack
+  alias Ethui.Accounts
+  alias Ethui.Accounts.User
+  alias Ethui.Accounts.ApiKey
+
+  alias Ethui.Repo
+  import Ecto.Query, only: [from: 2]
 
   @components ~w(graph graph-rpc graph-status ipfs)
-  @reserved ~w(rpc)
+  @reserved ~w(rpc api)
 
   def components, do: @components
 
@@ -61,35 +68,35 @@ defmodule Ethui.Stacks do
 
   def get_urls(stack) do
     base_urls = %{
-      # deprecated, delete later
-      rpc_url: rpc_url(stack.slug),
-      ipfs_url: ipfs_url(stack.slug),
-      explorer_url: explorer_url(stack.slug),
+      # deprecated
+      rpc_url: http_rpc_url(stack),
+      ipfs_url: ipfs_url(stack),
+      explorer_url: explorer_url(stack),
 
       # new ones
-      http_rpc: http_rpc_url(stack.slug),
-      ws_rpc: ws_rpc_url(stack.slug),
-      explorer: explorer_url(stack.slug)
+      http_rpc: http_rpc_url(stack),
+      ws_rpc: ws_rpc_url(stack),
+      explorer: explorer_url(stack)
     }
 
     if graph_enabled?(stack) do
       Map.merge(base_urls, %{
-        graph_url: graph_url(stack.slug),
-        graph_rpc_url: graph_rpc_url(stack.slug),
-        graph_status: graph_status(stack.slug)
+        graph_url: graph_url(stack),
+        graph_rpc_url: graph_rpc_url(stack),
+        graph_status: graph_status(stack)
       })
     else
       base_urls
     end
   end
 
-  def http_rpc_url(slug), do: build_http_url(slug)
-  def ws_rpc_url(slug), do: build_ws_url(slug)
-  def graph_url(slug), do: build_http_url("graph", slug)
-  def graph_rpc_url(slug), do: build_http_url("graph-rpc", slug)
-  def graph_status(slug), do: build_http_url("graph-status", slug)
-  def ipfs_url(slug), do: build_http_url("ipfs", slug)
-  def explorer_url(slug), do: build_http_url(slug)
+  def http_rpc_url(stack), do: build_url(http(), stack)
+  def ws_rpc_url(stack), do: build_url(ws(), stack)
+  def graph_url(stack), do: build_url(http(), "graph", stack)
+  def graph_rpc_url(stack), do: build_url(http(), "graph-rpc", stack)
+  def graph_status(stack), do: build_url(http(), "graph-status", stack)
+  def ipfs_url(stack), do: build_url(http(), "ipfs", stack)
+  def explorer_url(stack), do: build_url(http(), stack)
 
   def chain_id(id) do
     prefix = config() |> Keyword.fetch!(:chain_id_prefix)
@@ -98,16 +105,86 @@ defmodule Ethui.Stacks do
     val
   end
 
-  defp build_ws_url(slug) do
-    "#{ws()}#{slug}.#{host()}"
+  @doc "Gets a stack by ID"
+  def get_stack(id) do
+    Repo.get(Stack, id)
   end
 
-  defp build_http_url(slug) do
-    "#{http()}#{slug}.#{host()}"
+  def get_stack_by_slug(slug) do
+    Repo.get_by(Stack, slug: slug)
+    |> Repo.preload(:api_key)
   end
 
-  defp build_http_url(component, slug) do
-    "#{http()}#{component}-#{slug}.#{host()}"
+  def list_stacks(user) do
+    if user do
+      Repo.all(from(s in Stack, where: s.user_id == ^user.id))
+      |> Repo.preload(:api_key)
+    else
+      Repo.all(Stack)
+    end
+  end
+
+  def create_stack(nil, params) do
+    Stack.create_changeset(params)
+    |> Repo.insert()
+  end
+
+  def create_stack(user, params) do
+    params = Map.put(params, "user_id", user.id)
+
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(
+      :stack,
+      Stack.create_changeset(params)
+    )
+    |> Ecto.Multi.run(:api_key, fn _repo, %{stack: stack} ->
+      Accounts.create_api_key(stack)
+    end)
+    |> Ecto.Multi.run(:stack_with_api_key, fn repo, %{stack: stack} ->
+      {:ok, repo.preload(stack, :api_key)}
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{stack: stack}} ->
+        {:ok, stack}
+
+      {:error, _, changeset, _} ->
+        {:error, changeset}
+    end
+  end
+
+  def get_user_stack_by_slug(nil, slug) do
+    Repo.get_by(Stack, slug: slug)
+    |> Repo.preload(:api_key)
+  end
+
+  def get_user_stack_by_slug(%User{id: user_id}, slug) do
+    get_user_stack_by_slug(user_id, slug)
+  end
+
+  def get_user_stack_by_slug(user_id, slug) do
+    Repo.get_by(Stack, slug: slug, user_id: user_id)
+    |> Repo.preload(:api_key)
+  end
+
+  def delete_stack(stack) do
+    Repo.delete(stack)
+  end
+
+  defp build_url(proto, %Stack{slug: slug, api_key: %ApiKey{token: token}}) do
+    "#{proto}#{slug}.#{host()}/#{token}"
+  end
+
+  defp build_url(proto, %Stack{slug: slug}) do
+    "#{proto}#{slug}.#{host()}"
+  end
+
+  defp build_url(proto, component, %Stack{slug: slug, api_key: %ApiKey{token: token}}) do
+    "#{proto}#{component}-#{slug}.#{host()}/#{token}"
+  end
+
+  defp build_url(proto, component, %Stack{slug: slug}) do
+    "#{proto}#{component}-#{slug}.#{host()}"
   end
 
   defp graph_enabled?(stack) do

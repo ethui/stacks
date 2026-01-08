@@ -82,7 +82,10 @@ defmodule Ethui.MixProject do
 
       # Websocket
       {:websock_adapter, "~> 0.5"},
-      {:gun, "~> 2.0"}
+      {:gun, "~> 2.0"},
+
+      # base 58 for api token
+      {:b58, "~> 1.0.2"}
     ]
   end
 

@@ -1,0 +1,15 @@
+meta {
+  name: rotate
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{API}}/stacks/:slug
+  body: none
+  auth: inherit
+}
+
+params:path {
+  slug: demo
+}

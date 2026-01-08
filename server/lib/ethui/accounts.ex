@@ -7,6 +7,10 @@ defmodule Ethui.Accounts do
   alias Ethui.Repo
   alias Ethui.Accounts.User
   alias Ethui.Mailer
+  alias Ethui.Stacks.Stack
+  alias Ethui.Stacks
+
+  alias Ethui.Accounts.ApiKey
 
   ## Database getters
 
@@ -142,5 +146,66 @@ defmodule Ethui.Accounts do
       error ->
         error
     end
+  end
+
+  def get_stack_api_key(%User{id: user_id}, slug) do
+    case Stacks.get_user_stack_by_slug(user_id, slug) do
+      %Stack{} = stack ->
+        {:ok, stack.api_key}
+
+      nil ->
+        {:error, :not_found}
+    end
+  end
+
+  def create_api_key(%User{id: user_id}, slug) do
+    with %Stack{} = stack <- Stacks.get_user_stack_by_slug(user_id, slug),
+         {:ok, api_key} <- create_api_key(stack) do
+      {:ok, api_key}
+    else
+      nil -> {:error, :not_found}
+    end
+  end
+
+  def create_api_key(%Stack{id: id}) do
+    %ApiKey{}
+    |> ApiKey.changeset(%{stack_id: id})
+    |> Repo.insert()
+  end
+
+  def delete_api_key(%User{id: user_id}, slug) do
+    with %Stack{} = stack <- Stacks.get_user_stack_by_slug(user_id, slug),
+         %ApiKey{} = api_key <- Repo.get_by(ApiKey, stack_id: stack.id),
+         {:ok, _} <- Repo.delete(api_key) do
+      {:ok, :deleted}
+    else
+      nil -> {:error, :not_found}
+      error -> error
+    end
+  end
+
+  def rotate_api_key(user, slug) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:delete_api_key, fn _repo, _changes ->
+      delete_api_key(user, slug)
+    end)
+    |> Ecto.Multi.run(:api_key, fn _repo, _changes ->
+      create_api_key(user, slug)
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{api_key: api_key}} ->
+        {:ok, api_key}
+
+      {:error, _step, reason, _changes} ->
+        {:error, reason}
+    end
+  end
+
+  def get_api_key_by_token(token) do
+    ApiKey
+    |> where([k], k.token == ^token)
+    |> preload([:stack])
+    |> Repo.one()
   end
 end

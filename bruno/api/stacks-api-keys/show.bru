@@ -1,0 +1,19 @@
+meta {
+  name: show
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{API}}/stacks/:stack-id/api-keys
+  body: none
+  auth: bearer
+}
+
+params:path {
+  stack-id: 1
+}
+
+auth:bearer {
+  token: {{TOKEN}}
+}
