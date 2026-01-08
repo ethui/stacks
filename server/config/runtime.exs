@@ -62,13 +62,12 @@ if config_env() == :prod do
 
   host = System.get_env("PHX_HOST") || "stacks.ethui.dev"
   port = System.get_env("PHX_PORT") || 4000
-  listen_ip = {0, 0, 0, 0}
 
   config :ethui, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :ethui, EthuiWeb.Endpoint,
-    http: [ip: listen_ip, port: port],
-    url: [host: host, port: 80, scheme: "http"],
+    http: [ip: {0, 0, 0, 0}, port: port],
+    url: [host: host, port: 443, scheme: "https"],
     force_ssl: [rewrite_on: [:x_forwarded_proto]],
     secret_key_base: secret_key_base
 
