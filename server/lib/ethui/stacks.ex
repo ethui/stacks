@@ -173,7 +173,6 @@ defmodule Ethui.Stacks do
   end
 
   defp build_url(component, slug, %ApiKey{} = api_key) do
-    api_key |> IO.inspect(label: "api_key2 ")
     "#{http_protocol()}#{component}-#{slug}.#{host()}/#{api_key.token}"
   end
 
