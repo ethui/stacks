@@ -7,74 +7,89 @@ defmodule EthuiWeb.ProxyController do
     Forwards requests to the appropriate underlying service
   """
   def reverse_proxy(
-        %Plug.Conn{assigns: %{proxy: %{slug: slug, component: component}}} = conn,
+        %Plug.Conn{assigns: %{proxy: %{slug: slug, component: component}} = assigns} = conn,
         params
       ) do
-    proxy_component(conn, params, {slug, component})
+    case get_target_url(slug, component, params) do
+      {:ok, url} ->
+        dispatch(conn, url)
+
+      {:error, "Route not found"} ->
+        Logger.error("cannot proxy #{inspect(assigns)}")
+
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Route not found"})
+
+      {:error, error} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: error})
+    end
   end
 
   def reverse_proxy(conn, _params), do: conn |> send_resp(404, "Not found")
 
-  defp proxy_component(conn, params, {slug, nil}), do: anvil(conn, params, slug)
-
-  defp proxy_component(conn, params, {slug, "graph"}),
-    do: subgraph_generic(conn, params, slug, 8000)
-
-  defp proxy_component(conn, params, {slug, "graph-rpc"}),
-    do: subgraph_generic(conn, params, slug, 8020)
-
-  defp proxy_component(conn, params, {slug, "graph-status"}),
-    do: subgraph_generic(conn, params, slug, 8030)
-
-  defp proxy_component(conn, params, {_slug, "ipfs"}),
-    do: ipfs(conn, params)
-
-  defp proxy_component(%Plug.Conn{assigns: assigns} = conn, _params, _proxy) do
-    Logger.error("cannot proxy #{inspect(assigns)}")
-
-    conn
-    |> put_status(:not_found)
-    |> json(%{error: "Route not found"})
+  defp dispatch(conn, url) do
+    if websocket_upgrade?(conn) do
+      websocket_proxy(conn, url)
+    else
+      http_proxy(conn, url)
+    end
   end
 
-  defp anvil(conn, _params, slug) do
+  defp get_target_url(slug, nil, _params) do
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
          url when not is_nil(url) <- Anvil.url(pid) do
-      forward(conn, url)
+      {:ok, url}
     else
       _ ->
-        conn
-        |> put_status(:not_found)
-        |> json(%{error: "Stack not found"})
+        {:error, "Stack not found"}
     end
   end
 
-  defp subgraph_generic(conn, %{"proxied_path" => proxied_path}, slug, target_port) do
-    case Graph.ip_from_slug(slug) do
-      {:ok, ip} ->
-        url = "http://#{ip}:#{target_port}/#{Enum.join(proxied_path, "/")}"
-        forward(conn, url)
-
-      _ ->
-        conn
-        |> put_status(:not_found)
-        |> json(%{error: "Stack not found"})
-    end
+  defp get_target_url(slug, "graph", params) do
+    get_subgraph_url(params, slug, 8000)
   end
 
-  defp ipfs(conn, %{"proxied_path" => proxied_path}) do
+  defp get_target_url(slug, "graph-rpc", params) do
+    get_subgraph_url(params, slug, 8020)
+  end
+
+  defp get_target_url(slug, "graph-status", params) do
+    get_subgraph_url(params, slug, 8030)
+  end
+
+  defp get_target_url(_slug, "ipfs", %{"proxied_path" => proxied_path}) do
     case Ethui.Services.Ipfs.ip() do
-      {:ok, ip} ->
-        forward(conn, "http://#{ip}:5001/#{Enum.join(proxied_path, "/")}")
-
-      _ ->
-        conn
-        |> put_status(:not_found)
-        |> json(%{error: "IPFS service not available"})
+      {:ok, ip} -> {:ok, "http://#{ip}:5001/#{Enum.join(proxied_path, "/")}"}
+      _ -> {:error, "IPFS service not available"}
     end
   end
 
-  defp forward(conn, url) do
+  defp get_target_url(_slug, _component, _params) do
+    {:error, "Route not found"}
+  end
+
+  defp get_subgraph_url(%{"proxied_path" => proxied_path}, slug, target_port) do
+    case Graph.ip_from_slug(slug) do
+      {:ok, ip} -> {:ok, "http://#{ip}:#{target_port}/#{Enum.join(proxied_path, "/")}"}
+      _ -> {:error, "Stack not found"}
+    end
+  end
+
+  defp websocket_upgrade?(conn) do
+    conn
+    |> Plug.Conn.get_req_header("upgrade")
+    |> Enum.map(&String.downcase/1)
+    |> Enum.member?("websocket")
+  end
+
+  defp websocket_proxy(conn, url) do
+    WebSockAdapter.upgrade(conn, EthuiWeb.WebSocketProxy, %{target_url: url}, timeout: 60_000)
+  end
+
+  defp http_proxy(conn, url) do
     proxied_path = Map.get(conn.path_params, "proxied_path", [])
     base_proxy_path = proxy_path(conn.path_info, proxied_path)
 
