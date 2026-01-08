@@ -7,6 +7,7 @@ defmodule Ethui.Stacks do
   alias Ethui.Stacks.Stack
   alias Ethui.Accounts
   alias Ethui.Accounts.User
+  alias Ethui.Accounts.ApiKey
 
   alias Ethui.Repo
   import Ecto.Query, only: [from: 2]
@@ -163,20 +164,21 @@ defmodule Ethui.Stacks do
     Repo.delete(stack)
   end
 
-  defp build_url(slug, nil) do
-    "#{http_protocol()}#{slug}.#{host()}"
-  end
-
-  defp build_url(slug, api_key) do
+  defp build_url(slug, %ApiKey{} = api_key) do
     "#{http_protocol()}#{slug}.#{host()}/#{api_key.token}"
   end
 
-  defp build_url(component, slug, nil) do
-    "#{http_protocol()}#{component}-#{slug}.#{host()}"
+  defp build_url(slug, _) do
+    "#{http_protocol()}#{slug}.#{host()}"
   end
 
-  defp build_url(component, slug, api_key) do
+  defp build_url(component, slug, %ApiKey{} = api_key) do
+    api_key |> IO.inspect(label: "api_key2 ")
     "#{http_protocol()}#{component}-#{slug}.#{host()}/#{api_key.token}"
+  end
+
+  defp build_url(component, slug, _) do
+    "#{http_protocol()}#{component}-#{slug}.#{host()}"
   end
 
   defp graph_enabled?(stack) do
