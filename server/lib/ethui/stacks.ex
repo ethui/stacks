@@ -68,28 +68,35 @@ defmodule Ethui.Stacks do
 
   def get_urls(stack) do
     base_urls = %{
-      rpc_url: rpc_url(stack.slug, stack.api_key),
-      ipfs_url: ipfs_url(stack.slug, stack.api_key),
-      explorer_url: explorer_url(stack.slug, stack.api_key)
+      # deprecated
+      rpc_url: http_rpc_url(stack),
+      ipfs_url: ipfs_url(stack),
+      explorer_url: explorer_url(stack),
+
+      # new ones
+      http_rpc: http_rpc_url(stack),
+      ws_rpc: ws_rpc_url(stack),
+      explorer: explorer_url(stack)
     }
 
     if graph_enabled?(stack) do
       Map.merge(base_urls, %{
-        graph_url: graph_url(stack.slug, stack.api_key),
-        graph_rpc_url: graph_rpc_url(stack.slug, stack.api_key),
-        graph_status: graph_status(stack.slug, stack.api_key)
+        graph_url: graph_url(stack),
+        graph_rpc_url: graph_rpc_url(stack),
+        graph_status: graph_status(stack)
       })
     else
       base_urls
     end
   end
 
-  def rpc_url(slug, api_key), do: build_url(slug, api_key)
-  def graph_url(slug, api_key), do: build_url("graph", slug, api_key)
-  def graph_rpc_url(slug, api_key), do: build_url("graph-rpc", slug, api_key)
-  def graph_status(slug, api_key), do: build_url("graph-status", slug, api_key)
-  def ipfs_url(slug, api_key), do: build_url("ipfs", slug, api_key)
-  def explorer_url(slug, api_key), do: build_url(slug, api_key)
+  def http_rpc_url(stack), do: build_url(http(), stack)
+  def ws_rpc_url(stack), do: build_url(ws(), stack)
+  def graph_url(stack), do: build_url(http(), "graph", stack)
+  def graph_rpc_url(stack), do: build_url(http(), "graph-rpc", stack)
+  def graph_status(stack), do: build_url(http(), "graph-status", stack)
+  def ipfs_url(stack), do: build_url(http(), "ipfs", stack)
+  def explorer_url(stack), do: build_url(http(), stack)
 
   def chain_id(id) do
     prefix = config() |> Keyword.fetch!(:chain_id_prefix)
@@ -164,20 +171,20 @@ defmodule Ethui.Stacks do
     Repo.delete(stack)
   end
 
-  defp build_url(slug, %ApiKey{} = api_key) do
-    "#{http_protocol()}#{slug}.#{host()}/#{api_key.token}"
+  defp build_url(proto, %Stack{slug: slug, api_key: %ApiKey{token: token}}) do
+    "#{proto}#{slug}.#{host()}/#{token}"
   end
 
-  defp build_url(slug, _) do
-    "#{http_protocol()}#{slug}.#{host()}"
+  defp build_url(proto, %Stack{slug: slug}) do
+    "#{proto}#{slug}.#{host()}"
   end
 
-  defp build_url(component, slug, %ApiKey{} = api_key) do
-    "#{http_protocol()}#{component}-#{slug}.#{host()}/#{api_key.token}"
+  defp build_url(proto, component, %Stack{slug: slug, api_key: %ApiKey{token: token}}) do
+    "#{proto}#{component}-#{slug}.#{host()}/#{token}"
   end
 
-  defp build_url(component, slug, _) do
-    "#{http_protocol()}#{component}-#{slug}.#{host()}"
+  defp build_url(proto, component, %Stack{slug: slug}) do
+    "#{proto}#{component}-#{slug}.#{host()}"
   end
 
   defp graph_enabled?(stack) do
@@ -188,8 +195,12 @@ defmodule Ethui.Stacks do
     map_size(stack.anvil_opts) > 0
   end
 
-  defp http_protocol do
+  defp http do
     if saas?(), do: "https://", else: "http://"
+  end
+
+  defp ws do
+    if saas?(), do: "wss://", else: "ws://"
   end
 
   defp host do
