@@ -13,7 +13,7 @@ defmodule Ethui.Stacks do
   import Ecto.Query, only: [from: 2]
 
   @components ~w(graph graph-rpc graph-status ipfs)
-  @reserved ~w(rpc)
+  @reserved ~w(rpc api)
 
   def components, do: @components
 
