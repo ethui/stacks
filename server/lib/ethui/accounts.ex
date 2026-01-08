@@ -149,10 +149,12 @@ defmodule Ethui.Accounts do
   end
 
   def get_stack_api_key(%User{id: user_id}, slug) do
-    with %Stack{} = stack <- Stacks.get_user_stack_by_slug(user_id, slug) do
-      {:ok, stack.api_key}
-    else
-      nil -> {:error, :not_found}
+    case Stacks.get_user_stack_by_slug(user_id, slug) do
+      %Stack{} = stack ->
+        {:ok, stack.api_key}
+
+      nil ->
+        {:error, :not_found}
     end
   end
 

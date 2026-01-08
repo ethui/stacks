@@ -3,7 +3,6 @@ defmodule EthuiWeb.Api.StackController do
 
   alias Ethui.Stacks.{Server, Stack}
   alias Ethui.Stacks
-  alias Ethui.Repo
 
   def index(conn, _params) do
     user = conn.assigns[:current_user]

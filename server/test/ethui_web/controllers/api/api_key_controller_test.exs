@@ -1,10 +1,6 @@
 defmodule EthuiWeb.Api.ApiKeyControllerTest do
   use EthuiWeb.ConnCase, async: false
 
-  alias Ethui.Repo
-  alias Ethui.Stacks.Stack
-  alias Ethui.Accounts.User
-
   setup do
     # Ensure auth is enabled for all tests
     original_config = Application.get_env(:ethui, EthuiWeb.Plugs.Authenticate, [])
@@ -26,7 +22,7 @@ defmodule EthuiWeb.Api.ApiKeyControllerTest do
     |> Plug.Conn.put_req_header("authorization", "Bearer #{token}")
   end
 
-  defp create_stack_conn(slug \\ "slug") do
+  defp create_stack_conn(slug) do
     create_authenticated_conn()
     |> post(~p"/stacks", %{slug: slug})
   end

@@ -1,4 +1,7 @@
 defmodule Ethui.Accounts.ApiKey do
+  @moduledoc """
+  Key used to access a certain stack
+  """
   use Ecto.Schema
   import Ecto.Changeset
 
