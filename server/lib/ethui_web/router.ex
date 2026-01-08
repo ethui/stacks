@@ -54,6 +54,7 @@ defmodule EthuiWeb.Router do
       # get "/logs", StackController, :logs
       #
       get "/api-keys", ApiKeyController, :show
+      patch "/api-keys", ApiKeyController, :update
     end
   end
 

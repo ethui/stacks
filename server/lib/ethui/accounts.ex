@@ -160,11 +160,17 @@ defmodule Ethui.Accounts do
 
   def create_api_key(%User{id: user_id}, slug) do
     with %Stack{} = stack <- Stacks.get_user_stack_by_slug(user_id, slug),
-         {:ok, api_key} <- get_or_insert_api_key(stack) do
+         {:ok, api_key} <- create_api_key(stack) do
       {:ok, api_key}
     else
       nil -> {:error, :not_found}
     end
+  end
+
+  def create_api_key(%Stack{id: id}) do
+    %ApiKey{}
+    |> ApiKey.changeset(%{stack_id: id})
+    |> Repo.insert()
   end
 
   def delete_api_key(%User{id: user_id}, slug) do
@@ -178,20 +184,22 @@ defmodule Ethui.Accounts do
     end
   end
 
-  def create_api_key(%Stack{id: id}) do
-    %ApiKey{}
-    |> ApiKey.changeset(%{stack_id: id})
-    |> Repo.insert()
-  end
+  def rotate_api_key(user, slug) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:delete_api_key, fn _repo, _changes ->
+      delete_api_key(user, slug)
+    end)
+    |> Ecto.Multi.run(:api_key, fn _repo, _changes ->
+      create_api_key(user, slug)
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{api_key: api_key}} ->
+        {:ok, api_key}
 
-  def get_or_insert_api_key(%Stack{api_key: nil} = stack) do
-    %ApiKey{}
-    |> ApiKey.changeset(%{stack_id: stack.id})
-    |> Repo.insert()
-  end
-
-  def get_or_insert_api_key(%Stack{api_key: api_key}) do
-    {:ok, api_key}
+      {:error, _step, reason, _changes} ->
+        {:error, reason}
+    end
   end
 
   def get_api_key_by_token(token) do

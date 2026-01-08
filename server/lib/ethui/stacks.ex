@@ -122,18 +122,16 @@ defmodule Ethui.Stacks do
   def create_stack(user, params) do
     params = Map.put(params, "user_id", user.id)
 
-    transaction =
-      Ecto.Multi.new()
-      |> Ecto.Multi.insert(
-        :stack,
-        Stack.create_changeset(params)
-      )
-      |> Ecto.Multi.run(:api_key, fn _repo, %{stack: stack} ->
-        Accounts.create_api_key(stack)
-      end)
-      |> Repo.transaction()
-
-    case transaction do
+    Ecto.Multi.new()
+    |> Ecto.Multi.insert(
+      :stack,
+      Stack.create_changeset(params)
+    )
+    |> Ecto.Multi.run(:api_key, fn _repo, %{stack: stack} ->
+      Accounts.create_api_key(stack)
+    end)
+    |> Repo.transaction()
+    |> case do
       {:ok, %{stack: stack}} -> {:ok, stack}
       {:error, _, changeset, _} -> {:error, changeset}
     end
