@@ -1,10 +1,10 @@
 meta {
-  name: delete
+  name: rotate
   type: http
   seq: 3
 }
 
-delete {
+patch {
   url: {{API}}/stacks/:slug
   body: none
   auth: inherit
