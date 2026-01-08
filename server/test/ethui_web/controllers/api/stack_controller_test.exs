@@ -6,7 +6,7 @@ defmodule EthuiWeb.Api.StackControllerTest do
   alias Ethui.Accounts.User
 
   setup do
-    Ecto.Adapters.SQL.Sandbox.checkout(Repo, sandbox: false)
+    Ecto.Adapters.SQL.Sandbox.checkout(Repo)
     cleanup()
 
     # Ensure auth is enabled for all tests
@@ -164,7 +164,6 @@ defmodule EthuiWeb.Api.StackControllerTest do
       response = json_response(conn, 200)
       stacks = response["data"]
 
-
       assert conn.status == 200
       assert response["status"] == "success"
       assert length(stacks) == 2
@@ -221,6 +220,7 @@ defmodule EthuiWeb.Api.StackControllerTest do
       assert is_binary(stack["explorer_url"])
       assert is_binary(stack["ipfs_url"])
       assert is_binary(stack["rpc_url"])
+
       assert %{
                "fork_url" => "https://eth.llamarpc.com",
                "fork_block_number" => 24_026_490

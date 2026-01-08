@@ -21,7 +21,6 @@ defmodule EthuiWeb.Plugs.ApiKeyAuthTest do
         Application.put_env(:ethui, ApiKeyAuth, original_config_api_key)
       end)
 
-      # Create a user and get a valid token
       email = "auth-plug-test@example.com"
       {:ok, _user} = Accounts.send_verification_code(email)
       user = Accounts.get_user_by_email(email)

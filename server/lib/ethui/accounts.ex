@@ -8,6 +8,7 @@ defmodule Ethui.Accounts do
   alias Ethui.Accounts.User
   alias Ethui.Mailer
   alias Ethui.Stacks.Stack
+  alias Ethui.Stacks
 
   alias Ethui.Accounts.ApiKey
 
@@ -147,16 +148,8 @@ defmodule Ethui.Accounts do
     end
   end
 
-  def list_api_keys(%User{id: user_id}, slug) do
-    with %Stack{} = stack <- get_user_stack_by_slug(user_id, slug) do
-      {:ok, Repo.all(Ecto.assoc(stack, :api_key))}
-    else
-      nil -> {:error, :not_found}
-    end
-  end
-
   def get_stack_api_key(%User{id: user_id}, slug) do
-    with %Stack{} = stack <- get_user_stack_by_slug(user_id, slug) do
+    with %Stack{} = stack <- Stacks.get_user_stack_by_slug(user_id, slug) do
       {:ok, stack.api_key}
     else
       nil -> {:error, :not_found}
@@ -164,7 +157,7 @@ defmodule Ethui.Accounts do
   end
 
   def create_api_key(%User{id: user_id}, slug) do
-    with %Stack{} = stack <- get_user_stack_by_slug(user_id, slug),
+    with %Stack{} = stack <- Stacks.get_user_stack_by_slug(user_id, slug),
          {:ok, api_key} <- get_or_insert_api_key(stack) do
       {:ok, api_key}
     else
@@ -173,7 +166,7 @@ defmodule Ethui.Accounts do
   end
 
   def delete_api_key(%User{id: user_id}, slug) do
-    with %Stack{} = stack <- get_user_stack_by_slug(user_id, slug),
+    with %Stack{} = stack <- Stacks.get_user_stack_by_slug(user_id, slug),
          %ApiKey{} = api_key <- Repo.get_by(ApiKey, stack_id: stack.id),
          {:ok, _} <- Repo.delete(api_key) do
       {:ok, :deleted}
@@ -183,15 +176,15 @@ defmodule Ethui.Accounts do
     end
   end
 
-  def get_user_stack_by_slug(user_id, slug) do
-    Repo.get_by(Stack, slug: slug, user_id: user_id)
-    |> Repo.preload(:api_key)
+  def create_api_key(%Stack{id: id}) do
+    %ApiKey{}
+    |> ApiKey.changeset(%{stack_id: id})
+    |> Repo.insert()
   end
 
   def get_or_insert_api_key(%Stack{api_key: nil} = stack) do
     %ApiKey{}
     |> ApiKey.changeset(%{stack_id: stack.id})
-    # |> Ecto.Changeset.put_assoc(:stack, stack)
     |> Repo.insert()
   end
 

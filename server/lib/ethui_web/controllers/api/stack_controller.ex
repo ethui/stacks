@@ -4,17 +4,11 @@ defmodule EthuiWeb.Api.StackController do
   alias Ethui.Stacks.{Server, Stack}
   alias Ethui.Stacks
   alias Ethui.Repo
-  import Ecto.Query, only: [from: 2]
 
   def index(conn, _params) do
     user = conn.assigns[:current_user]
 
-    stacks =
-      if user do
-        Repo.all(from(s in Stack, where: s.user_id == ^user.id))
-      else
-        Repo.all(Stack)
-      end
+    stacks = Stacks.list_stacks(user)
 
     stack_data =
       Enum.map(stacks, fn stack ->
@@ -30,7 +24,7 @@ defmodule EthuiWeb.Api.StackController do
   def show(conn, %{"slug" => slug}) do
     user = conn.assigns[:current_user]
 
-    with %Stack{} = stack <- Repo.get_by(Stack, slug: slug),
+    with %Stack{} = stack <- Stacks.get_stack_by_slug(slug),
          :ok <- authorize_user_access(user, stack) do
       json(conn, %{
         status: "success",
@@ -48,16 +42,7 @@ defmodule EthuiWeb.Api.StackController do
   def create(conn, params) do
     user = conn.assigns[:current_user]
 
-    # Add user_id to params if user is authenticated
-    stack_params =
-      if user do
-        Map.put(params, "user_id", user.id)
-      else
-        params
-      end
-
-    with changeset <- Stack.create_changeset(stack_params),
-         {:ok, stack} <- Repo.insert(changeset),
+    with {:ok, stack} <- Stacks.create_stack(user, params),
          _ <- Server.start(stack) do
       conn
       |> put_status(201)
@@ -91,10 +76,10 @@ defmodule EthuiWeb.Api.StackController do
   def delete(conn, %{"slug" => slug}) do
     user = conn.assigns[:current_user]
 
-    with %Stack{} = stack <- Repo.get_by(Stack, slug: slug),
+    with %Stack{} = stack <- Stacks.get_stack_by_slug(slug),
          :ok <- authorize_user_access(user, stack),
          _ <- Server.stop(stack),
-         _ <- Repo.delete(stack) do
+         _ <- Stacks.delete_stack(stack) do
       conn |> send_resp(204, "")
     else
       nil ->

@@ -5,8 +5,12 @@ defmodule Ethui.Stacks do
   alias EthuiWeb.Endpoint
   alias Ethui.Stacks.Server
   alias Ethui.Stacks.Stack
+  alias Ethui.Accounts
+  alias Ethui.Accounts.User
 
   alias Ethui.Repo
+  import Ecto.Query, only: [from: 2]
+
   @components ~w(graph graph-rpc graph-status ipfs)
   @reserved ~w(rpc)
 
@@ -96,6 +100,61 @@ defmodule Ethui.Stacks do
   @doc "Gets a stack by ID"
   def get_stack(id) do
     Repo.get(Stack, id)
+  end
+
+  def get_stack_by_slug(slug) do
+    Repo.get_by(Stack, slug: slug)
+  end
+
+  def list_stacks(user) do
+    if user do
+      Repo.all(from(s in Stack, where: s.user_id == ^user.id))
+    else
+      Repo.all(Stack)
+    end
+  end
+
+  def create_stack(nil, params) do
+    Stack.create_changeset(params)
+    |> Repo.insert()
+  end
+
+  def create_stack(user, params) do
+    params = Map.put(params, "user_id", user.id)
+
+    transaction =
+      Ecto.Multi.new()
+      |> Ecto.Multi.insert(
+        :stack,
+        Stack.create_changeset(params)
+      )
+      |> Ecto.Multi.run(:api_key, fn _repo, %{stack: stack} ->
+        Accounts.create_api_key(stack)
+      end)
+      |> Repo.transaction()
+
+    case transaction do
+      {:ok, %{stack: stack}} -> {:ok, stack}
+      {:error, _, changeset, _} -> {:error, changeset}
+    end
+  end
+
+  def get_user_stack_by_slug(nil, slug) do
+    Repo.get_by(Stack, slug: slug)
+    |> Repo.preload(:api_key)
+  end
+
+  def get_user_stack_by_slug(%User{id: user_id}, slug) do
+    get_user_stack_by_slug(user_id, slug)
+  end
+
+  def get_user_stack_by_slug(user_id, slug) do
+    Repo.get_by(Stack, slug: slug, user_id: user_id)
+    |> Repo.preload(:api_key)
+  end
+
+  def delete_stack(stack) do
+    Repo.delete(stack)
   end
 
   defp build_url(slug) do
