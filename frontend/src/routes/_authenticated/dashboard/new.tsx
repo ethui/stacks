@@ -69,10 +69,13 @@ function NewStackPage() {
 
   const createMutation = useMutation({
     mutationFn: stacks.create,
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["stacks"] });
       toast.success("Stack created successfully");
-      navigate({ to: "/dashboard" });
+      navigate({
+        to: "/dashboard/$slug/add-chain",
+        params: { slug: variables.slug },
+      });
     },
     onError: () => {
       toast.error("Failed to create stack");

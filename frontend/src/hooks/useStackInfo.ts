@@ -5,6 +5,7 @@ import {
   http,
   useTransactionReceipt,
   useWatchBlocks,
+  webSocket,
 } from "wagmi";
 import { Stack } from "~/api/stacks";
 import { useAnvilNodeInfo, useForkChainId } from "./useAnvil";
@@ -25,12 +26,12 @@ export function useStackInfo(stack: Stack) {
             name: stack.slug,
             nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
             rpcUrls: {
-              default: { http: [stack.rpc_url] },
+              default: { http: [stack.rpc_url], ws: [stack.ws_rpc] },
             },
           },
         ],
         transports: {
-          [stack.chain_id]: http(stack.rpc_url),
+          [stack.chain_id]: webSocket(stack.ws_rpc),
         },
       }),
     [stack.chain_id, stack.rpc_url, stack.slug],
