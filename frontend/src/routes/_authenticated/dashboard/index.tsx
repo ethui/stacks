@@ -3,16 +3,18 @@ import { Skeleton } from "@ethui/ui/components/shadcn/skeleton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Layers, Plus } from "lucide-react";
-import { useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { stacks } from "~/api/stacks";
 import { EmptyState } from "~/components/EmptyState";
 import { useListStacks } from "~/hooks/useStacks";
 import { trackPageView } from "~/utils/analytics";
-import { StackCard } from "./-components/StackCard";
+import { StackCard } from "./-components/stack-card/StackCard";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   component: DashboardPage,
+  onEnter: () => {
+    trackPageView("dashboard");
+  },
 });
 
 const SKELETON_ITEMS = Array.from({ length: 6 }, (_, i) => i);
@@ -21,10 +23,6 @@ function DashboardPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: stacksList, isLoading } = useListStacks();
-
-  useEffect(() => {
-    trackPageView("dashboard");
-  }, []);
 
   const { mutate: deleteStack } = useMutation({
     mutationFn: stacks.delete,
@@ -56,13 +54,13 @@ function DashboardPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
           {SKELETON_ITEMS.map((id) => (
             <Skeleton key={`skeleton-${id}`} className="h-64 rounded-lg" />
           ))}
         </div>
       ) : stacksList && stacksList.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
           {stacksList.map((stack) => (
             <StackCard key={stack.slug} stack={stack} onDelete={deleteStack} />
           ))}

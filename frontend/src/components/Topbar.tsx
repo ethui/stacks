@@ -33,7 +33,7 @@ export function Topbar() {
       >
         <EthuiLogo size={28} />
         <span className="font-semibold text-foreground text-lg">
-          ethui <span className="text-primary">Stacks</span>
+          ethui <span className="text-primary">stacks</span>
         </span>
       </button>
 
