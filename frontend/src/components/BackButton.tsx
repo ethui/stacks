@@ -19,8 +19,8 @@ export function BackButton({ onClick, label = "Back" }: BackButtonProps) {
   };
 
   return (
-    <div className="mb-6 animate-fade-in opacity-0">
-      <Button variant="ghost" onClick={handleClick} className="mb-4 -ml-2">
+    <div className="mb-2 animate-fade-in opacity-0">
+      <Button variant="ghost" onClick={handleClick} className="-ml-2">
         <ArrowLeft className="mr-2 h-4 w-4" />
         {label}
       </Button>

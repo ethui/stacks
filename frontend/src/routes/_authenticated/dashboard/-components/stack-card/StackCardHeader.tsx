@@ -6,7 +6,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@ethui/ui/components/shadcn/dropdown-menu";
-import { Layers, MoreVertical, Trash2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Layers, MoreVertical, Trash2, Wallet } from "lucide-react";
 import { useState } from "react";
 import type { Stack } from "~/api/stacks";
 import { DeleteStackDialog } from "./DeleteStackDialog";
@@ -50,12 +51,15 @@ export function StackCardHeader({ stack, onDelete }: StackCardHeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {/* TODO: Needs to be implemented */}
-              {/* <DropdownMenuItem asChild disabled={true}>
-                <Link to="/dashboard/$slug" params={{ slug: stack.slug }}>
-                  View Details
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link
+                  to="/dashboard/$slug/add-chain"
+                  params={{ slug: stack.slug }}
+                >
+                  <Wallet className="mr-2 h-4 w-4" />
+                  Add to Wallet
                 </Link>
-              </DropdownMenuItem> */}
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleDeleteClick}
                 className="text-destructive cursor-pointer"
