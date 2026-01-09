@@ -39,12 +39,33 @@ function AddChainPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center px-6 py-12">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex items-center justify-center py-12">
-            <Skeleton className="h-48 w-full" />
-          </CardContent>
-        </Card>
+      <div className="flex items-start justify-center px-6 py-12">
+        <div className="w-full max-w-lg">
+          <Skeleton className="mb-4 h-9 w-40" />
+          <Card>
+            <CardHeader className="text-center">
+              <Skeleton className="mx-auto mb-2 h-12 w-12 rounded-full" />
+              <Skeleton className="mx-auto h-6 w-48" />
+              <Skeleton className="mx-auto mt-2 h-4 w-72" />
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-3 rounded-lg border bg-muted/50 p-4">
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+              <div className="space-y-3">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-14 w-full rounded-lg" />
+                <Skeleton className="h-14 w-full rounded-lg" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
