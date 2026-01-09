@@ -3,6 +3,7 @@ import { createStore } from "mipd";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import type { Stack } from "~/api/stacks";
+import { explorerUrl } from "~/utils/global";
 import {
   addChainToProvider,
   type EIP6963ProviderDetail,
@@ -30,7 +31,7 @@ export function useWalletProviders() {
 
 type AddChainInput = {
   wallet: EIP6963ProviderDetail;
-  stack: Stack | Pick<Stack, "chain_id" | "rpc_url" | "slug">;
+  stack: Stack;
 };
 
 export function useAddChain() {
@@ -40,6 +41,8 @@ export function useAddChain() {
         chainId: stack.chain_id,
         chainName: stack.slug,
         rpcUrl: stack.rpc_url,
+        wsUrl: stack.ws_rpc,
+        explorerUrl: explorerUrl(stack.ws_rpc),
       });
     },
     onSuccess: (_data, { wallet }) => {

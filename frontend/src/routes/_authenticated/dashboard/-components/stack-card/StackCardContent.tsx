@@ -39,9 +39,10 @@ export function StackCardContent({
 function UrlList({ stack }: { stack: Stack }) {
   return (
     <div className="space-y-2">
-      <UrlRow label="RPC" url={stack.rpc_url} />
+      <UrlRow label="HTTP RPC" url={stack.rpc_url} />
+      <UrlRow label="WebSocket RPC" url={stack.ws_rpc} />
       {/* TODO: Use the actual explorer URL */}
-      <UrlRow label="Explorer" url={explorerUrl(stack.rpc_url)} isExternal />
+      <UrlRow label="Explorer" url={explorerUrl(stack.ws_rpc)} isExternal />
 
       {stack.graph_url && (
         <UrlRow label="Subgraph" url={stack.graph_url} isExternal />

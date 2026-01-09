@@ -48,7 +48,7 @@ export function ChainStateSection({
           <span className="font-mono text-foreground text-xs">
             {latestBlockNumber ? (
               <ExternalLinkText
-                href={`${explorerUrl(stack.rpc_url)}/block/${latestBlockNumber}`}
+                href={`${explorerUrl(stack.ws_rpc)}/block/${latestBlockNumber}`}
                 tooltip={latestTxHash}
               >
                 {latestBlockNumber}
@@ -66,7 +66,7 @@ export function ChainStateSection({
           ) : (
             <div className="flex items-center gap-2">
               <ExternalLinkText
-                href={`${explorerUrl(stack.rpc_url)}/tx/${latestTxHash}`}
+                href={`${explorerUrl(stack.ws_rpc)}/tx/${latestTxHash}`}
                 tooltip={latestTxHash}
               >
                 {minifyHash(latestTxHash)}

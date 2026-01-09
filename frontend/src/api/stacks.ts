@@ -7,7 +7,7 @@ export const stackSchema = z.object({
   chain_id: z.number(),
   rpc_url: z.string(),
   http_rpc: z.string().optional(),
-  ws_rpc: z.string().optional(),
+  ws_rpc: z.string(),
   explorer: z.string().optional(),
   explorer_url: z.string(),
   anvil_opts: z

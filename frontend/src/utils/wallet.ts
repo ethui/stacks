@@ -20,6 +20,8 @@ export interface AddChainParams {
   chainId: number;
   chainName: string;
   rpcUrl: string;
+  wsUrl: string;
+  explorerUrl: string;
 }
 
 export async function addChainToProvider(
@@ -34,6 +36,8 @@ export async function addChainToProvider(
           chainId: chainIdToHex(params.chainId),
           chainName: params.chainName,
           rpcUrls: [params.rpcUrl],
+          wsUrls: [params.wsUrl],
+          blockExplorerUrls: [params.explorerUrl],
           nativeCurrency: {
             name: "Ether",
             symbol: "ETH",
