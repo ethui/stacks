@@ -9,12 +9,10 @@ import { EmptyState } from "~/components/EmptyState";
 import { useListStacks } from "~/hooks/useStacks";
 import { trackPageView } from "~/utils/analytics";
 import { StackCard } from "./-components/stack-card/StackCard";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   component: DashboardPage,
-  onEnter: () => {
-    trackPageView("dashboard");
-  },
 });
 
 const SKELETON_ITEMS = Array.from({ length: 6 }, (_, i) => i);
@@ -23,6 +21,10 @@ function DashboardPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: stacksList, isLoading } = useListStacks();
+
+  useEffect(() => {
+    trackPageView("dashboard");
+  }, []);
 
   const { mutate: deleteStack } = useMutation({
     mutationFn: stacks.delete,
