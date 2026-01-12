@@ -34,7 +34,7 @@ export function ClickToCopy({ text, className }: ClickToCopyProps) {
 
   return (
     <Tooltip open={open} onOpenChange={setOpen} delayDuration={40}>
-      <TooltipTrigger asChild>
+      <TooltipTrigger className="cursor-pointer" asChild>
         <button type="button" onClick={handleCopy} className={className}>
           <Copy className="h-3.5 w-3.5" />
         </button>

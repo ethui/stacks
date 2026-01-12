@@ -13,13 +13,16 @@ import { Switch } from "@ethui/ui/components/shadcn/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Database, GitFork, Layers, Loader2 } from "lucide-react";
+import { CheckCircle, Database, GitFork, Layers, Loader2, Wallet } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { createStackInputSchema, stacks } from "~/api/stacks";
 import { BackButton } from "~/components/BackButton";
+import { DefaultAddresses } from "~/components/DefaultAddresses";
+import { StackProvider } from "~/components/StackProvider";
+import { useGetStack } from "~/hooks/useStacks";
 
 export const Route = createFileRoute("/_authenticated/dashboard/new")({
   component: NewStackPage,
@@ -56,6 +59,11 @@ function NewStackPage() {
   const queryClient = useQueryClient();
   const [enableFork, setEnableFork] = useState(false);
   const [enableGraph, setEnableGraph] = useState(false);
+  const [createdSlug, setCreatedSlug] = useState<string | null>(null);
+
+  const { data: createdStack } = useGetStack(createdSlug ?? "", {
+    enabled: !!createdSlug,
+  });
 
   const form = useForm<StackFormData>({
     mode: "onChange",
@@ -72,10 +80,7 @@ function NewStackPage() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["stacks"] });
       toast.success("Stack created successfully");
-      navigate({
-        to: "/dashboard/$slug/add-chain",
-        params: { slug: variables.slug },
-      });
+      setCreatedSlug(variables.slug);
     },
     onError: () => {
       toast.error("Failed to create stack");
@@ -99,6 +104,48 @@ function NewStackPage() {
 
     createMutation.mutate(input);
   };
+
+  if (createdStack) {
+    return (
+      <StackProvider stack={createdStack}>
+        <div className="flex items-start justify-center px-6 py-12">
+          <div className="w-full max-w-2xl space-y-6">
+            <Card className="animate-fade-in-up rounded-xl shadow-lg opacity-0">
+              <CardHeader className="pb-4 text-center">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-green-500/10">
+                  <CheckCircle className="h-7 w-7 text-green-500" />
+                </div>
+                <CardTitle className="text-2xl">Stack Created!</CardTitle>
+                <CardDescription>
+                  Your stack "{createdStack.slug}" is ready to use.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex justify-center gap-3 px-8 pb-8">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate({ to: "/dashboard" })}
+                >
+                  Go to Dashboard
+                </Button>
+                <Button
+                  onClick={() =>
+                    navigate({
+                      to: "/dashboard/$slug/add-chain",
+                      params: { slug: createdStack.slug },
+                    })
+                  }
+                >
+                  <Wallet className="mr-2 h-4 w-4" />
+                  Add to Wallet
+                </Button>
+              </CardContent>
+            </Card>
+            <DefaultAddresses className="animation-delay-100 animate-fade-in-up opacity-0" />
+          </div>
+        </div>
+      </StackProvider>
+    );
+  }
 
   return (
     <div className="flex items-start justify-center px-6 py-12">

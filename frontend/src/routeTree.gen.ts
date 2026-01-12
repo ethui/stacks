@@ -16,6 +16,7 @@ import { Route as UnauthenticatedVerifyCodeRouteImport } from './routes/_unauthe
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard/index'
 import { Route as AuthenticatedDashboardNewRouteImport } from './routes/_authenticated/dashboard/new'
 import { Route as AuthenticatedDashboardSlugIndexRouteImport } from './routes/_authenticated/dashboard/$slug/index'
+import { Route as AuthenticatedDashboardSlugAddressesRouteImport } from './routes/_authenticated/dashboard/$slug/addresses'
 import { Route as AuthenticatedDashboardSlugAddChainRouteImport } from './routes/_authenticated/dashboard/$slug/add-chain'
 
 const UnauthenticatedRoute = UnauthenticatedRouteImport.update({
@@ -55,6 +56,12 @@ const AuthenticatedDashboardSlugIndexRoute =
     path: '/dashboard/$slug/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedDashboardSlugAddressesRoute =
+  AuthenticatedDashboardSlugAddressesRouteImport.update({
+    id: '/dashboard/$slug/addresses',
+    path: '/dashboard/$slug/addresses',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDashboardSlugAddChainRoute =
   AuthenticatedDashboardSlugAddChainRouteImport.update({
     id: '/dashboard/$slug/add-chain',
@@ -68,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/dashboard/$slug/add-chain': typeof AuthenticatedDashboardSlugAddChainRoute
+  '/dashboard/$slug/addresses': typeof AuthenticatedDashboardSlugAddressesRoute
   '/dashboard/$slug': typeof AuthenticatedDashboardSlugIndexRoute
 }
 export interface FileRoutesByTo {
@@ -76,6 +84,7 @@ export interface FileRoutesByTo {
   '/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/dashboard/$slug/add-chain': typeof AuthenticatedDashboardSlugAddChainRoute
+  '/dashboard/$slug/addresses': typeof AuthenticatedDashboardSlugAddressesRoute
   '/dashboard/$slug': typeof AuthenticatedDashboardSlugIndexRoute
 }
 export interface FileRoutesById {
@@ -87,6 +96,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/new': typeof AuthenticatedDashboardNewRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/dashboard/$slug/add-chain': typeof AuthenticatedDashboardSlugAddChainRoute
+  '/_authenticated/dashboard/$slug/addresses': typeof AuthenticatedDashboardSlugAddressesRoute
   '/_authenticated/dashboard/$slug/': typeof AuthenticatedDashboardSlugIndexRoute
 }
 export interface FileRouteTypes {
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/dashboard/new'
     | '/dashboard'
     | '/dashboard/$slug/add-chain'
+    | '/dashboard/$slug/addresses'
     | '/dashboard/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/dashboard/new'
     | '/dashboard'
     | '/dashboard/$slug/add-chain'
+    | '/dashboard/$slug/addresses'
     | '/dashboard/$slug'
   id:
     | '__root__'
@@ -115,6 +127,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/new'
     | '/_authenticated/dashboard/'
     | '/_authenticated/dashboard/$slug/add-chain'
+    | '/_authenticated/dashboard/$slug/addresses'
     | '/_authenticated/dashboard/$slug/'
   fileRoutesById: FileRoutesById
 }
@@ -174,6 +187,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardSlugIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/dashboard/$slug/addresses': {
+      id: '/_authenticated/dashboard/$slug/addresses'
+      path: '/dashboard/$slug/addresses'
+      fullPath: '/dashboard/$slug/addresses'
+      preLoaderRoute: typeof AuthenticatedDashboardSlugAddressesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard/$slug/add-chain': {
       id: '/_authenticated/dashboard/$slug/add-chain'
       path: '/dashboard/$slug/add-chain'
@@ -188,6 +208,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardNewRoute: typeof AuthenticatedDashboardNewRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedDashboardSlugAddChainRoute: typeof AuthenticatedDashboardSlugAddChainRoute
+  AuthenticatedDashboardSlugAddressesRoute: typeof AuthenticatedDashboardSlugAddressesRoute
   AuthenticatedDashboardSlugIndexRoute: typeof AuthenticatedDashboardSlugIndexRoute
 }
 
@@ -196,6 +217,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   AuthenticatedDashboardSlugAddChainRoute:
     AuthenticatedDashboardSlugAddChainRoute,
+  AuthenticatedDashboardSlugAddressesRoute:
+    AuthenticatedDashboardSlugAddressesRoute,
   AuthenticatedDashboardSlugIndexRoute: AuthenticatedDashboardSlugIndexRoute,
 }
 

@@ -8,7 +8,12 @@ export function useListStacks() {
   });
 }
 
-export function useGetStack(slug: string, enabled = true) {
+interface UseGetStackOptions {
+  enabled?: boolean;
+}
+
+export function useGetStack(slug: string, options?: UseGetStackOptions) {
+  const { enabled = true } = options ?? {};
   return useQuery({
     queryKey: ["stack", slug],
     queryFn: () => stacks.get(slug),
