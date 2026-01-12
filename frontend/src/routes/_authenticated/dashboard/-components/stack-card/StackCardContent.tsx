@@ -46,7 +46,7 @@ function UrlList({ stack }: { stack: Stack }) {
       <UrlRow
         label="Explorer"
         url={explorerUrl(stack.ws_rpc)}
-        externalLink={`${explorerUrl(stack.ws_rpc)}}`}
+        externalLink={explorerUrl(stack.ws_rpc)}
         externalLinkTooltip="View in Explorer"
       />
 
