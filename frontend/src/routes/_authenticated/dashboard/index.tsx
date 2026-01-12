@@ -10,6 +10,7 @@ import { useListStacks } from "~/hooks/useStacks";
 import { trackPageView } from "~/utils/analytics";
 import { StackCard } from "./-components/stack-card/StackCard";
 import { useEffect } from "react";
+import { StackProvider } from "~/components/StackProvider";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   component: DashboardPage,
@@ -64,7 +65,13 @@ function DashboardPage() {
       ) : stacksList && stacksList.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
           {stacksList.map((stack) => (
-            <StackCard key={stack.slug} stack={stack} onDelete={deleteStack} />
+            <StackProvider key={stack.slug} stack={stack}>
+              <StackCard
+                key={stack.slug}
+                stack={stack}
+                onDelete={deleteStack}
+              />
+            </StackProvider>
           ))}
         </div>
       ) : (
