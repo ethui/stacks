@@ -37,29 +37,18 @@ export const Route = createRootRouteWithContext<RouteContext>()({
         title: "ethui Stacks",
         description:
           "On-demand Anvil nodes in the cloud. Create, manage, and explore your Ethereum development stacks.",
-        image: "/favicon.png",
+        image: "https://stacks.ethui.dev/symbol-black.svg",
+        url: "https://stacks.ethui.dev",
       }),
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/svg+xml", href: "/symbol-black.svg" },
       {
         rel: "apple-touch-icon",
         sizes: "180x180",
         href: "/apple-touch-icon.png",
       },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "32x32",
-        href: "/favicon-32x32.png",
-      },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "16x16",
-        href: "/favicon-16x16.png",
-      },
-      { rel: "icon", href: "/favicon.ico" },
     ],
   }),
   errorComponent: (props) => {
