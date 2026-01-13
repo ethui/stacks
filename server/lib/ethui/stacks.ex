@@ -14,6 +14,8 @@ defmodule Ethui.Stacks do
 
   @components ~w(graph graph-rpc graph-status ipfs)
   @reserved ~w(rpc api)
+  @max_stacks_per_user 3
+  @max_total_stacks 100
 
   def components, do: @components
 
@@ -117,32 +119,63 @@ defmodule Ethui.Stacks do
     end
   end
 
+  def count_user_stacks(user_id) do
+    from(s in Stack, where: s.user_id == ^user_id, select: count(s.id))
+    |> Repo.one()
+  end
+
+  def count_total_stacks do
+    from(s in Stack, select: count(s.id))
+    |> Repo.one()
+  end
+
+  defp check_user_limit(user_id) do
+    if count_user_stacks(user_id) >= @max_stacks_per_user do
+      {:error, :user_limit_exceeded}
+    else
+      :ok
+    end
+  end
+
+  defp check_global_limit do
+    if count_total_stacks() >= @max_total_stacks do
+      {:error, :global_limit_exceeded}
+    else
+      :ok
+    end
+  end
+
   def create_stack(nil, params) do
-    Stack.create_changeset(params)
-    |> Repo.insert()
+    with :ok <- check_global_limit() do
+      Stack.create_changeset(params)
+      |> Repo.insert()
+    end
   end
 
   def create_stack(user, params) do
-    params = Map.put(params, "user_id", user.id)
+    with :ok <- check_user_limit(user.id),
+         :ok <- check_global_limit() do
+      params = Map.put(params, "user_id", user.id)
 
-    Ecto.Multi.new()
-    |> Ecto.Multi.insert(
-      :stack,
-      Stack.create_changeset(params)
-    )
-    |> Ecto.Multi.run(:api_key, fn _repo, %{stack: stack} ->
-      Accounts.create_api_key(stack)
-    end)
-    |> Ecto.Multi.run(:stack_with_api_key, fn repo, %{stack: stack} ->
-      {:ok, repo.preload(stack, :api_key)}
-    end)
-    |> Repo.transaction()
-    |> case do
-      {:ok, %{stack: stack}} ->
-        {:ok, stack}
+      Ecto.Multi.new()
+      |> Ecto.Multi.insert(
+        :stack,
+        Stack.create_changeset(params)
+      )
+      |> Ecto.Multi.run(:api_key, fn _repo, %{stack: stack} ->
+        Accounts.create_api_key(stack)
+      end)
+      |> Ecto.Multi.run(:stack_with_api_key, fn repo, %{stack: stack} ->
+        {:ok, repo.preload(stack, :api_key)}
+      end)
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{stack: stack}} ->
+          {:ok, stack}
 
-      {:error, _, changeset, _} ->
-        {:error, changeset}
+        {:error, _, changeset, _} ->
+          {:error, changeset}
+      end
     end
   end
 
