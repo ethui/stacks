@@ -6,6 +6,9 @@ export const stackSchema = z.object({
   status: z.enum(["running", "stopped"]),
   chain_id: z.number(),
   rpc_url: z.string(),
+  http_rpc: z.string().optional(),
+  ws_rpc: z.string(),
+  explorer: z.string().optional(),
   explorer_url: z.string(),
   anvil_opts: z
     .object({
@@ -50,7 +53,7 @@ export const stacks = {
   get: async (slug: string) => {
     try {
       const res = await api.get(`/stacks/${slug}`);
-      return stackSchema.parse(res.data);
+      return stackSchema.parse(res.data.data);
     } catch (error) {
       console.error("Failed to fetch stack:", error);
       throw error;

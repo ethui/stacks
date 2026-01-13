@@ -8,9 +8,10 @@ export function useListStacks() {
   });
 }
 
-export function useGetStack(slug: string) {
+export function useGetStack(slug: string, enabled = true) {
   return useQuery({
     queryKey: ["stack", slug],
     queryFn: () => stacks.get(slug),
+    enabled: enabled && !!slug,
   });
 }

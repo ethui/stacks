@@ -4,13 +4,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { stacks } from "~/api/stacks";
-import { ConnectionCard } from "./-components/stack-detail/ConnectionCard";
-import { ForkConfigCard } from "./-components/stack-detail/ForkConfigCard";
-import { MetadataCard } from "./-components/stack-detail/MetadataCard";
-import { StackDetailHeader } from "./-components/stack-detail/StackDetailHeader";
-import { SubgraphCard } from "./-components/stack-detail/SubgraphCard";
+import { ConnectionCard } from "../-components/stack-detail/ConnectionCard";
+import { ForkConfigCard } from "../-components/stack-detail/ForkConfigCard";
+import { MetadataCard } from "../-components/stack-detail/MetadataCard";
+import { StackDetailHeader } from "../-components/stack-detail/StackDetailHeader";
+import { SubgraphCard } from "../-components/stack-detail/SubgraphCard";
 
-export const Route = createFileRoute("/_authenticated/dashboard/$slug")({
+export const Route = createFileRoute("/_authenticated/dashboard/$slug/")({
   component: StackDetailPage,
 });
 
