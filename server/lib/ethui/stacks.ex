@@ -15,7 +15,7 @@ defmodule Ethui.Stacks do
   @components ~w(graph graph-rpc graph-status ipfs)
   @reserved ~w(rpc api)
   @max_stacks_per_user 3
-  @max_total_stacks 100
+  @max_total_stacks 250
 
   def components, do: @components
 
