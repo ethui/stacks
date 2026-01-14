@@ -14,7 +14,7 @@ defmodule Ethui.Stacks do
 
   @components ~w(graph graph-rpc graph-status ipfs)
   @reserved ~w(rpc api)
-  @max_stacks_per_user 3
+  @max_stacks_per_user 5
   @max_total_stacks 250
 
   def components, do: @components
@@ -126,39 +126,6 @@ defmodule Ethui.Stacks do
     end
   end
 
-  def count_user_stacks(user_id) do
-    from(s in Stack, where: s.user_id == ^user_id, select: count(s.id))
-    |> Repo.one()
-  end
-
-  def count_total_stacks do
-    from(s in Stack, select: count(s.id))
-    |> Repo.one()
-  end
-
-  defp check_user_limit(user_id) do
-    if count_user_stacks(user_id) >= @max_stacks_per_user do
-      {:error, :user_limit_exceeded}
-    else
-      :ok
-    end
-  end
-
-  defp check_global_limit do
-    if count_total_stacks() >= @max_total_stacks do
-      {:error, :global_limit_exceeded}
-    else
-      :ok
-    end
-  end
-
-  def create_stack(nil, params) do
-    with :ok <- check_global_limit() do
-      Stack.create_changeset(params)
-      |> Repo.insert()
-    end
-  end
-
   def create_stack(user, params) do
     with :ok <- check_user_limit(user.id),
          :ok <- check_global_limit() do
@@ -218,6 +185,39 @@ defmodule Ethui.Stacks do
 
   defp build_url(proto, component, %Stack{slug: slug}) do
     "#{proto}#{component}-#{slug}.#{host()}"
+  end
+
+  defp check_user_limit(user_id) do
+    if count_user_stacks(user_id) >= @max_stacks_per_user do
+      {:error, :user_limit_exceeded}
+    else
+      :ok
+    end
+  end
+
+  defp check_global_limit do
+    if count_total_stacks() >= @max_total_stacks do
+      {:error, :global_limit_exceeded}
+    else
+      :ok
+    end
+  end
+
+  def create_stack(nil, params) do
+    with :ok <- check_global_limit() do
+      Stack.create_changeset(params)
+      |> Repo.insert()
+    end
+  end
+
+  defp count_user_stacks(user_id) do
+    from(s in Stack, where: s.user_id == ^user_id, select: count(s.id))
+    |> Repo.one()
+  end
+
+  defp count_total_stacks do
+    from(s in Stack, select: count(s.id))
+    |> Repo.one()
   end
 
   defp graph_enabled?(stack) do
