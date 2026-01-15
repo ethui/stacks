@@ -46,6 +46,18 @@ defmodule EthuiWeb.Api.AuthController do
     end
   end
 
+  @doc """
+  Endpoint to get current user data.
+  Returns: {"email": "user@example.com"}
+  """
+  def me(conn, _params) do
+    user = conn.assigns.current_user
+
+    conn
+    |> put_status(:ok)
+    |> json(%{email: user.email})
+  end
+
   defp format_changeset_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Regex.replace(~r"%{(\w+)}", msg, fn _, key ->

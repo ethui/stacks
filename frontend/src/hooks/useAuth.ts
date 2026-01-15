@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { type SendCodeRequest, type VerifyCodeRequest, auth } from "~/api/auth";
 import { useAuthStore } from "~/store/auth";
@@ -27,5 +27,12 @@ export function useVerifyCode() {
     onError: () => {
       toast.error("Failed to verify code");
     },
+  });
+}
+
+export function useGetUser() {
+  return useQuery({
+    queryKey: ["user"],
+    queryFn: () => auth.me(),
   });
 }

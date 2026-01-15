@@ -50,6 +50,8 @@ defmodule EthuiWeb.Router do
   scope "/", EthuiWeb, host: "api." do
     pipe_through [:base, :authenticated_api]
 
+    get "/me", Api.AuthController, :me
+
     resources "/stacks", Api.StackController, param: "slug" do
       # get "/logs", StackController, :logs
       #

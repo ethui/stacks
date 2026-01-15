@@ -8,11 +8,13 @@ import {
 } from "@ethui/ui/components/shadcn/dropdown-menu";
 import { useNavigate } from "@tanstack/react-router";
 import { LogOut, User } from "lucide-react";
+import { useGetUser } from "~/hooks/useAuth";
 import { useAuthStore } from "~/store/auth";
 
 export function Topbar() {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
+  const { data: user } = useGetUser();
 
   const handleLogout = () => {
     logout();
@@ -44,6 +46,9 @@ export function Topbar() {
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
               <User className="h-4 w-4 text-primary" />
             </div>
+            {user?.email && (
+              <span className="text-sm text-muted-foreground">{user.email}</span>
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
