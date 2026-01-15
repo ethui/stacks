@@ -11,7 +11,7 @@ defmodule EthuiWeb.ProxyControllerTest do
   defp cleanup do
     Server.list()
     |> Enum.each(fn slug ->
-      Server.stop(%Stack{slug: slug})
+      Server.destroy(%Stack{slug: slug})
     end)
 
     :ok
@@ -22,7 +22,7 @@ defmodule EthuiWeb.ProxyControllerTest do
       slug = "slug10"
 
       s = %Stack{slug: slug, id: 1}
-      Server.start(s)
+      Server.create(s)
       Process.sleep(100)
 
       conn =
@@ -63,7 +63,7 @@ defmodule EthuiWeb.ProxyControllerTest do
     test "proxies websocket to anvil" do
       slug = "slug10"
       s = %Stack{slug: slug, id: 1}
-      Server.start(s)
+      Server.create(s)
       Process.sleep(1000)
 
       port = @endpoint.config(:http)[:port]
@@ -101,7 +101,7 @@ defmodule EthuiWeb.ProxyControllerTest do
     test "proxies multiple websocket messages to anvil" do
       slug = "slug11"
       s = %Stack{slug: slug, id: 1}
-      Server.start(s)
+      Server.create(s)
       Process.sleep(1000)
 
       port = @endpoint.config(:http)[:port]

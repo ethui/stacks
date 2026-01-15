@@ -13,7 +13,7 @@ defmodule Ethui.Services.AnvilTest do
   defp cleanup do
     Server.list()
     |> Enum.each(fn slug ->
-      Server.stop(%Stack{slug: slug})
+      Server.destroy(%Stack{slug: slug})
     end)
 
     :ok

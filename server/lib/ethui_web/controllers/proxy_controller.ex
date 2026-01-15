@@ -1,6 +1,6 @@
 defmodule EthuiWeb.ProxyController do
   use EthuiWeb, :controller
-  alias Ethui.Services.{Anvil, Graph}
+  alias Ethui.Stacks.Server
   require Logger
 
   @doc """
@@ -39,13 +39,7 @@ defmodule EthuiWeb.ProxyController do
   end
 
   defp get_target_url(slug, nil, _params) do
-    with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
-         url when not is_nil(url) <- Anvil.url(pid) do
-      {:ok, url}
-    else
-      _ ->
-        {:error, "Stack not found"}
-    end
+    Server.anvil_url(slug) |> IO.inspect(label: "anvil_url")
   end
 
   defp get_target_url(slug, "graph", params) do
@@ -72,10 +66,7 @@ defmodule EthuiWeb.ProxyController do
   end
 
   defp get_subgraph_url(%{"proxied_path" => proxied_path}, slug, target_port) do
-    case Graph.ip_from_slug(slug) do
-      {:ok, ip} -> {:ok, "http://#{ip}:#{target_port}/#{Enum.join(proxied_path, "/")}"}
-      _ -> {:error, "Stack not found"}
-    end
+    Server.graph_ip_from_slug(proxied_path, slug, target_port)
   end
 
   defp websocket_upgrade?(conn) do

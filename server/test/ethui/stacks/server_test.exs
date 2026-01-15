@@ -11,7 +11,7 @@ defmodule Ethui.Stacks.ServerTest do
   defp cleanup do
     Server.list()
     |> Enum.each(fn slug ->
-      Server.stop(%Stack{slug: slug})
+      Server.destroy(%Stack{slug: slug})
     end)
 
     :ok
@@ -21,23 +21,23 @@ defmodule Ethui.Stacks.ServerTest do
     s1 = %Stack{id: 1, slug: "slug1"}
     s2 = %Stack{id: 2, slug: "slug2"}
 
-    Server.start(s1)
-    Server.start(s2)
+    Server.create(s1)
+    Server.create(s2)
 
     assert Server.list() |> length == 2
-    s2 |> Server.stop()
+    s2 |> Server.destroy()
     assert Server.list() |> length == 1
   end
 
-  test "can start and stop a stack" do
+  test "can create and stop a stack" do
     stack = %Stack{id: 1, slug: "test_stack"}
 
     assert Server.list() |> length == 0
 
-    Server.start(stack)
+    Server.create(stack)
     assert Server.list() |> length == 1
 
-    Server.stop(stack)
+    Server.destroy(stack)
     assert Server.list() |> length == 0
   end
 end

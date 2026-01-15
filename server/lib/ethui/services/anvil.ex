@@ -9,6 +9,8 @@ defmodule Ethui.Services.Anvil do
   require Logger
   alias Ethui.Stacks
 
+  # :timer.minutes(30)
+  @idle_timeout :timer.seconds(30)
   @log_max_size 10_000
 
   @type id :: pid | atom | {:via, atom, term}
@@ -20,7 +22,7 @@ defmodule Ethui.Services.Anvil do
           slug: String.t(),
           hash: String.t(),
           anvil_opts: opts_map,
-          id: Integer.t()
+          id: integer()
         ]
 
   @type t :: %{
@@ -33,7 +35,11 @@ defmodule Ethui.Services.Anvil do
           # directory where state and IPC socket is stored
           dir: String.t(),
           log_subscribers: MapSet.t(),
-          chain_id: String.t()
+          chain_id: String.t(),
+          # idle timer
+          idle_timer: :timer.time(),
+          status: atom(),
+          last_used: integer
         }
 
   @doc "Start an anvil instance"
@@ -52,7 +58,12 @@ defmodule Ethui.Services.Anvil do
   @doc "Get the URL of an anvil instance"
   @spec url(id) :: String.t()
   def url(id) do
-    GenServer.call(id, :url)
+    GenServer.call(id, :url) |> IO.inspect(label: "url")
+  end
+
+  @spec ensure_running(id) :: String.t()
+  def ensure_running(id) do
+    GenServer.call(id, :ensure_running) |> IO.inspect(label: "url")
   end
 
   @doc """
@@ -72,10 +83,10 @@ defmodule Ethui.Services.Anvil do
     GenServer.cast(id, {:unsubscribe_logs, self()})
   end
 
-  @doc "Stop an anvil instance"
-  @spec stop(id) :: :ok
-  def stop(id) do
-    GenServer.cast(id, :stop)
+  @doc "Stops an anvil instance and deletes the state file"
+  @spec destroy(id) :: :ok
+  def destroy(id) do
+    GenServer.cast(id, :destroy)
   end
 
   #
@@ -102,7 +113,10 @@ defmodule Ethui.Services.Anvil do
          slug: opts[:slug],
          log_subscribers: MapSet.new(),
          chain_id: Stacks.chain_id(opts[:id]),
-         args: opts_to_args(opts[:anvil_opts])
+         args: opts_to_args(opts[:anvil_opts]),
+         idle_timer: nil,
+         status: :running,
+         last_used: nil
        }}
     else
       error -> error
@@ -134,7 +148,7 @@ defmodule Ethui.Services.Anvil do
            exit_status_to_reason: & &1
          ) do
       {:ok, proc} ->
-        {:noreply, %{state | proc: proc}}
+        {:noreply, %{touch(state) | proc: proc}}
 
       {:error, reason} ->
         Logger.error("Failed to start anvil: #{inspect(reason)}")
@@ -149,25 +163,97 @@ defmodule Ethui.Services.Anvil do
       0 ->
         {:stop, :normal, state}
 
+      :killed ->
+        {:noreply, state}
+
       exit_code ->
         Logger.error("anvil exited with code #{inspect(exit_code)}")
         {:stop, :normal, state}
     end
   end
 
+  def handle_info(
+        :suspend,
+        %{status: :running, proc: proc, port: port, last_used: last_used} = state
+      ) do
+    Logger.info("Suspending #{state.slug}: #{last_used}")
+
+    Ethui.Stacks.HttpPorts.free(port)
+    Process.exit(proc, :kill)
+
+    {:noreply, %{state | port: nil, proc: nil, status: :stopped, idle_timer: nil}}
+  end
+
   @impl GenServer
   def handle_call(:url, _from, %{port: port} = state) do
-    {:reply, "http://localhost:#{port}", state}
+    {:reply, "http://localhost:#{port}", touch(state)}
   end
 
   @impl GenServer
   def handle_call(:logs, _from, %{logs: logs} = state) do
-    {:reply, logs |> :queue.to_list(), state}
+    {:reply, logs |> :queue.to_list(), touch(state)}
+  end
+
+  def handle_call(
+        :ensure_running,
+        _from,
+        %{dir: dir, chain_id: chain_id, args: args, slug: slug, status: status} = state
+      ) do
+    state =
+      case status do
+        :running ->
+          state
+
+        :stopped ->
+          Logger.info("restarting slug: #{slug}")
+
+          with {:ok, port} <-
+                 Ethui.Stacks.HttpPorts.claim() do
+            pid = self()
+
+            anvil_args =
+              [
+                "--port",
+                to_string(port),
+                "--state",
+                "#{dir}/state.json",
+                "--host",
+                "0.0.0.0",
+                "--chain-id",
+                to_string(chain_id)
+              ] ++ args
+
+            case MuonTrap.Daemon.start_link(
+                   anvil_bin(),
+                   anvil_args,
+                   logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
+                   # TODO maybe patch muontrap to have a separate stream for stderr
+                   stderr_to_stdout: true,
+                   exit_status_to_reason: & &1
+                 ) do
+              {:ok, proc} ->
+                Logger.info("restarting slug with port: #{slug} #{port}")
+                wait_until_ready(port)
+
+                %{state | proc: proc, status: :running, port: port}
+
+              {:error, reason} ->
+                Logger.error("Failed to start anvil: #{inspect(reason)}")
+
+                send(self(), :boot)
+                state
+            end
+          end
+      end
+
+    {:reply, :ok, state}
   end
 
   @impl GenServer
-  def handle_cast(:stop, %{proc: proc} = state) do
+  def handle_cast(:destroy, %{proc: proc, port: port} = state) do
     remove_dir(state)
+    Ethui.Stacks.HttpPorts.free(port)
+    Process.exit(proc, :kill)
     GenServer.stop(proc)
     {:stop, :normal, state}
   end
@@ -194,10 +280,12 @@ defmodule Ethui.Services.Anvil do
 
   @impl GenServer
   def handle_cast({:unsubscribe_logs, pid}, %{log_subscribers: subs} = state) do
-    {:noreply, %{state | log_subscribers: MapSet.delete(subs, pid)}}
+    {:noreply, %{touch(state) | log_subscribers: MapSet.delete(subs, pid)}}
   end
 
-  def remove_dir(state) do
+  ## aux 
+
+  defp remove_dir(state) do
     case File.rm_rf(state.dir) do
       {:ok, _files} ->
         :ok
@@ -237,6 +325,10 @@ defmodule Ethui.Services.Anvil do
     Application.get_env(:ethui, Ethui.Stacks)
   end
 
+  defp idle_timeout() do
+    @idle_timeout
+  end
+
   #
   # utils
   #
@@ -251,4 +343,43 @@ defmodule Ethui.Services.Anvil do
   end
 
   defp dashify(key) when is_binary(key), do: String.replace(key, "_", "-")
+
+  defp touch(state) do
+    if state.idle_timer, do: Process.cancel_timer(state.idle_timer)
+
+    timer =
+      Process.send_after(self(), :suspend, idle_timeout())
+
+    %{state | last_used: System.system_time(:second), idle_timer: timer}
+  end
+
+  defp wait_until_ready(port, attempts \\ 100)
+
+  defp wait_until_ready(_port, 0), do: {:error, :timeout}
+
+  defp wait_until_ready(port, attempts) do
+    url = "http://127.0.0.1:#{port}"
+
+    body =
+      Jason.encode!(%{
+        jsonrpc: "2.0",
+        method: "eth_chainId",
+        params: [],
+        id: 1
+      })
+
+    case :httpc.request(
+           :post,
+           {String.to_charlist(url), [], 'application/json', body},
+           [],
+           [{:body_format, :binary}]
+         ) do
+      {:ok, {{_, 200, _}, _, _}} ->
+        :ok
+
+      _ ->
+        Process.sleep(100)
+        wait_until_ready(port, attempts - 1)
+    end
+  end
 end

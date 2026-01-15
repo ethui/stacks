@@ -42,7 +42,7 @@ defmodule EthuiWeb.Api.StackController do
     user = conn.assigns[:current_user]
 
     with {:ok, stack} <- Stacks.create_stack(user, params),
-         _ <- Server.start(stack) do
+         _ <- Server.create(stack) do
       conn
       |> put_status(201)
       |> json(%{
@@ -77,7 +77,7 @@ defmodule EthuiWeb.Api.StackController do
 
     with %Stack{} = stack <- Stacks.get_stack_by_slug(slug),
          :ok <- authorize_user_access(user, stack),
-         _ <- Server.stop(stack),
+         _ <- Server.destroy(stack),
          _ <- Stacks.delete_stack(stack) do
       conn |> send_resp(204, "")
     else
