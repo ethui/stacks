@@ -9,8 +9,7 @@ defmodule Ethui.Services.Anvil do
   require Logger
   alias Ethui.Stacks
 
-  # :timer.minutes(30)
-  @idle_timeout :timer.seconds(30)
+  @idle_timeout :timer.minutes(10)
   @log_max_size 10_000
 
   @type id :: pid | atom | {:via, atom, term}
@@ -99,11 +98,9 @@ defmodule Ethui.Services.Anvil do
     Process.flag(:trap_exit, true)
 
     with {:ok, dir} <- data_dir(opts[:slug], opts[:hash]),
-         File.mkdir_p!(dir),
+         :ok <- File.mkdir_p!(dir),
          {:ok, port} <-
            Ethui.Stacks.HttpPorts.claim() do
-      send(self(), :boot)
-
       {:ok,
        %{
          port: port,
@@ -115,7 +112,7 @@ defmodule Ethui.Services.Anvil do
          chain_id: Stacks.chain_id(opts[:id]),
          args: opts_to_args(opts[:anvil_opts]),
          idle_timer: nil,
-         status: :running,
+         status: :suspended,
          last_used: nil
        }}
     else
@@ -124,41 +121,9 @@ defmodule Ethui.Services.Anvil do
   end
 
   @impl GenServer
-  def handle_info(:boot, %{port: port, dir: dir, chain_id: chain_id, args: args} = state) do
-    pid = self()
+  def handle_info({:EXIT, _pid, exit_status}, %{port: port} = state) do
+    Ethui.Stacks.HttpPorts.free(port)
 
-    anvil_args =
-      [
-        "--port",
-        to_string(port),
-        "--state",
-        "#{dir}/state.json",
-        "--host",
-        "0.0.0.0",
-        "--chain-id",
-        to_string(chain_id)
-      ] ++ args
-
-    case MuonTrap.Daemon.start_link(
-           anvil_bin(),
-           anvil_args,
-           logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
-           # TODO maybe patch muontrap to have a separate stream for stderr
-           stderr_to_stdout: true,
-           exit_status_to_reason: & &1
-         ) do
-      {:ok, proc} ->
-        {:noreply, %{touch(state) | proc: proc}}
-
-      {:error, reason} ->
-        Logger.error("Failed to start anvil: #{inspect(reason)}")
-
-        {:stop, reason, state}
-    end
-  end
-
-  @impl GenServer
-  def handle_info({:EXIT, _pid, exit_status}, state) do
     case exit_status do
       0 ->
         {:stop, :normal, state}
@@ -174,14 +139,13 @@ defmodule Ethui.Services.Anvil do
 
   def handle_info(
         :suspend,
-        %{status: :running, proc: proc, port: port, last_used: last_used} = state
+        %{status: :running, proc: proc, last_used: last_used} = state
       ) do
     Logger.info("Suspending #{state.slug}: #{last_used}")
 
-    Ethui.Stacks.HttpPorts.free(port)
     Process.exit(proc, :kill)
 
-    {:noreply, %{state | port: nil, proc: nil, status: :stopped, idle_timer: nil}}
+    {:noreply, %{state | port: nil, proc: nil, status: :suspended, idle_timer: nil}}
   end
 
   @impl GenServer
@@ -197,53 +161,17 @@ defmodule Ethui.Services.Anvil do
   def handle_call(
         :ensure_running,
         _from,
-        %{dir: dir, chain_id: chain_id, args: args, slug: slug, status: status} = state
+        %{slug: slug, status: status} = state
       ) do
     state =
       case status do
         :running ->
           state
 
-        :stopped ->
+        :suspended ->
           Logger.info("restarting slug: #{slug}")
 
-          with {:ok, port} <-
-                 Ethui.Stacks.HttpPorts.claim() do
-            pid = self()
-
-            anvil_args =
-              [
-                "--port",
-                to_string(port),
-                "--state",
-                "#{dir}/state.json",
-                "--host",
-                "0.0.0.0",
-                "--chain-id",
-                to_string(chain_id)
-              ] ++ args
-
-            case MuonTrap.Daemon.start_link(
-                   anvil_bin(),
-                   anvil_args,
-                   logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
-                   # TODO maybe patch muontrap to have a separate stream for stderr
-                   stderr_to_stdout: true,
-                   exit_status_to_reason: & &1
-                 ) do
-              {:ok, proc} ->
-                Logger.info("restarting slug with port: #{slug} #{port}")
-                wait_until_ready(port)
-
-                %{state | proc: proc, status: :running, port: port}
-
-              {:error, reason} ->
-                Logger.error("Failed to start anvil: #{inspect(reason)}")
-
-                send(self(), :boot)
-                state
-            end
-          end
+          start_anvil(state)
       end
 
     {:reply, :ok, state}
@@ -252,8 +180,6 @@ defmodule Ethui.Services.Anvil do
   @impl GenServer
   def handle_cast(:destroy, %{proc: proc, port: port} = state) do
     remove_dir(state)
-    Ethui.Stacks.HttpPorts.free(port)
-    Process.exit(proc, :kill)
     GenServer.stop(proc)
     {:stop, :normal, state}
   end
@@ -380,6 +306,43 @@ defmodule Ethui.Services.Anvil do
       _ ->
         Process.sleep(100)
         wait_until_ready(port, attempts - 1)
+    end
+  end
+
+  defp start_anvil(%{dir: dir, chain_id: chain_id, args: args, slug: slug} = state) do
+    {:ok, port} = Ethui.Stacks.HttpPorts.claim()
+
+    pid = self()
+
+    anvil_args =
+      [
+        "--port",
+        to_string(port),
+        "--state",
+        "#{dir}/state.json",
+        "--host",
+        "0.0.0.0",
+        "--chain-id",
+        to_string(chain_id)
+      ] ++ args
+
+    case MuonTrap.Daemon.start_link(
+           anvil_bin(),
+           anvil_args,
+           logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
+           # TODO maybe patch muontrap to have a separate stream for stderr
+           stderr_to_stdout: true,
+           exit_status_to_reason: & &1
+         ) do
+      {:ok, proc} ->
+        Logger.info("restarting slug with port: #{slug} #{port}")
+        wait_until_ready(port)
+
+        %{state | proc: proc, status: :running, port: port} |> touch()
+
+      {:error, reason} ->
+        Logger.error("Failed to start anvil: #{inspect(reason)}")
+        state
     end
   end
 end
