@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@ethui/ui/components/shadcn/dropdown-menu";
 import { Link } from "@tanstack/react-router";
-import { Layers, MoreVertical, Trash2, Wallet } from "lucide-react";
+import { Key, Layers, MoreVertical, Trash2, Wallet } from "lucide-react";
 import { useState } from "react";
 import type { Stack } from "~/api/stacks";
 import { DeleteStackDialog } from "./DeleteStackDialog";
@@ -58,6 +58,15 @@ export function StackCardHeader({ stack, onDelete }: StackCardHeaderProps) {
                 >
                   <Wallet className="mr-2 h-4 w-4" />
                   Add to Wallet
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link
+                  to="/dashboard/$slug/addresses"
+                  params={{ slug: stack.slug }}
+                >
+                  <Key className="mr-2 h-4 w-4" />
+                  View Addresses
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem

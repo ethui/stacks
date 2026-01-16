@@ -17,26 +17,6 @@ export interface LatestTransaction {
 }
 
 export function useStackInfo(stack: Stack) {
-  const config = useMemo(
-    () =>
-      createConfig({
-        chains: [
-          {
-            id: stack.chain_id,
-            name: stack.slug,
-            nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-            rpcUrls: {
-              default: { http: [stack.rpc_url], ws: [stack.ws_rpc] },
-            },
-          },
-        ],
-        transports: {
-          [stack.chain_id]: webSocket(stack.ws_rpc),
-        },
-      }),
-    [stack.chain_id, stack.rpc_url, stack.slug],
-  );
-
   const [latestStackInfo, setLatestStackInfo] = useState<
     | {
         latestBlockNumber: number;
@@ -53,7 +33,6 @@ export function useStackInfo(stack: Stack) {
   );
 
   useWatchBlocks({
-    config,
     includeTransactions: true,
     emitOnBegin: true,
     onBlock(block) {
@@ -68,7 +47,6 @@ export function useStackInfo(stack: Stack) {
   });
 
   const { data: receipt } = useTransactionReceipt({
-    config,
     hash: latestStackInfo?.latestTxHash,
   });
 
