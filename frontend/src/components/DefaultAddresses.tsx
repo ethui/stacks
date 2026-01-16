@@ -50,7 +50,7 @@ export function DefaultAddresses({ className }: DefaultAddressesProps) {
             <Key className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-lg">Default Test Accounts</CardTitle>
+            <CardTitle className="text-lg">Accounts</CardTitle>
             <CardDescription>
               Pre-funded Anvil accounts for development
             </CardDescription>
