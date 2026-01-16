@@ -124,16 +124,18 @@ defmodule Ethui.Services.Anvil do
   def handle_info({:EXIT, _pid, exit_status}, %{port: port} = state) do
     Ethui.Stacks.HttpPorts.free(port)
 
+    new_state = %{state | port: nil}
+
     case exit_status do
       0 ->
-        {:stop, :normal, state}
+        {:stop, :normal, new_state}
 
       :killed ->
-        {:noreply, state}
+        {:noreply, new_state}
 
       exit_code ->
         Logger.error("anvil exited with code #{inspect(exit_code)}")
-        {:stop, :normal, state}
+        {:stop, :normal, new_state}
     end
   end
 
@@ -145,7 +147,7 @@ defmodule Ethui.Services.Anvil do
 
     Process.exit(proc, :kill)
 
-    {:noreply, %{state | port: nil, proc: nil, status: :suspended, idle_timer: nil}}
+    {:noreply, %{state | proc: nil, status: :suspended, idle_timer: nil}}
   end
 
   @impl GenServer
