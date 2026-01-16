@@ -21,8 +21,8 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  @spec start_stack(opts) :: {:ok, pid} | {:error, any}
-  def start_stack(opts) do
+  @spec create_stack(opts) :: {:ok, pid} | {:error, any}
+  def create_stack(opts) do
     opts = [
       slug: opts[:slug],
       anvil: [id: opts[:id], slug: opts[:slug], hash: opts[:hash], anvil_opts: opts[:anvil_opts]],
@@ -32,8 +32,8 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
     DynamicSupervisor.start_child(__MODULE__, {SingleStackSupervisor, opts})
   end
 
-  @spec stop_stack(pid) :: :ok
-  def stop_stack(stack) do
+  @spec destroy_stack(pid) :: :ok
+  def destroy_stack(stack) do
     SingleStackSupervisor.cleanup_anvil(stack)
     DynamicSupervisor.terminate_child(__MODULE__, stack)
   end

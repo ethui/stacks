@@ -115,7 +115,7 @@ defmodule Ethui.Stacks do
     |> Repo.preload(:api_key)
   end
 
-  def list_stacks(user) do
+  def list_stacks(user \\ nil) do
     if user do
       Repo.all(from(s in Stack, where: s.user_id == ^user.id))
       |> Repo.preload(:api_key)
