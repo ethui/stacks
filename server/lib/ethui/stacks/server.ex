@@ -60,7 +60,7 @@ defmodule Ethui.Stacks.Server do
   # adicionar public api aqui, nao queromos interagir com o anvil diretamente 
 
   def anvil_url(slug) do
-    with pid <- Anvil.name(slug),
+    with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
          :ok <- Anvil.ensure_running(pid),
          url when not is_nil(url) <- Anvil.url(pid) do
       {:ok, url}

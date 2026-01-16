@@ -39,7 +39,7 @@ defmodule EthuiWeb.ProxyController do
   end
 
   defp get_target_url(slug, nil, _params) do
-    Server.anvil_url(slug) |> IO.inspect(label: "anvil_url")
+    Server.anvil_url(slug)
   end
 
   defp get_target_url(slug, "graph", params) do

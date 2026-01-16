@@ -57,12 +57,12 @@ defmodule Ethui.Services.Anvil do
   @doc "Get the URL of an anvil instance"
   @spec url(id) :: String.t()
   def url(id) do
-    GenServer.call(id, :url) |> IO.inspect(label: "url")
+    GenServer.call(id, :url)
   end
 
   @spec ensure_running(id) :: String.t()
   def ensure_running(id) do
-    GenServer.call(id, :ensure_running) |> IO.inspect(label: "url")
+    GenServer.call(id, :ensure_running)
   end
 
   @doc """
