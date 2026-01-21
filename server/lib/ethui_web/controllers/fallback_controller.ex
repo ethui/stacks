@@ -1,16 +1,13 @@
 defmodule EthuiWeb.FallbackController do
   @moduledoc """
-  Fallback controller for handling common error cases in API controllers.
+  Translates controller action results into valid `Plug.Conn` responses.
 
-  This controller is used with `action_fallback` to provide consistent
-  error handling across all API endpoints.
+  See `Phoenix.Controller.action_fallback/1` for more details.
   """
 
   use EthuiWeb, :controller
 
-  @doc """
-  Handles Ecto changeset errors.
-  """
+  # Handles Ecto changeset errors.
   def call(conn, {:error, %Ecto.Changeset{} = changeset}) do
     conn
     |> put_status(:unprocessable_entity)
@@ -18,9 +15,7 @@ defmodule EthuiWeb.FallbackController do
     |> render(:error, changeset: changeset)
   end
 
-  @doc """
-  Handles not found errors.
-  """
+  # Handles not found errors.
   def call(conn, {:error, :not_found}) do
     conn
     |> put_status(:not_found)
@@ -28,9 +23,7 @@ defmodule EthuiWeb.FallbackController do
     |> render(:"404")
   end
 
-  @doc """
-  Handles unauthorized access errors.
-  """
+  # Handles unauthorized access errors.
   def call(conn, {:error, :unauthorized}) do
     conn
     |> put_status(:forbidden)
@@ -38,9 +31,7 @@ defmodule EthuiWeb.FallbackController do
     |> render(:"403")
   end
 
-  @doc """
-  Handles generic errors.
-  """
+  # Handles generic errors.
   def call(conn, {:error, reason}) when is_binary(reason) do
     conn
     |> put_status(:unprocessable_entity)
@@ -48,9 +39,7 @@ defmodule EthuiWeb.FallbackController do
     |> render(:error, error: reason)
   end
 
-  @doc """
-  Handles unexpected errors.
-  """
+  # Handles unexpected errors.
   def call(conn, _error) do
     conn
     |> put_status(:internal_server_error)

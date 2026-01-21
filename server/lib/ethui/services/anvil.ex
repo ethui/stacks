@@ -180,7 +180,7 @@ defmodule Ethui.Services.Anvil do
   end
 
   @impl GenServer
-  def handle_cast(:destroy, %{proc: proc, port: port} = state) do
+  def handle_cast(:destroy, %{proc: proc} = state) do
     remove_dir(state)
     GenServer.stop(proc)
     {:stop, :normal, state}
@@ -298,7 +298,7 @@ defmodule Ethui.Services.Anvil do
 
     case :httpc.request(
            :post,
-           {String.to_charlist(url), [], 'application/json', body},
+           {String.to_charlist(url), [], ~c"application/json", body},
            [],
            [{:body_format, :binary}]
          ) do
