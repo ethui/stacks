@@ -212,9 +212,4 @@ defmodule Ethui.Stacks.Server do
       create_async(stack)
     end)
   end
-
-  # extract the slug from what may be a {:via, ...} registry name
-  # allows the internal API to deal with either direct slugs or registry names
-  defp to_slug({:via, _, {_, slug}}), do: slug
-  defp to_slug(slug) when is_binary(slug), do: slug
 end
