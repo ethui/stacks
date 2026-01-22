@@ -7,9 +7,11 @@ defmodule Ethui.Stacks.Server do
   use GenServer
   require Logger
 
-  alias Ethui.Stacks.{Stack, MultiStackSupervisor}
-  alias Ethui.Stacks
   alias Ethui.Services.{Anvil, Graph}
+  alias Ethui.Stacks
+  alias Ethui.Stacks.MultiStackSupervisor
+  alias Ethui.Stacks.Stack
+  alias Ethui.Stacks.{Stack, MultiStackSupervisor}
 
   # state
   @type t :: %{
@@ -157,7 +159,7 @@ defmodule Ethui.Stacks.Server do
     end
   end
 
-  @spec create_stack(map, t) :: {:ok, pid, t} | {:error, any}
+  @spec create_stack(map, t) :: {:ok, pid, t} | {:error, term}
   defp create_stack(
          %{
            id: id,

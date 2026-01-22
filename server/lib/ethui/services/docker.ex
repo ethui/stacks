@@ -75,6 +75,10 @@ defmodule Ethui.Services.Docker do
 
       @impl GenServer
       def handle_call(:ip, _from, %{container_name: container_name} = state) do
+        Logger.info(
+          "docker inspect-f {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}} container_name"
+        )
+
         reply =
           case MuonTrap.cmd(
                  "docker",
@@ -85,7 +89,7 @@ defmodule Ethui.Services.Docker do
                    container_name
                  ]
                ) do
-            {out, _} ->
+            {out, 0} ->
               {:ok, out |> String.split("\n") |> Enum.at(0)}
 
             error ->
@@ -120,7 +124,7 @@ defmodule Ethui.Services.Docker do
           format_docker_args(image, env, named_args, volumes, flags)
 
         if named_args[:network] do
-          ensure_network_exists(named_args[:network])
+          :ok = ensure_network_exists(named_args[:network])
         end
 
         if named_args[:name] do
@@ -128,6 +132,8 @@ defmodule Ethui.Services.Docker do
         end
 
         # Process.flag(:trap_exit, true)
+
+        Logger.info("docker #{Enum.join(args, " ")}")
 
         {:ok, proc} =
           MuonTrap.Daemon.start_link("docker", args,
@@ -140,14 +146,21 @@ defmodule Ethui.Services.Docker do
       end
 
       @impl GenServer
-      def handle_info({:EXIT, _pid, exit_status}, %{logs: logs} = state) do
+      def handle_info(
+            {:EXIT, _pid, exit_status},
+            %{logs: logs, container_name: container_name} = state
+          ) do
         case exit_status do
           0 ->
             {:stop, :normal, state}
 
           exit_code ->
             logs |> :queue.to_list() |> Enum.each(&Logger.error/1)
-            Logger.error("exited with code #{inspect(exit_code)}")
+
+            Logger.error(
+              "#{container_name} - exited with code #{inspect(exit_code)} logs: #{inspect(logs)}"
+            )
+
             {:stop, :normal, state}
         end
       end
@@ -159,11 +172,15 @@ defmodule Ethui.Services.Docker do
     Utility functions for Ethui.Services.Docker
     """
 
+    require Logger
+
     def apply_if_fun(fun, _state) when is_function(fun, 0), do: fun.()
     def apply_if_fun(fun, state) when is_function(fun, 1), do: fun.(state)
     def apply_if_fun(other, _state), do: other
 
     def wait_for_removal(name) do
+      Logger.info("docker rm -f #{name}")
+
       case System.cmd("docker", ["rm", "-f", name], stderr_to_stdout: true) do
         {_out, 0} ->
           :ok
@@ -200,9 +217,20 @@ defmodule Ethui.Services.Docker do
     end
 
     def ensure_network_exists(network_name) do
+      Logger.info("docker network inspect #{network_name}")
+
       case System.cmd("docker", ["network", "inspect", network_name]) do
-        {_, 0} -> :ok
-        {_, _} -> System.cmd("docker", ["network", "create", network_name])
+        {_, 0} ->
+          :ok
+
+        {_, _} ->
+          case System.cmd("docker", ["network", "create", network_name]) do
+            {_, 0} ->
+              :ok
+
+            {out, exit_code} ->
+              raise "docker network create #{network_name} failed to create: exit_code=#{exit_code}, output=#{inspect(out)}"
+          end
       end
     end
   end

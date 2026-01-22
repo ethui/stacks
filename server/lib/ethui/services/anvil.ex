@@ -273,20 +273,20 @@ defmodule Ethui.Services.Anvil do
   defp dashify(key) when is_binary(key), do: String.replace(key, "_", "-")
 
   defp touch(state) do
-    if state.idle_timer do
-      _remaining = Process.cancel_timer(state.idle_timer)
-    end
+    # if state.idle_timer do
+    #  _remaining = Process.cancel_timer(state.idle_timer)
+    # end
+
+    # timer =
+    #  Process.send_after(self(), :suspend, idle_timeout())
 
     timer =
-      Process.send_after(self(), :suspend, idle_timeout())
-
-    #    timer =
-    #      if state.idle_timer do
-    #        _remaining = Process.cancel_timer(state.idle_timer)
-    #        Process.send_after(self(), :suspend, idle_timeout())
-    #      else
-    #        Process.send_after(self(), :suspend, idle_timeout())
-    #      end
+      if state.idle_timer do
+        _remaining = Process.cancel_timer(state.idle_timer)
+        Process.send_after(self(), :suspend, idle_timeout())
+      else
+        Process.send_after(self(), :suspend, idle_timeout())
+      end
 
     %{state | last_used: System.system_time(:second), idle_timer: timer}
   end
