@@ -168,12 +168,12 @@ defmodule Ethui.Services.Docker do
         {_out, 0} ->
           :ok
 
-        {_out, 1} ->
+        {_out, exit_code} when exit_code in [1, 125] ->
           :timer.sleep(100)
           wait_for_removal(name)
 
-        error ->
-          raise "Error while waiting for removal of container #{name}: #{inspect(error)}"
+        {out, exit_code} ->
+          raise "Error while waiting for removal of container #{name}: exit_code=#{exit_code}, output=#{inspect(out)}"
       end
     end
 

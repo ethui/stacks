@@ -104,11 +104,6 @@ defmodule EthuiWeb.ProxyController do
 
         redirect(conn, to: to)
 
-      :error ->
-        conn
-        |> put_status(:server_error)
-        |> json(%{error: "Redirect without location header"})
-
       {:error, error} ->
         conn
         |> put_status(:server_error)

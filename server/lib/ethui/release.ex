@@ -6,7 +6,7 @@ defmodule Ethui.Release do
   @app :ethui
 
   def migrate do
-    load_app()
+    :ok = load_app()
 
     for repo <- repos() do
       {:ok, _, _} = Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :up, all: true))
@@ -14,7 +14,7 @@ defmodule Ethui.Release do
   end
 
   def rollback(repo, version) do
-    load_app()
+    :ok = load_app()
     {:ok, _, _} = Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :down, to: version))
   end
 

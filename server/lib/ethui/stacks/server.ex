@@ -57,7 +57,7 @@ defmodule Ethui.Stacks.Server do
     GenServer.call(__MODULE__, {:destroy, stack})
   end
 
-  # adicionar public api aqui, nao queromos interagir com o anvil diretamente 
+  # adicionar public api aqui, nao queromos interagir com o anvil diretamente
 
   def anvil_url(slug) do
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
@@ -205,7 +205,7 @@ defmodule Ethui.Stacks.Server do
   defp start_all do
     Stacks.list_stacks()
     |> Enum.each(fn stack ->
-      # this function starts all the stacks on the init function , we can't use 
+      # this function starts all the stacks on the init function , we can't use
       # a sync call because the process calling itself and it creates a deadlock.
       # We also don't want to create it directly on the init since we would block
       # the the supervisor for this process (i think).

@@ -19,6 +19,8 @@ defmodule Ethui.Services.Graph do
           graph_opts: opts_map
         ]
 
+  @spec init(any()) :: {:ok, t()}
+
   def name(slug) do
     {:via, Registry, {Ethui.Stacks.Registry, {slug, :graph}}}
   end

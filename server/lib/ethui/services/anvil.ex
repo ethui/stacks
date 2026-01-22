@@ -36,7 +36,7 @@ defmodule Ethui.Services.Anvil do
           log_subscribers: MapSet.t(),
           chain_id: String.t(),
           # idle timer
-          idle_timer: :timer.time(),
+          idle_timer: reference() | nil,
           status: atom(),
           last_used: integer
         }
@@ -60,7 +60,7 @@ defmodule Ethui.Services.Anvil do
     GenServer.call(id, :url)
   end
 
-  @spec ensure_running(id) :: String.t()
+  @spec ensure_running(id) :: :ok
   def ensure_running(id) do
     GenServer.call(id, :ensure_running)
   end
@@ -92,7 +92,7 @@ defmodule Ethui.Services.Anvil do
   # Server
   #
 
-  @spec init(opts) :: {:ok, t}
+  @spec init(opts) :: {:ok, t} | {:error, any}
   @impl GenServer
   def init(opts) do
     Process.flag(:trap_exit, true)
@@ -181,7 +181,7 @@ defmodule Ethui.Services.Anvil do
 
   @impl GenServer
   def handle_cast(:destroy, %{proc: proc} = state) do
-    remove_dir(state)
+    _ = remove_dir(state)
     GenServer.stop(proc)
     {:stop, :normal, state}
   end
@@ -211,7 +211,7 @@ defmodule Ethui.Services.Anvil do
     {:noreply, %{touch(state) | log_subscribers: MapSet.delete(subs, pid)}}
   end
 
-  ## aux 
+  ## aux
 
   defp remove_dir(state) do
     case File.rm_rf(state.dir) do
@@ -273,10 +273,20 @@ defmodule Ethui.Services.Anvil do
   defp dashify(key) when is_binary(key), do: String.replace(key, "_", "-")
 
   defp touch(state) do
-    if state.idle_timer, do: Process.cancel_timer(state.idle_timer)
+    if state.idle_timer do
+      _remaining = Process.cancel_timer(state.idle_timer)
+    end
 
     timer =
       Process.send_after(self(), :suspend, idle_timeout())
+
+    #    timer =
+    #      if state.idle_timer do
+    #        _remaining = Process.cancel_timer(state.idle_timer)
+    #        Process.send_after(self(), :suspend, idle_timeout())
+    #      else
+    #        Process.send_after(self(), :suspend, idle_timeout())
+    #      end
 
     %{state | last_used: System.system_time(:second), idle_timer: timer}
   end
@@ -328,20 +338,20 @@ defmodule Ethui.Services.Anvil do
         to_string(chain_id)
       ] ++ args
 
-    case MuonTrap.Daemon.start_link(
-           anvil_bin(),
-           anvil_args,
-           logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
-           # TODO maybe patch muontrap to have a separate stream for stderr
-           stderr_to_stdout: true,
-           exit_status_to_reason: & &1
-         ) do
-      {:ok, proc} ->
-        Logger.info("restarting slug with port: #{slug} #{port}")
-        wait_until_ready(port)
+    with {:ok, proc} <-
+           MuonTrap.Daemon.start_link(
+             anvil_bin(),
+             anvil_args,
+             logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
+             # TODO maybe patch muontrap to have a separate stream for stderr
+             stderr_to_stdout: true,
+             exit_status_to_reason: & &1
+           ),
+         :ok <- wait_until_ready(port) do
+      Logger.info("restarting slug with port: #{slug} #{port}")
 
-        %{state | proc: proc, status: :running, port: port} |> touch()
-
+      %{state | proc: proc, status: :running, port: port} |> touch()
+    else
       {:error, reason} ->
         Logger.error("Failed to start anvil: #{inspect(reason)}")
         state
