@@ -185,7 +185,7 @@ defmodule Ethui.Services.Docker do
         {_out, 0} ->
           :ok
 
-        {_out, exit_code} when exit_code in [1, 125] ->
+        {_out, exit_code} when exit_code in [1, 124] ->
           :timer.sleep(100)
           wait_for_removal(name)
 
