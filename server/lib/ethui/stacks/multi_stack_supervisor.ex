@@ -27,9 +27,6 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  # @spec create_stack(opts) :: {:ok, pid} | {:error, term}
-  # @spec create_stack(opts) ::
-  #        {:error, :failed | :ignored | :max_children} | {:ok, any()}
   @spec create_stack(opts) :: {:ok, pid} | {:error, term}
   def create_stack(opts) do
     opts = [

@@ -56,7 +56,7 @@ jobs:
       - name: Create PLTs
         if: steps.plt_cache.outputs.cache-hit != 'true'
         run: mix dialyzer --plt
-        
+
       # By default, the GitHub Cache action will only save the cache if all steps in the job succeed,
       # so we separate the cache restore and save steps in case running dialyzer fails.
       - name: Save PLT cache

@@ -75,10 +75,6 @@ defmodule Ethui.Services.Docker do
 
       @impl GenServer
       def handle_call(:ip, _from, %{container_name: container_name} = state) do
-        Logger.info(
-          "docker inspect-f {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}} container_name"
-        )
-
         reply =
           case MuonTrap.cmd(
                  "docker",
@@ -172,15 +168,11 @@ defmodule Ethui.Services.Docker do
     Utility functions for Ethui.Services.Docker
     """
 
-    require Logger
-
     def apply_if_fun(fun, _state) when is_function(fun, 0), do: fun.()
     def apply_if_fun(fun, state) when is_function(fun, 1), do: fun.(state)
     def apply_if_fun(other, _state), do: other
 
     def wait_for_removal(name) do
-      Logger.info("docker rm -f #{name}")
-
       case System.cmd("docker", ["rm", "-f", name], stderr_to_stdout: true) do
         {_out, 0} ->
           :ok
@@ -217,8 +209,6 @@ defmodule Ethui.Services.Docker do
     end
 
     def ensure_network_exists(network_name) do
-      Logger.info("docker network inspect #{network_name}")
-
       case System.cmd("docker", ["network", "inspect", network_name]) do
         {_, 0} ->
           :ok

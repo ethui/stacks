@@ -32,7 +32,7 @@ defmodule Ethui.Services.Pg do
     config = config()
 
     [
-      "#{config[:pg_data_dir]}": "/var/lib/postgresql/data:Z"
+      "#{config[:pg_data_dir]}": "/var/lib/postgresql/data"
     ]
   end
 
