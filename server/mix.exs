@@ -11,7 +11,12 @@ defmodule Ethui.MixProject do
       aliases: aliases(),
       deps: deps(),
       dialyzer: [
-        flags: ["-Wunmatched_returns", :error_handling, :underspecs]
+        plt_file: {:no_warn, "priv/plts/project.plt"},
+        flags: [
+          "-Wunmatched_returns",
+          :error_handling,
+          :underspecs
+        ]
       ]
     ]
   end
