@@ -50,7 +50,7 @@ jobs:
           restore-keys: |
             plt-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-
           path: |
-            priv/plts
+            server/priv/plts
 
       # Create PLTs if no cache was found
       - name: Create PLTs
@@ -67,7 +67,7 @@ jobs:
           key: |
             plt-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
           path: |
-            priv/plts
+            server/priv/plts
 
       - name: Install dependencies
         run: mix deps.get
