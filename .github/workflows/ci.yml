@@ -40,6 +40,13 @@ jobs:
           key: ${{ runner.os }}-mix-${{ hashFiles('server/mix.lock') }}
           restore-keys: ${{ runner.os }}-mix-
 
+      - uses: actions/cache@v4
+        with:
+          path: |
+            server/priv/plts
+          key: ${{ runner.os }}-mix-${{ hashFiles('server/mix.lock') }}
+          restore-keys: ${{ runner.os }}-dialyzer-
+
       - name: Install dependencies
         run: mix deps.get
       - name: Compile
@@ -50,5 +57,7 @@ jobs:
         run: mix ecto.migrate
       - name: Run Credo
         run: mix credo
+      - name: Run Credo
+        run: mix dialyzer
       - name: Run tests
         run: mix test
