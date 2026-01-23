@@ -36,3 +36,7 @@ test-data/
 Thumbs.db
 .env*.local
 .claude
+
+# dialyzer
+/priv/plts/*.plt
+/priv/plts/*.plt.hash
