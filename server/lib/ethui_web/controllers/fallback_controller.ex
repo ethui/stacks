@@ -7,8 +7,6 @@ defmodule EthuiWeb.FallbackController do
 
   use EthuiWeb, :controller
 
-  alias Ethui.Stacks
-
   # Handles Ecto changeset errors.
   def call(conn, {:error, %Ecto.Changeset{} = changeset}) do
     conn
@@ -33,21 +31,21 @@ defmodule EthuiWeb.FallbackController do
     |> render(:"403")
   end
 
-  def call(conn, {:error, :user_limit_exceeded}) do
+  def call(conn, {:error, {:user_limit_exceeded, limit}}) do
     conn
     |> put_status(:forbidden)
     |> put_view(json: EthuiWeb.ErrorJSON)
     |> render(:error,
-      error: "User stack limit reached (maximum #{Stacks.max_stacks_per_user()} stacks)"
+      error: "User stack limit reached (maximum #{limit} stacks)"
     )
   end
 
-  def call(conn, {:error, :global_limit_exceeded}) do
+  def call(conn, {:error, {:global_limit_exceeded, limit}}) do
     conn
     |> put_status(:service_unavailable)
     |> put_view(json: EthuiWeb.ErrorJSON)
     |> render(:error,
-      error: "Global stack limit reached (maximum #{Stacks.max_total_stacks()} stacks)"
+      error: "Global stack limit reached (maximum #{limit} stacks)"
     )
   end
 

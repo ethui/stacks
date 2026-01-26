@@ -17,9 +17,6 @@ defmodule Ethui.Stacks do
   @max_stacks_per_user 5
   @max_total_stacks 250
 
-  def max_total_stacks, do: @max_total_stacks
-  def max_stacks_per_user, do: @max_stacks_per_user
-
   def components, do: @components
 
   # prevents slugs starting with rpc that would break the subdmonain for the graph component to link to graph-rpc*
@@ -197,7 +194,7 @@ defmodule Ethui.Stacks do
 
   defp check_user_limit(user_id) do
     if count_user_stacks(user_id) >= @max_stacks_per_user do
-      {:error, :user_limit_exceeded}
+      {:error, {:user_limit_exceeded, @max_stacks_per_user}}
     else
       :ok
     end
@@ -205,7 +202,7 @@ defmodule Ethui.Stacks do
 
   defp check_global_limit do
     if count_total_stacks() >= @max_total_stacks do
-      {:error, :global_limit_exceeded}
+      {:error, {:global_limit_exceeded, @max_total_stacks}}
     else
       :ok
     end
