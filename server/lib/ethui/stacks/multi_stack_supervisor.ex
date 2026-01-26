@@ -7,9 +7,15 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
 
   alias Ethui.Stacks.SingleStackSupervisor
 
+  @type opts_value :: String.t() | number()
+  @type opts_map :: %{optional(String.t()) => opts_value()}
+
   @type opts :: [
           slug: String.t(),
-          hash: String.t()
+          hash: String.t(),
+          anvil_opts: opts_map,
+          graph_opts: opts_map,
+          id: integer()
         ]
 
   def start_link(opts \\ []) do
@@ -21,19 +27,26 @@ defmodule Ethui.Stacks.MultiStackSupervisor do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 
-  @spec start_stack(opts) :: {:ok, pid} | {:error, any}
-  def start_stack(opts) do
+  @spec create_stack(opts) :: {:ok, pid} | {:error, term}
+  def create_stack(opts) do
     opts = [
       slug: opts[:slug],
       anvil: [id: opts[:id], slug: opts[:slug], hash: opts[:hash], anvil_opts: opts[:anvil_opts]],
       graph: [slug: opts[:slug], hash: opts[:hash], graph_opts: opts[:graph_opts]]
     ]
 
-    DynamicSupervisor.start_child(__MODULE__, {SingleStackSupervisor, opts})
+    case DynamicSupervisor.start_child(__MODULE__, {SingleStackSupervisor, opts}) do
+      {:ok, pid} -> {:ok, pid}
+      {:ok, pid, _info} -> {:ok, pid}
+      {:error, {:already_started, pid}} -> {:ok, pid}
+      {:error, :max_children} -> {:error, :max_children}
+      {:error, error} -> {:error, error}
+      :ignore -> {:error, :ignored}
+    end
   end
 
-  @spec stop_stack(pid) :: :ok
-  def stop_stack(stack) do
+  @spec destroy_stack(pid) :: :ok
+  def destroy_stack(stack) do
     SingleStackSupervisor.cleanup_anvil(stack)
     DynamicSupervisor.terminate_child(__MODULE__, stack)
   end

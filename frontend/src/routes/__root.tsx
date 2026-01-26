@@ -34,9 +34,9 @@ export const Route = createRootRouteWithContext<RouteContext>()({
         content: "width=device-width, initial-scale=1",
       },
       ...seo({
-        title: "ethui Stacks",
+        title: "ethui stacks",
         description:
-          "On-demand Anvil nodes in the cloud. Create, manage, and explore your Ethereum development stacks.",
+          "On-demand testnets. Create, manage, and explore your Ethereum development stacks.",
         image: "https://stacks.ethui.dev/symbol-black.svg",
         url: "https://stacks.ethui.dev",
       }),

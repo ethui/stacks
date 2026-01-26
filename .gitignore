@@ -7,6 +7,9 @@ server/.fetch
 server/tmp/
 server/priv/static/assets/app.css
 server/priv/static/assets/app.js
+# dialyzer
+server/priv/plts/*.plt
+server/priv/plts/*.plt.hash
 
 # Root level
 node_modules/
@@ -36,3 +39,4 @@ test-data/
 Thumbs.db
 .env*.local
 .claude
+

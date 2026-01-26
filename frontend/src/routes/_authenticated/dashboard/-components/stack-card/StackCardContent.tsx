@@ -1,13 +1,14 @@
 import { CardContent } from "@ethui/ui/components/shadcn/card";
 import { cn } from "@ethui/ui/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink as ExternalLinkIcon } from "lucide-react";
 import { Input } from "@ethui/ui/components/shadcn/input";
 import type { Stack } from "~/api/stacks";
 import { ClickToCopy } from "~/components/ClickToCopy";
 import { ChainStateSection } from "./ChainStateSection";
 import type { StackCardDataProps } from "./types";
 import { explorerUrl } from "~/utils/global";
+import { ExternalLink } from "~/components/ExternalLink";
 
 interface StackCardContentProps extends StackCardDataProps {}
 
@@ -42,10 +43,20 @@ function UrlList({ stack }: { stack: Stack }) {
       <UrlRow label="HTTP RPC" url={stack.rpc_url} />
       <UrlRow label="WebSocket RPC" url={stack.ws_rpc} />
       {/* TODO: Use the actual explorer URL */}
-      <UrlRow label="Explorer" url={explorerUrl(stack.ws_rpc)} isExternal />
+      <UrlRow
+        label="Explorer"
+        url={explorerUrl(stack.ws_rpc)}
+        externalLink={explorerUrl(stack.ws_rpc)}
+        externalLinkTooltip="View in Explorer"
+      />
 
       {stack.graph_url && (
-        <UrlRow label="Subgraph" url={stack.graph_url} isExternal />
+        <UrlRow
+          label="Subgraph"
+          url={stack.graph_url}
+          externalLink={stack.graph_url}
+          externalLinkTooltip="View in Subgraph dashboard"
+        />
       )}
     </div>
   );
@@ -54,10 +65,16 @@ function UrlList({ stack }: { stack: Stack }) {
 interface UrlRowProps {
   label: string;
   url: string;
-  isExternal?: boolean;
+  externalLink?: string;
+  externalLinkTooltip?: string;
 }
 
-function UrlRow({ label, url, isExternal }: UrlRowProps) {
+function UrlRow({
+  label,
+  url,
+  externalLink,
+  externalLinkTooltip,
+}: UrlRowProps) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-muted-foreground text-xs">{label}</span>
@@ -72,16 +89,14 @@ function UrlRow({ label, url, isExternal }: UrlRowProps) {
           text={url}
           className="shrink-0 rounded border border-border bg-background p-2 text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer"
         />
-        {isExternal && (
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 rounded border border-border bg-background p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
-            title={`Open ${label}`}
+        {externalLink && (
+          <ExternalLink
+            href={externalLink}
+            tooltip={externalLinkTooltip}
+            className="shrink-0 text-muted-foreground hover:text-foreground border rounded border-border bg-background p-2"
           >
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
+            <ExternalLinkIcon className="h-3.5 w-3.5" />
+          </ExternalLink>
         )}
       </div>
     </div>

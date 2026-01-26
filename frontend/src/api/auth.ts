@@ -18,10 +18,15 @@ export const verifyCodeResponseSchema = z.object({
   token: z.string(),
 });
 
+export const meResponseSchema = z.object({
+  email: z.string().email(),
+});
+
 export type SendCodeRequest = z.infer<typeof sendCodeSchema>;
 export type VerifyCodeRequest = z.infer<typeof verifyCodeSchema>;
 export type SendCodeResponse = z.infer<typeof sendCodeResponseSchema>;
 export type VerifyCodeResponse = z.infer<typeof verifyCodeResponseSchema>;
+export type MeResponse = z.infer<typeof meResponseSchema>;
 
 export const auth = {
   sendCode: async (data: SendCodeRequest) => {
@@ -41,5 +46,9 @@ export const auth = {
       console.error("Failed to verify code:", error);
       throw error;
     }
+  },
+  me: async (): Promise<MeResponse> => {
+    const res = await api.get("/me");
+    return meResponseSchema.parse(res.data);
   },
 };

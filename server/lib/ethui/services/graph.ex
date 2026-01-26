@@ -12,6 +12,15 @@ defmodule Ethui.Services.Graph do
     named_args: &__MODULE__.named_args/1,
     env: &__MODULE__.env/1
 
+  @type opts_map :: %{enabled: boolean()}
+  @type opts :: [
+          slug: String.t(),
+          hash: String.t(),
+          graph_opts: opts_map
+        ]
+
+  @spec init(any()) :: {:ok, t()}
+
   def name(slug) do
     {:via, Registry, {Ethui.Stacks.Registry, {slug, :graph}}}
   end

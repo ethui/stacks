@@ -11,6 +11,8 @@ defmodule Ethui.Services.Ipfs do
       name: "ethui-stacks-ipfs"
     ]
 
+  @spec init(any()) :: {:ok, t()}
+
   def docker_image do
     config()[:ipfs_image]
   end

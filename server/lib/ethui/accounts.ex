@@ -32,29 +32,9 @@ defmodule Ethui.Accounts do
   Creates or updates a user and sends a 6-digit verification code.
   """
   def send_verification_code(email) do
-    normalized_email = String.downcase(email)
-
-    case get_user_by_email(normalized_email) do
-      nil ->
-        %User{}
-        |> User.email_changeset(%{email: normalized_email})
-        |> Repo.insert()
-        |> case do
-          {:ok, user} ->
-            code = generate_verification_code()
-            update_verification_code(user, code)
-            send_verification_email(user, code)
-            {:ok, user}
-
-          error ->
-            error
-        end
-
-      user ->
-        code = generate_verification_code()
-        update_verification_code(user, code)
-        send_verification_email(user, code)
-        {:ok, user}
+    with email <- normalize_email(email),
+         {:ok, user} <- ensure_user(email) do
+      send_code(user)
     end
   end
 
@@ -207,5 +187,28 @@ defmodule Ethui.Accounts do
     |> where([k], k.token == ^token)
     |> preload([:stack])
     |> Repo.one()
+  end
+
+  defp normalize_email(email), do: String.downcase(email)
+
+  defp ensure_user(email) do
+    case get_user_by_email(email) do
+      nil ->
+        %User{}
+        |> User.email_changeset(%{email: email})
+        |> Repo.insert()
+
+      user ->
+        {:ok, user}
+    end
+  end
+
+  defp send_code(user) do
+    code = generate_verification_code()
+
+    with {:ok, user} <- update_verification_code(user, code),
+         {:ok, _} <- send_verification_email(user, code) do
+      {:ok, user}
+    end
   end
 end

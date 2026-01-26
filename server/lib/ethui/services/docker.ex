@@ -85,7 +85,7 @@ defmodule Ethui.Services.Docker do
                    container_name
                  ]
                ) do
-            {out, _} ->
+            {out, 0} ->
               {:ok, out |> String.split("\n") |> Enum.at(0)}
 
             error ->
@@ -120,7 +120,7 @@ defmodule Ethui.Services.Docker do
           format_docker_args(image, env, named_args, volumes, flags)
 
         if named_args[:network] do
-          ensure_network_exists(named_args[:network])
+          :ok = ensure_network_exists(named_args[:network])
         end
 
         if named_args[:name] do
@@ -128,6 +128,8 @@ defmodule Ethui.Services.Docker do
         end
 
         # Process.flag(:trap_exit, true)
+
+        Logger.info("docker #{Enum.join(args, " ")}")
 
         {:ok, proc} =
           MuonTrap.Daemon.start_link("docker", args,
@@ -140,14 +142,21 @@ defmodule Ethui.Services.Docker do
       end
 
       @impl GenServer
-      def handle_info({:EXIT, _pid, exit_status}, %{logs: logs} = state) do
+      def handle_info(
+            {:EXIT, _pid, exit_status},
+            %{logs: logs, container_name: container_name} = state
+          ) do
         case exit_status do
           0 ->
             {:stop, :normal, state}
 
           exit_code ->
             logs |> :queue.to_list() |> Enum.each(&Logger.error/1)
-            Logger.error("exited with code #{inspect(exit_code)}")
+
+            Logger.error(
+              "#{container_name} - exited with code #{inspect(exit_code)} logs: #{inspect(logs)}"
+            )
+
             {:stop, :normal, state}
         end
       end
@@ -168,12 +177,12 @@ defmodule Ethui.Services.Docker do
         {_out, 0} ->
           :ok
 
-        {_out, 1} ->
+        {_out, exit_code} when exit_code in [1, 124] ->
           :timer.sleep(100)
           wait_for_removal(name)
 
-        error ->
-          raise "Error while waiting for removal of container #{name}: #{inspect(error)}"
+        {out, exit_code} ->
+          raise "Error while waiting for removal of container #{name}: exit_code=#{exit_code}, output=#{inspect(out)}"
       end
     end
 
@@ -201,8 +210,17 @@ defmodule Ethui.Services.Docker do
 
     def ensure_network_exists(network_name) do
       case System.cmd("docker", ["network", "inspect", network_name]) do
-        {_, 0} -> :ok
-        {_, _} -> System.cmd("docker", ["network", "create", network_name])
+        {_, 0} ->
+          :ok
+
+        {_, _} ->
+          case System.cmd("docker", ["network", "create", network_name]) do
+            {_, 0} ->
+              :ok
+
+            {out, exit_code} ->
+              raise "docker network create #{network_name} failed to create: exit_code=#{exit_code}, output=#{inspect(out)}"
+          end
       end
     end
   end

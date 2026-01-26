@@ -16,6 +16,7 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
         ]
 
   @spec start_link(opts) :: Supervisor.on_start()
+
   def start_link(opts) do
     Supervisor.start_link(__MODULE__, opts, name: name(opts[:slug]))
   end
@@ -30,6 +31,7 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
     # runnings subgraphs in test mode is not feasible, so we skip them
     children =
       if enable_graph?(opts) do
+        # TODO: Needs to be created by a task
         [{Graph, opts[:graph]} | children]
       else
         children
@@ -43,7 +45,7 @@ defmodule Ethui.Stacks.SingleStackSupervisor do
     |> Supervisor.which_children()
     |> Enum.each(fn {_id, pid, _type, modules} ->
       if Ethui.Services.Anvil in modules do
-        Anvil.stop(Anvil.name(pid))
+        Anvil.destroy(Anvil.name(pid))
       end
     end)
   end

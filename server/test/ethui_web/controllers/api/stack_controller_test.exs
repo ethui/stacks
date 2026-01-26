@@ -78,8 +78,8 @@ defmodule EthuiWeb.Api.StackControllerTest do
       |> Enum.map(fn slug ->
         conn = conn |> post(~p"/stacks", %{slug: slug})
 
-        assert json_response(conn, 422)["error"] ==
-                 "[slug: {\"has invalid format\", [validation: :format]}]"
+        assert json_response(conn, 422)["errors"] ==
+                 %{"slug" => ["has invalid format"]}
       end)
     end
   end
@@ -106,7 +106,8 @@ defmodule EthuiWeb.Api.StackControllerTest do
       conn2 = create_authenticated_conn("user2@example.com")
       conn2 = conn2 |> delete(~p"/stacks/#{slug}")
       assert conn2.status == 403
-      assert json_response(conn2, 403)["error"] == "unauthorized"
+
+      assert json_response(conn2, 403)["errors"] == %{"detail" => "Forbidden"}
     end
 
     test "returns 404 when stack does not exist" do

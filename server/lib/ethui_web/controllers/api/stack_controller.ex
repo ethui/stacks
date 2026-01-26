@@ -4,20 +4,12 @@ defmodule EthuiWeb.Api.StackController do
   alias Ethui.Stacks.{Server, Stack}
   alias Ethui.Stacks
 
+  action_fallback EthuiWeb.FallbackController
+
   def index(conn, _params) do
     user = conn.assigns[:current_user]
-
     stacks = Stacks.list_stacks(user)
-
-    stack_data =
-      Enum.map(stacks, fn stack ->
-        Stacks.get_info(stack)
-      end)
-
-    json(conn, %{
-      status: "success",
-      data: stack_data
-    })
+    render(conn, :index, stacks: stacks)
   end
 
   def show(conn, %{"slug" => slug}) do
@@ -25,16 +17,13 @@ defmodule EthuiWeb.Api.StackController do
 
     with %Stack{} = stack <- Stacks.get_stack_by_slug(slug),
          :ok <- authorize_user_access(user, stack) do
-      json(conn, %{
-        status: "success",
-        data: Stacks.get_info(stack)
-      })
+      render(conn, :show, stack: stack)
     else
       nil ->
-        conn |> put_status(404) |> json(%{status: "error", error: "not found"})
+        {:error, :not_found}
 
-      {:error, :unauthorized} ->
-        conn |> put_status(403) |> json(%{status: "error", error: "unauthorized"})
+      error ->
+        error
     end
   end
 
@@ -42,49 +31,10 @@ defmodule EthuiWeb.Api.StackController do
     user = conn.assigns[:current_user]
 
     with {:ok, stack} <- Stacks.create_stack(user, params),
-         _ <- Server.start(stack) do
+         _ <- Server.create(stack) do
       conn
-      |> put_status(201)
-      |> json(%{
-        status: "success",
-        data: %{
-          slug: stack.slug,
-          urls: Stacks.get_urls(stack),
-          status: "running"
-        }
-      })
-    else
-      {:error, :user_limit_exceeded} ->
-        conn
-        |> put_status(403)
-        |> json(%{
-          status: "error",
-          error: "User stack limit reached (maximum #{Stacks.max_stacks_per_user()} stacks)"
-        })
-
-      {:error, :global_limit_exceeded} ->
-        conn
-        |> put_status(503)
-        |> json(%{
-          status: "error",
-          error: "Global stack limit reached (maximum #{Stacks.max_total_stacks()} stacks)"
-        })
-
-      {:error, %Ecto.Changeset{} = changeset} ->
-        conn
-        |> put_status(422)
-        |> json(%{
-          status: "error",
-          error: inspect(changeset.errors)
-        })
-
-      {:error, reason} ->
-        conn
-        |> put_status(500)
-        |> json(%{
-          status: "error",
-          error: inspect(reason)
-        })
+      |> put_status(:created)
+      |> render(:create, stack: stack)
     end
   end
 
@@ -93,15 +43,15 @@ defmodule EthuiWeb.Api.StackController do
 
     with %Stack{} = stack <- Stacks.get_stack_by_slug(slug),
          :ok <- authorize_user_access(user, stack),
-         _ <- Server.stop(stack),
-         _ <- Stacks.delete_stack(stack) do
-      conn |> send_resp(204, "")
+         _ <- Server.destroy(stack),
+         {:ok, _} <- Stacks.delete_stack(stack) do
+      send_resp(conn, :no_content, "")
     else
       nil ->
-        conn |> put_status(404) |> json(%{status: "error", error: "not found"})
+        {:error, :not_found}
 
-      {:error, :unauthorized} ->
-        conn |> put_status(403) |> json(%{status: "error", error: "unauthorized"})
+      error ->
+        error
     end
   end
 

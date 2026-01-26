@@ -18,6 +18,8 @@ defmodule Ethui.Services.Pg do
     ],
     volumes: &__MODULE__.volumes/1
 
+  @spec init(any()) :: {:ok, t()}
+
   def username do
     "postgres"
   end

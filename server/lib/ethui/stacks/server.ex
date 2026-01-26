@@ -7,8 +7,11 @@ defmodule Ethui.Stacks.Server do
   use GenServer
   require Logger
 
+  alias Ethui.Services.{Anvil, Graph}
+  alias Ethui.Stacks
+  alias Ethui.Stacks.MultiStackSupervisor
+  alias Ethui.Stacks.Stack
   alias Ethui.Stacks.{Stack, MultiStackSupervisor}
-  alias Ethui.Repo
 
   # state
   @type t :: %{
@@ -35,12 +38,53 @@ defmodule Ethui.Stacks.Server do
     GenServer.call(__MODULE__, :list)
   end
 
-  def start(%Stack{} = stack) do
-    GenServer.cast(__MODULE__, {:start, stack})
+  # create
+  def create(%Stack{} = stack) do
+    GenServer.call(__MODULE__, {:create, stack})
   end
 
-  def stop(%Stack{} = stack) do
-    GenServer.cast(__MODULE__, {:stop, stack})
+  def create_async(%Stack{} = stack) do
+    GenServer.cast(__MODULE__, {:create_async, stack})
+  end
+
+  def destroy(%Stack{} = stack) do
+    GenServer.call(__MODULE__, {:destroy, stack})
+  end
+
+  def suspend(%Stack{} = stack) do
+    GenServer.call(__MODULE__, {:suspend, stack})
+  end
+
+  def resume(%Stack{} = stack) do
+    GenServer.call(__MODULE__, {:destroy, stack})
+  end
+
+  # adicionar public api aqui, nao queromos interagir com o anvil diretamente
+
+  def anvil_url(slug) do
+    with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
+         :ok <- Anvil.ensure_running(pid),
+         url when not is_nil(url) <- Anvil.url(pid) do
+      {:ok, url}
+    else
+      _ ->
+        {:error, "Stack not found"}
+    end
+  end
+
+  def graph_ip_from_slug(proxied_path, slug, target_port) do
+    case Graph.ip_from_slug(slug) do
+      {:ok, ip} -> {:ok, "http://#{ip}:#{target_port}/#{Enum.join(proxied_path, "/")}"}
+      _ -> {:error, "Stack not found"}
+    end
+  end
+
+  def subscribe_logs(id) do
+    GenServer.cast(id, {:subscribe_logs, self()})
+  end
+
+  def unsubscribe_logs(id) do
+    GenServer.cast(id, {:unsubscribe_logs, self()})
   end
 
   #
@@ -59,30 +103,29 @@ defmodule Ethui.Stacks.Server do
   end
 
   @impl GenServer
-  def handle_call({:start_stack, opts}, _from, state) do
-    case start_stack(opts, state) do
+  def handle_call({:create, opts}, _from, state) do
+    case create_stack(opts, state) do
       {:ok, pid, new_state} ->
         {:reply, {:ok, pid}, new_state}
 
       error ->
+        Logger.error(inspect(error))
         {:reply, error, state}
     end
   end
 
   @impl GenServer
   def handle_call(
-        {:stop_stack, slug_or_name},
+        {:destroy, stack},
         _from,
-        %{instances: instances} = state
+        state
       ) do
-    slug = to_slug(slug_or_name)
+    case destroy_stack(stack, state) do
+      {:ok, new_state} ->
+        {:reply, :ok, new_state}
 
-    case Map.fetch(instances, slug) do
-      {:ok, pid} ->
-        MultiStackSupervisor.stop_stack(pid)
-        {:reply, :ok, %{state | instances: Map.delete(instances, slug)}}
-
-      :error ->
+      error ->
+        Logger.error(inspect(error))
         {:reply, {:error, :not_found}, state}
     end
   end
@@ -93,8 +136,8 @@ defmodule Ethui.Stacks.Server do
   end
 
   @impl GenServer
-  def handle_cast({:start, stack}, state) do
-    case start_stack(stack, state) do
+  def handle_cast({:create_async, stack}, state) do
+    case create_stack(stack, state) do
       {:ok, _pid, new_state} ->
         {:noreply, new_state}
 
@@ -106,7 +149,7 @@ defmodule Ethui.Stacks.Server do
 
   @impl GenServer
   def handle_cast({:stop, stack}, state) do
-    case stop_stack(stack, state) do
+    case destroy_stack(stack, state) do
       {:ok, new_state} ->
         {:noreply, new_state}
 
@@ -116,8 +159,8 @@ defmodule Ethui.Stacks.Server do
     end
   end
 
-  @spec start_stack(map, t) :: {:ok, pid, t} | {:error, any}
-  defp start_stack(
+  @spec create_stack(map, t) :: {:ok, pid, t} | {:error, term}
+  defp create_stack(
          %{
            id: id,
            slug: slug,
@@ -134,9 +177,9 @@ defmodule Ethui.Stacks.Server do
       |> String.downcase()
 
     full_opts = [id: id, slug: slug, hash: hash, anvil_opts: anvil_opts, graph_opts: graph_opts]
-    Logger.info("Starting stack #{slug}")
+    Logger.info("creating stack #{slug}")
 
-    case MultiStackSupervisor.start_stack(full_opts) do
+    case MultiStackSupervisor.create_stack(full_opts) do
       {:ok, pid} ->
         {:ok, pid, %{state | instances: Map.put(instances, slug, pid)}}
 
@@ -145,15 +188,15 @@ defmodule Ethui.Stacks.Server do
     end
   end
 
-  @spec stop_stack(map, map) :: {:ok, t} | {:error, :not_found}
-  defp stop_stack(
+  @spec destroy_stack(map, map) :: {:ok, t} | {:error, :not_found}
+  defp destroy_stack(
          %{slug: slug},
          %{instances: instances} = state
        ) do
     case Map.fetch(instances, slug) do
       {:ok, pid} ->
-        Logger.info("Stopping stack #{inspect(pid)}")
-        MultiStackSupervisor.stop_stack(pid)
+        Logger.info("Destroying stack #{slug} #{inspect(pid)}")
+        MultiStackSupervisor.destroy_stack(pid)
         {:ok, %{state | instances: Map.delete(instances, slug)}}
 
       :error ->
@@ -162,15 +205,13 @@ defmodule Ethui.Stacks.Server do
   end
 
   defp start_all do
-    Stack
-    |> Repo.all()
+    Stacks.list_stacks()
     |> Enum.each(fn stack ->
-      start(stack)
+      # this function starts all the stacks on the init function , we can't use
+      # a sync call because the process calling itself and it creates a deadlock.
+      # We also don't want to create it directly on the init since we would block
+      # the the supervisor for this process (i think).
+      create_async(stack)
     end)
   end
-
-  # extract the slug from what may be a {:via, ...} registry name
-  # allows the internal API to deal with either direct slugs or registry names
-  defp to_slug({:via, _, {_, slug}}), do: slug
-  defp to_slug(slug) when is_binary(slug), do: slug
 end

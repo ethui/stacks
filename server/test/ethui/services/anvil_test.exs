@@ -13,7 +13,7 @@ defmodule Ethui.Services.AnvilTest do
   defp cleanup do
     Server.list()
     |> Enum.each(fn slug ->
-      Server.stop(%Stack{slug: slug})
+      Server.destroy(%Stack{slug: slug})
     end)
 
     :ok
@@ -21,6 +21,7 @@ defmodule Ethui.Services.AnvilTest do
 
   test "creates an anvil process" do
     {:ok, anvil} = Anvil.start_link(ports: HttpPorts, slug: "slug123", hash: "hash", id: 1)
+    Anvil.ensure_running(anvil)
     Process.sleep(1000)
 
     client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
@@ -31,7 +32,7 @@ defmodule Ethui.Services.AnvilTest do
 
     assert {:ok, _} = resp
 
-    Anvil.stop(anvil)
+    Anvil.destroy(anvil)
     Process.sleep(100)
 
     err =
@@ -51,6 +52,7 @@ defmodule Ethui.Services.AnvilTest do
         id: 1
       )
 
+    Anvil.ensure_running(anvil)
     Process.sleep(10_000)
 
     client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
@@ -64,7 +66,7 @@ defmodule Ethui.Services.AnvilTest do
 
     assert fork_block_number
 
-    Anvil.stop(anvil)
+    Anvil.destroy(anvil)
     Process.sleep(100)
 
     err =
@@ -78,6 +80,7 @@ defmodule Ethui.Services.AnvilTest do
     anvils =
       for i <- 1..10 do
         {:ok, pid} = Anvil.start_link(ports: HttpPorts, slug: :"anvil_#{i}", hash: "hash", id: 1)
+
         Process.monitor(pid)
         pid
       end
@@ -85,6 +88,8 @@ defmodule Ethui.Services.AnvilTest do
     Process.sleep(100)
 
     for anvil <- anvils do
+      Anvil.ensure_running(anvil)
+
       client =
         Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
 
@@ -93,7 +98,7 @@ defmodule Ethui.Services.AnvilTest do
     end
 
     for anvil <- anvils do
-      Anvil.stop(anvil)
+      Anvil.destroy(anvil)
       assert_receive {:DOWN, _ref, :process, ^anvil, :normal}
     end
   end
