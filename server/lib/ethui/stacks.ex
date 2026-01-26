@@ -129,6 +129,11 @@ defmodule Ethui.Stacks do
     end
   end
 
+  def create_stack(nil, params) do
+    Stack.create_changeset(params)
+    |> Repo.insert()
+  end
+
   def create_stack(user, params) do
     with :ok <- check_user_limit(user.id),
          :ok <- check_global_limit() do
