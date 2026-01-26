@@ -59,7 +59,7 @@ defmodule EthuiWeb.Api.StackController do
         |> put_status(403)
         |> json(%{
           status: "error",
-          error: "User stack limit reached (maximum 3 stacks per user)"
+          error: "User stack limit reached (maximum #{Stacks.max_stacks_per_user()} stacks)"
         })
 
       {:error, :global_limit_exceeded} ->
@@ -67,7 +67,7 @@ defmodule EthuiWeb.Api.StackController do
         |> put_status(503)
         |> json(%{
           status: "error",
-          error: "Global stack limit reached (maximum 100 stacks)"
+          error: "Global stack limit reached (maximum #{Stacks.max_total_stacks()} stacks)"
         })
 
       {:error, %Ecto.Changeset{} = changeset} ->

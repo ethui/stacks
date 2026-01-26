@@ -17,6 +17,9 @@ defmodule Ethui.Stacks do
   @max_stacks_per_user 5
   @max_total_stacks 250
 
+  def max_total_stacks, do: @max_total_stacks
+  def max_stacks_per_user, do: @max_stacks_per_user
+
   def components, do: @components
 
   # prevents slugs starting with rpc that would break the subdmonain for the graph component to link to graph-rpc*
