@@ -31,6 +31,24 @@ defmodule EthuiWeb.FallbackController do
     |> render(:"403")
   end
 
+  def call(conn, {:error, {:user_limit_exceeded, limit}}) do
+    conn
+    |> put_status(:forbidden)
+    |> put_view(json: EthuiWeb.ErrorJSON)
+    |> render(:error,
+      error: "User stack limit reached (maximum #{limit} stacks)"
+    )
+  end
+
+  def call(conn, {:error, {:global_limit_exceeded, limit}}) do
+    conn
+    |> put_status(:service_unavailable)
+    |> put_view(json: EthuiWeb.ErrorJSON)
+    |> render(:error,
+      error: "Global stack limit reached (maximum #{limit} stacks)"
+    )
+  end
+
   # Handles generic errors.
   def call(conn, {:error, reason}) when is_binary(reason) do
     conn
