@@ -127,8 +127,10 @@ defmodule Ethui.Stacks do
   end
 
   def create_stack(nil, params) do
-    Stack.create_changeset(params)
-    |> Repo.insert()
+    with :ok <- check_global_limit() do
+      Stack.create_changeset(params)
+      |> Repo.insert()
+    end
   end
 
   def create_stack(user, params) do
@@ -205,13 +207,6 @@ defmodule Ethui.Stacks do
       {:error, {:global_limit_exceeded, @max_total_stacks}}
     else
       :ok
-    end
-  end
-
-  def create_stack(nil, params) do
-    with :ok <- check_global_limit() do
-      Stack.create_changeset(params)
-      |> Repo.insert()
     end
   end
 
