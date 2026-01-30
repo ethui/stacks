@@ -1,11 +1,11 @@
 {
-  "name": "@ethui/stacks-cli",
+  "name": "@ethui/stacks",
   "version": "0.1.0",
   "description": "CLI for authenticating with ethui stacks",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "stacks-cli": "dist/index.js"
+    "stacks": "dist/index.js"
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts",
