@@ -7,12 +7,22 @@
   "bin": {
     "stacks": "dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ethui/stacks.git",
+    "directory": "packages/cli"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts",
     "dev": "tsup src/index.ts --format esm --watch",
     "lint": "biome lint src/",
     "format": "biome format src/ --write",
-    "check": "biome check src/"
+    "check": "biome check src/",
+    "prepublishOnly": "pnpm run build",
+    "publish": "pnpm publish --access public"
   },
   "keywords": [
     "ethui",
