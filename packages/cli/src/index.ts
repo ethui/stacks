@@ -1,11 +1,49 @@
 #!/usr/bin/env node
 
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { homedir, platform } from "node:os";
+import { dirname, join } from "node:path";
 import { confirm, input } from "@inquirer/prompts";
 
 const DEFAULT_API_URL = "https://api.stacks.ethui.dev";
 
 interface AuthConfig {
 	apiUrl: string;
+}
+
+type TokenMap = Record<string, string>;
+
+function getConfigPath(): string {
+	const home = homedir();
+	if (platform() === "darwin") {
+		return join(
+			home,
+			"Library",
+			"Application Support",
+			"dev.ethui",
+			"stacks.json",
+		);
+	}
+	return join(home, ".config", "dev.ethui", "stacks.json");
+}
+
+async function loadTokens(): Promise<TokenMap> {
+	const configPath = getConfigPath();
+	try {
+		const content = await readFile(configPath, "utf-8");
+		return JSON.parse(content) as TokenMap;
+	} catch {
+		return {};
+	}
+}
+
+async function saveToken(apiUrl: string, token: string): Promise<void> {
+	const configPath = getConfigPath();
+	const tokens = await loadTokens();
+	tokens[apiUrl] = token;
+
+	await mkdir(dirname(configPath), { recursive: true });
+	await writeFile(configPath, JSON.stringify(tokens, null, 2), "utf-8");
 }
 
 async function sendVerificationCode(
@@ -143,12 +181,9 @@ async function main(): Promise<void> {
 	const token = await authenticate({ apiUrl });
 
 	if (token) {
-		console.log("─".repeat(50));
-		console.log("\nYour JWT token:\n");
-		console.log(token);
-		console.log(`\n${"─".repeat(50)}`);
-		console.log("\nYou can use this token in the Authorization header:");
-		console.log(`Authorization: Bearer ${token}\n`);
+		await saveToken(apiUrl, token);
+		const configPath = getConfigPath();
+		console.log(`✓ Token saved to ${configPath}\n`);
 	} else {
 		console.error("\n✗ Authentication failed.\n");
 		process.exit(1);
