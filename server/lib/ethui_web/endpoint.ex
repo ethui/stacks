@@ -34,6 +34,7 @@ defmodule EthuiWeb.Endpoint do
     cookie_key: "request_logger"
 
   plug Plug.RequestId
+  plug EthuiWeb.Plugs.LogMetadata
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
   plug CORSPlug, origin: ["*"]

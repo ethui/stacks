@@ -35,6 +35,10 @@ services:
       - 'traefik.http.routers.ethui-stacks-secure.tls.domains[0].main=stacks.ethui.dev'
       - 'traefik.http.routers.ethui-stacks-secure.tls.domains[0].sans=*.stacks.ethui.dev'
 
+      # enabling scraping from alloy/prometheus
+      - "prometheus.scrape=true"
+      - "prometheus.port=4000"
+
 volumes:
   data:
 

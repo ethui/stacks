@@ -77,6 +77,11 @@ defmodule EthuiWeb.Router do
     end
   end
 
+  # Metrics endpoint - accessible only within internal Docker network
+  scope "/" do
+    get "/metrics", EthuiWeb.MetricsController, :index
+  end
+
   scope "/", EthuiWeb do
     pipe_through :proxy
 
