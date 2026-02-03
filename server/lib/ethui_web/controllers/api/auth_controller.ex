@@ -12,8 +12,8 @@ defmodule EthuiWeb.Api.AuthController do
   """
   def send_code(conn, %{"email" => email}) do
     with {:ok, _user} <- Accounts.send_verification_code(email) do
-      :telemetry.execute(
-        [:ethui, :auth, :code_sent],
+      Ethui.Telemetry.exec(
+        [:auth, :code_sent],
         %{count: 1},
         %{email: email}
       )
@@ -30,8 +30,8 @@ defmodule EthuiWeb.Api.AuthController do
   def verify_code(conn, %{"email" => email, "code" => code}) do
     case Accounts.verify_code_and_generate_token(email, code) do
       {:ok, token} ->
-        :telemetry.execute(
-          [:ethui, :auth, :code_verified],
+        Ethui.Telemetry.exec(
+          [:auth, :code_verified],
           %{count: 1},
           %{status: :success, email: email}
         )
@@ -39,8 +39,8 @@ defmodule EthuiWeb.Api.AuthController do
         render(conn, :verify_code, token: token)
 
       {:error, :invalid_code} ->
-        :telemetry.execute(
-          [:ethui, :auth, :code_verified],
+        Ethui.Telemetry.exec(
+          [:auth, :code_verified],
           %{count: 1},
           %{status: :invalid_code, email: email}
         )
@@ -48,8 +48,8 @@ defmodule EthuiWeb.Api.AuthController do
         {:error, "Invalid or expired verification code"}
 
       {:error, _reason} ->
-        :telemetry.execute(
-          [:ethui, :auth, :code_verified],
+        Ethui.Telemetry.exec(
+          [:auth, :code_verified],
           %{count: 1},
           %{status: :error, email: email}
         )
