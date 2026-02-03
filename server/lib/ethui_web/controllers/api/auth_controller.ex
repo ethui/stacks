@@ -14,7 +14,6 @@ defmodule EthuiWeb.Api.AuthController do
     with {:ok, _user} <- Accounts.send_verification_code(email) do
       Ethui.Telemetry.exec(
         [:auth, :code_sent],
-        %{count: 1},
         %{email: email}
       )
 
@@ -32,7 +31,6 @@ defmodule EthuiWeb.Api.AuthController do
       {:ok, token} ->
         Ethui.Telemetry.exec(
           [:auth, :code_verified],
-          %{count: 1},
           %{status: :success, email: email}
         )
 
@@ -41,7 +39,6 @@ defmodule EthuiWeb.Api.AuthController do
       {:error, :invalid_code} ->
         Ethui.Telemetry.exec(
           [:auth, :code_verified],
-          %{count: 1},
           %{status: :invalid_code, email: email}
         )
 
@@ -50,7 +47,6 @@ defmodule EthuiWeb.Api.AuthController do
       {:error, _reason} ->
         Ethui.Telemetry.exec(
           [:auth, :code_verified],
-          %{count: 1},
           %{status: :error, email: email}
         )
 

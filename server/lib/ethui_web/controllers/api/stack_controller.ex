@@ -34,7 +34,6 @@ defmodule EthuiWeb.Api.StackController do
          _ <- Server.create(stack) do
       Ethui.Telemetry.exec(
         [:stacks, :created],
-        %{count: 1},
         %{user_id: user && user.id, stack_slug: stack.slug}
       )
 
@@ -53,7 +52,6 @@ defmodule EthuiWeb.Api.StackController do
          {:ok, _} <- Stacks.delete_stack(stack) do
       Ethui.Telemetry.exec(
         [:stacks, :deleted],
-        %{count: 1},
         %{user_id: user && user.id, stack_slug: slug}
       )
 
