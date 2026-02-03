@@ -36,7 +36,7 @@ services:
       - 'traefik.http.routers.ethui-stacks-secure.tls.domains[0].sans=*.stacks.ethui.dev'
 
       # block external access to /metrics
-      - "traefik.http.routesr.ethui-stacks-secure.middlewares=block-metrics"
+      - "traefik.http.routers.ethui-stacks-secure.middlewares=block-metrics"
       - "traefik.http.middlewares.block-metrics.replacepathregex.regex=^/metrics.*"
       - "traefik.http.middlewares.block-metrics.replacepathregex.replacement=/404-not-found"
 
