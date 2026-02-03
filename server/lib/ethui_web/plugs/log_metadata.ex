@@ -65,8 +65,6 @@ defmodule EthuiWeb.Plugs.LogMetadata do
     :inet.ntoa({a, b, c, d, e, f, g, h}) |> to_string()
   end
 
-  defp format_ip(ip), do: inspect(ip)
-
   defp calculate_duration(conn) do
     case conn.private[:phoenix_endpoint_start] do
       %{system: start} ->
