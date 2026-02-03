@@ -81,6 +81,31 @@ if config_env() == :prod do
 
   config :ethui, :jwt_secret, jwt_secret
 
+  # JSON logging configuration for production
+  config :logger, :default_handler,
+    formatter:
+      {LoggerJSON.Formatters.Basic,
+       metadata: :all, exclude_metadata: [:domain, :erl_level, :gl, :time]}
+
+  config :logger, :console,
+    format: {LoggerJSON.Formatters.Basic, :format},
+    metadata: [
+      :request_id,
+      :user_id,
+      :stack_slug,
+      :remote_ip,
+      :method,
+      :path,
+      :status,
+      :duration,
+      :pid,
+      :application,
+      :module,
+      :function,
+      :file,
+      :line
+    ]
+
   if is_saas? do
     config :ethui, Ethui.Mailer,
       adapter: Swoosh.Adapters.Mua,

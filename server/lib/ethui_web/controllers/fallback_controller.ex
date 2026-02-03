@@ -7,8 +7,12 @@ defmodule EthuiWeb.FallbackController do
 
   use EthuiWeb, :controller
 
+  alias Ethui.Telemetry
+
   # Handles Ecto changeset errors.
   def call(conn, {:error, %Ecto.Changeset{} = changeset}) do
+    Telemetry.exec([:errors], %{type: :changeset_error})
+
     conn
     |> put_status(:unprocessable_entity)
     |> put_view(json: EthuiWeb.ChangesetJSON)
@@ -17,6 +21,8 @@ defmodule EthuiWeb.FallbackController do
 
   # Handles not found errors.
   def call(conn, {:error, :not_found}) do
+    Telemetry.exec([:errors], %{type: :not_found})
+
     conn
     |> put_status(:not_found)
     |> put_view(json: EthuiWeb.ErrorJSON)
@@ -25,6 +31,8 @@ defmodule EthuiWeb.FallbackController do
 
   # Handles unauthorized access errors.
   def call(conn, {:error, :unauthorized}) do
+    Telemetry.exec([:errors], %{type: :unauthorized})
+
     conn
     |> put_status(:forbidden)
     |> put_view(json: EthuiWeb.ErrorJSON)
@@ -32,6 +40,8 @@ defmodule EthuiWeb.FallbackController do
   end
 
   def call(conn, {:error, {:user_limit_exceeded, limit}}) do
+    Telemetry.exec([:errors], %{type: :user_limit_exceeded})
+
     conn
     |> put_status(:forbidden)
     |> put_view(json: EthuiWeb.ErrorJSON)
@@ -41,6 +51,8 @@ defmodule EthuiWeb.FallbackController do
   end
 
   def call(conn, {:error, {:global_limit_exceeded, limit}}) do
+    Telemetry.exec([:errors], %{type: :global_limit_exceeded})
+
     conn
     |> put_status(:service_unavailable)
     |> put_view(json: EthuiWeb.ErrorJSON)
@@ -51,6 +63,8 @@ defmodule EthuiWeb.FallbackController do
 
   # Handles generic errors.
   def call(conn, {:error, reason}) when is_binary(reason) do
+    Telemetry.exec([:errors], %{type: :validation_error})
+
     conn
     |> put_status(:unprocessable_entity)
     |> put_view(json: EthuiWeb.ErrorJSON)
@@ -59,6 +73,8 @@ defmodule EthuiWeb.FallbackController do
 
   # Handles unexpected errors.
   def call(conn, _error) do
+    Telemetry.exec([:errors], %{type: :internal_server_error})
+
     conn
     |> put_status(:internal_server_error)
     |> put_view(json: EthuiWeb.ErrorJSON)

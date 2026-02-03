@@ -52,6 +52,9 @@ jobs:
           path: |
             server/priv/plts
 
+      - name: Install dependencies
+        run: mix deps.get
+
       # Create PLTs if no cache was found
       - name: Create PLTs
         if: steps.plt_cache.outputs.cache-hit != 'true'
@@ -69,8 +72,6 @@ jobs:
           path: |
             server/priv/plts
 
-      - name: Install dependencies
-        run: mix deps.get
       - name: Compile
         run: mix compile
       - name: Create database

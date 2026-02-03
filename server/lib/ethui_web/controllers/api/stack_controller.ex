@@ -32,6 +32,8 @@ defmodule EthuiWeb.Api.StackController do
 
     with {:ok, stack} <- Stacks.create_stack(user, params),
          _ <- Server.create(stack) do
+      Ethui.Telemetry.exec([:stacks, :created], %{user_id: user && user.id, stack_slug: stack.slug})
+
       conn
       |> put_status(:created)
       |> render(:create, stack: stack)
@@ -45,6 +47,8 @@ defmodule EthuiWeb.Api.StackController do
          :ok <- authorize_user_access(user, stack),
          _ <- Server.destroy(stack),
          {:ok, _} <- Stacks.delete_stack(stack) do
+      Ethui.Telemetry.exec([:stacks, :deleted], %{user_id: user && user.id, stack_slug: slug})
+
       send_resp(conn, :no_content, "")
     else
       nil ->
