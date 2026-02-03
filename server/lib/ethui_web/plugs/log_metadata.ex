@@ -40,6 +40,13 @@ defmodule EthuiWeb.Plugs.LogMetadata do
         status: conn.status,
         duration: calculate_duration(conn)
       )
+
+      # Emit API request telemetry event
+      Ethui.Telemetry.exec(
+        [:api, :requests],
+        %{method: conn.method, path: conn.request_path, status: conn.status}
+      )
+
       conn
     end)
   end
@@ -52,6 +59,12 @@ defmodule EthuiWeb.Plugs.LogMetadata do
   end
 
   defp format_ip({a, b, c, d}), do: "#{a}.#{b}.#{c}.#{d}"
+
+  defp format_ip({a, b, c, d, e, f, g, h}) do
+    # IPv6 address - convert to standard colon-separated hex notation
+    :inet.ntoa({a, b, c, d, e, f, g, h}) |> to_string()
+  end
+
   defp format_ip(ip), do: inspect(ip)
 
   defp calculate_duration(conn) do

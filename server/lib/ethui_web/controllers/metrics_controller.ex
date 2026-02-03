@@ -3,10 +3,6 @@ defmodule EthuiWeb.MetricsController do
 
   @moduledoc """
   Exposes Prometheus metrics for scraping.
-
-  This endpoint is designed to be accessible only within the internal Docker/Dokploy network,
-  not via external Traefik routing. Prometheus should scrape metrics directly from the
-  application on port 4000.
   """
 
   def index(conn, _params) do

@@ -102,27 +102,27 @@ defmodule EthuiWeb.Telemetry do
       ),
 
       # Application Metrics
-      counter("ethui.stacks.created.count",
+      counter("ethui.stacks.created",
         description: "Total number of stacks created"
       ),
-      counter("ethui.stacks.deleted.count",
+      counter("ethui.stacks.deleted",
         description: "Total number of stacks deleted"
       ),
-      last_value("ethui.stacks.active.count",
+      last_value("ethui.stacks.active",
         description: "Current number of active stacks"
       ),
-      counter("ethui.api.requests.count",
+      counter("ethui.api.requests",
         tags: [:method, :path, :status],
         description: "API request count by method, path, and status"
       ),
-      counter("ethui.auth.code_sent.count",
+      counter("ethui.auth.code_sent",
         description: "Number of authentication codes sent"
       ),
-      counter("ethui.auth.code_verified.count",
+      counter("ethui.auth.code_verified",
         tags: [:status],
         description: "Number of authentication verification attempts"
       ),
-      counter("ethui.errors.count",
+      counter("ethui.errors",
         tags: [:type],
         description: "Application errors by type"
       )
@@ -131,9 +131,20 @@ defmodule EthuiWeb.Telemetry do
 
   defp periodic_measurements do
     [
-      # A module, function and arguments to be invoked periodically.
-      # This function must call :telemetry.execute/3 and a metric must be added above.
-      # {EthuiWeb, :count_users, []}
+      {__MODULE__, :publish_active_stacks_count, []}
     ]
+  end
+
+  @doc """
+  Periodically called to publish the current count of active stacks.
+  """
+  def publish_active_stacks_count do
+    import Ecto.Query, only: [from: 2]
+    alias Ethui.Stacks.Stack
+    alias Ethui.Repo
+
+    count = from(s in Stack, select: count(s.id)) |> Repo.one()
+
+    :telemetry.execute([:ethui, :stacks, :active], %{count: count}, %{})
   end
 end
