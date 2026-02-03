@@ -47,12 +47,9 @@ defmodule EthuiWeb.Endpoint do
       "Accept",
       "Origin",
       "User-Agent",
-      "DNT",
       "Cache-Control",
-      "X-Mx-ReqToken",
       "Keep-Alive",
       "X-Requested-With",
-      "If-Modified-Since",
       "X-CSRF-Token"
     ]
 
