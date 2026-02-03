@@ -17,6 +17,6 @@ defmodule Ethui.Telemetry do
   """
   @spec exec(event :: [atom()], metadata :: map()) :: :ok
   def exec(event, metadata \\ %{}) when is_list(event) do
-    :telemetry.execute([:ethui | event], %{count: 1}, metadata)
+    :telemetry.execute([:ethui_stacks | event], %{count: 1}, metadata)
   end
 end
