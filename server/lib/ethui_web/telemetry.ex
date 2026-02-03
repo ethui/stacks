@@ -25,19 +25,19 @@ defmodule EthuiWeb.Telemetry do
       distribution("phoenix.endpoint.stop.duration",
         unit: {:native, :millisecond},
         description: "Phoenix endpoint response time",
-        reporter_options: [buckets: [10, 50, 100, 250, 500, 1000, 2500, 5000, 10000]]
+        reporter_options: [buckets: [10, 50, 100, 250, 500, 1000, 2500, 5000, 10_000]]
       ),
       distribution("phoenix.router_dispatch.stop.duration",
         tags: [:route],
         unit: {:native, :millisecond},
         description: "Phoenix router dispatch time by route",
-        reporter_options: [buckets: [10, 50, 100, 250, 500, 1000, 2500, 5000, 10000]]
+        reporter_options: [buckets: [10, 50, 100, 250, 500, 1000, 2500, 5000, 10_000]]
       ),
       distribution("phoenix.router_dispatch.exception.duration",
         tags: [:route],
         unit: {:native, :millisecond},
         description: "Phoenix router exception duration",
-        reporter_options: [buckets: [10, 50, 100, 250, 500, 1000, 2500, 5000, 10000]]
+        reporter_options: [buckets: [10, 50, 100, 250, 500, 1000, 2500, 5000, 10_000]]
       ),
       distribution("phoenix.socket_connected.duration",
         unit: {:native, :millisecond},
