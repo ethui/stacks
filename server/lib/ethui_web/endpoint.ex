@@ -40,7 +40,7 @@ defmodule EthuiWeb.Endpoint do
   plug CORSPlug,
     origin: ["https://stacks.ethui.dev"],
     credentials: true,
-    max_age: 86400,
+    max_age: 86_400,
     headers: [
       "Authorization",
       "Content-Type",
