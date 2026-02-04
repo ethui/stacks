@@ -51,16 +51,6 @@ defmodule Ethui.Stacks.Server do
     GenServer.call(__MODULE__, {:destroy, stack})
   end
 
-  def suspend(%Stack{} = stack) do
-    GenServer.call(__MODULE__, {:suspend, stack})
-  end
-
-  def resume(%Stack{} = stack) do
-    GenServer.call(__MODULE__, {:destroy, stack})
-  end
-
-  # adicionar public api aqui, nao queromos interagir com o anvil diretamente
-
   def anvil_url(slug) do
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
          :ok <- Anvil.ensure_running(pid),

@@ -1,4 +1,4 @@
-defmodule EthuiWeb.WebSocketProxy do
+defmodule Ethui.Proxy.WebSocket do
   require Logger
 
   @moduledoc """
