@@ -9,9 +9,7 @@ defmodule Ethui.Stacks.Server do
 
   alias Ethui.Services.{Anvil, Graph}
   alias Ethui.Stacks
-  alias Ethui.Stacks.MultiStackSupervisor
-  alias Ethui.Stacks.Stack
-  alias Ethui.Stacks.{Stack, MultiStackSupervisor}
+  alias Ethui.Stacks.{MultiStackSupervisor, Stack}
 
   # state
   @type t :: %{
@@ -56,10 +54,10 @@ defmodule Ethui.Stacks.Server do
   end
 
   def resume(%Stack{} = stack) do
-    GenServer.call(__MODULE__, {:destroy, stack})
+    GenServer.call(__MODULE__, {:resume, stack})
   end
 
-  # adicionar public api aqui, nao queromos interagir com o anvil diretamente
+  # Public API for stack services - avoid direct interaction with anvil
 
   def anvil_url(slug) do
     with [{pid, _}] <- Registry.lookup(Ethui.Stacks.Registry, {slug, :anvil}),
