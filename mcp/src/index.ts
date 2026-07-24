@@ -289,5 +289,28 @@ cheat(
   (a) => ({ method: "evm_revert", params: [a.id] }),
 );
 
+server.tool(
+  "explorer_link",
+  "Build an ethui explorer deep link for a stack — to a tx, address, block, or the stack root. Hand this to a human to inspect.",
+  {
+    slug: z.string().describe("Stack slug"),
+    tx: z.string().optional().describe("Tx hash"),
+    address: z.string().optional().describe("Address"),
+    block: z.string().optional().describe("Block number"),
+  },
+  async ({ slug, tx, address, block }) => {
+    const rpc = await stacks.rpcFor(slug);
+    const links = explorerLinks(cfg, rpc);
+    const url = tx
+      ? links.tx(tx)
+      : address
+        ? links.address(address)
+        : block
+          ? links.block(block)
+          : links.root;
+    return text({ url });
+  },
+);
+
 const transport = new StdioServerTransport();
 await server.connect(transport);
