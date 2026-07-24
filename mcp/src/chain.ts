@@ -100,3 +100,51 @@ export async function execute(
   const receipt = await public_.waitForTransactionReceipt({ hash });
   return { hash, receipt };
 }
+
+// anvil signs on behalf of an impersonated address — no private key needed.
+export async function executeAs(rpc: string, from: Address, params: CallParams) {
+  const client = clientFor(rpc);
+  await anvil(rpc, "anvil_impersonateAccount", [from]);
+  try {
+    const hash = (await client.request({
+      method: "eth_sendTransaction",
+      params: [
+        {
+          from,
+          to: params.to,
+          data: params.data,
+          value: params.value != null ? `0x${params.value.toString(16)}` : undefined,
+        },
+      ],
+    } as never)) as Hash;
+    const receipt = await client.waitForTransactionReceipt({ hash });
+    return { hash, receipt };
+  } finally {
+    await anvil(rpc, "anvil_stopImpersonatingAccount", [from]);
+  }
+}
+
+export async function deployContract(
+  rpc: string,
+  abi: readonly unknown[],
+  bytecode: Hex,
+  args: unknown[],
+  privateKey?: Hex,
+) {
+  const wallet = walletFor(rpc, privateKey);
+  const public_ = clientFor(rpc);
+  const hash = await wallet.deployContract({
+    chain: null,
+    abi: abi as never,
+    bytecode,
+    args,
+  });
+  const receipt = await public_.waitForTransactionReceipt({ hash });
+  return { hash, address: receipt.contractAddress, receipt };
+}
+
+// Raw anvil_/evm_ cheatcode passthrough.
+export async function anvil(rpc: string, method: string, params: unknown[]) {
+  const client = clientFor(rpc);
+  return client.request({ method, params } as never);
+}
