@@ -55,7 +55,12 @@ export class StacksClient {
       method: "POST",
       body: JSON.stringify(body),
     });
-    return data;
+    // The create/show `urls` omit the per-stack key until provisioning catches
+    // up; resolve it from the api-key endpoint, which is populated immediately,
+    // then wait until anvil actually answers.
+    const stack = await this.resolveStack(data.slug);
+    await this.waitForAnvil(stack.urls.http_rpc);
+    return stack;
   }
 
   async listStacks(): Promise<Stack[]> {
@@ -68,10 +73,55 @@ export class StacksClient {
     return data;
   }
 
+  async apiKeyToken(slug: string): Promise<string> {
+    const { data } = await this.req<{ data: { token: string } }>(
+      `/stacks/${slug}/api-keys`,
+    );
+    return data.token;
+  }
+
+  // Stack services live at {scheme}//{slug}.{baseHost}; baseHost is the api
+  // host without its "api." prefix (api.stacks.ethui.dev -> stacks.ethui.dev).
+  private origins(slug: string) {
+    const api = new URL(this.cfg.stacksApi);
+    const baseHost = api.host.replace(/^api\./, "");
+    const ws = api.protocol === "https:" ? "wss:" : "ws:";
+    return {
+      http: `${api.protocol}//${slug}.${baseHost}`,
+      ws: `${ws}//${slug}.${baseHost}`,
+    };
+  }
+
+  // The show/list `urls` lag behind provisioning, but the api-key exists at
+  // once — so build the keyed urls ourselves and wait for anvil to answer.
+  async resolveStack(slug: string): Promise<Stack> {
+    const token = await this.apiKeyToken(slug);
+    const o = this.origins(slug);
+    const urls: StackUrls = {
+      http_rpc: `${o.http}/${token}`,
+      ws_rpc: `${o.ws}/${token}`,
+      explorer: `${o.http}/${token}`,
+    };
+    return { slug, status: "running", urls };
+  }
+
+  async waitForAnvil(rpc: string, tries = 45, delayMs = 2000): Promise<void> {
+    for (let i = 0; i < tries; i++) {
+      try {
+        const r = await fetch(rpc, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_chainId", params: [] }),
+        });
+        if (r.ok && (await r.json())?.result) return;
+      } catch {}
+      await new Promise((res) => setTimeout(res, delayMs));
+    }
+    throw new Error(`anvil for ${rpc} did not respond in time`);
+  }
+
   async rpcFor(slug: string): Promise<string> {
-    const stack = await this.getStack(slug);
-    if (!stack.urls?.http_rpc) throw new Error(`Stack ${slug} has no http_rpc url`);
-    return stack.urls.http_rpc;
+    return (await this.resolveStack(slug)).urls.http_rpc;
   }
 
   async deleteStack(slug: string): Promise<void> {
