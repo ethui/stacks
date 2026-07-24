@@ -53,6 +53,18 @@ curl -X POST https://api.stacks.ethui.dev/auth/verify-code -d '{"email":"you@x.c
 pnpm --filter @ethui/stacks-mcp build
 ```
 
+## End-to-end demo
+
+Runs the fork-mainnet whale flow against live Stacks and prints explorer links:
+
+```
+export STACKS_TOKEN=<jwt>
+export FORK_URL=<a mainnet rpc>
+pnpm --filter @ethui/stacks-mcp demo
+```
+
+Optional overrides: `USDC`, `WHALE`, `RECIPIENT`.
+
 ## Tools
 
 - `create_stack` / `list_stacks` / `delete_stack` — sandbox lifecycle
