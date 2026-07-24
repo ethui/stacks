@@ -1,0 +1,24 @@
+{
+  "name": "@ethui/stacks-mcp",
+  "version": "0.0.0",
+  "description": "MCP server for ethui Stacks — provision forked anvil sandboxes, inspect chain, simulate & execute, drive anvil cheatcodes",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "ethui-stacks-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "viem": "^2.21.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}
