@@ -1,6 +1,14 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { decodeFunctionData, parseEventLogs, type Abi, type Hex, type Log } from "viem";
+import {
+  decodeFunctionData,
+  parseAbiItem,
+  parseEventLogs,
+  slice,
+  type Abi,
+  type Hex,
+  type Log,
+} from "viem";
 
 export interface Artifact {
   name: string;
@@ -72,4 +80,29 @@ export function decodeLogs(out: string, logs: Log[]) {
   } catch {
     return [];
   }
+}
+
+// Fallback when the selector isn't in out/: resolve the signature via the
+// openchain/4byte database, then decode args from the recovered signature.
+export async function decodeVia4byte(data: Hex) {
+  if (!data || data.length < 10) return null;
+  const selector = slice(data, 0, 4);
+  try {
+    const res = await fetch(
+      `https://api.openchain.xyz/signature-database/v1/lookup?function=${selector}&filter=true`,
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      result?: { function?: Record<string, { name: string }[]> };
+    };
+    const candidates = json.result?.function?.[selector] ?? [];
+    for (const { name } of candidates) {
+      try {
+        const item = parseAbiItem(`function ${name}`);
+        const decoded = decodeFunctionData({ abi: [item], data });
+        return { signature: name, ...decoded, source: "4byte" as const };
+      } catch {}
+    }
+  } catch {}
+  return null;
 }

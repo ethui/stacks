@@ -18,7 +18,7 @@ import {
   jsonSafe,
   simulateCall,
 } from "./chain.js";
-import { decodeCalldata, decodeLogs, getArtifact } from "./abi.js";
+import { decodeCalldata, decodeLogs, decodeVia4byte, getArtifact } from "./abi.js";
 
 function toWeiHex(decimal: string): Hex {
   return `0x${BigInt(decimal).toString(16)}`;
@@ -112,13 +112,15 @@ server.tool(
     const rpc = await stacks.rpcFor(slug);
     const result = await getTransaction(rpc, hash as Hash);
     const links = explorerLinks(cfg, rpc);
-    const decoded = cfg.foundryOut
-      ? {
-          call: decodeCalldata(cfg.foundryOut, result.tx.input),
-          events: result.receipt ? decodeLogs(cfg.foundryOut, result.receipt.logs) : [],
-        }
-      : undefined;
-    return text({ ...jsonSafe(result), decoded: jsonSafe(decoded), explorer: links.tx(hash) });
+    let call = cfg.foundryOut ? decodeCalldata(cfg.foundryOut, result.tx.input) : null;
+    if (!call) call = await decodeVia4byte(result.tx.input);
+    const events =
+      cfg.foundryOut && result.receipt ? decodeLogs(cfg.foundryOut, result.receipt.logs) : [];
+    return text({
+      ...jsonSafe(result),
+      decoded: jsonSafe({ call, events }),
+      explorer: links.tx(hash),
+    });
   },
 );
 
