@@ -2,11 +2,19 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import type { Address, Hash } from "viem";
+import type { Address, Hash, Hex } from "viem";
 import { loadConfig } from "./config.js";
 import { StacksClient } from "./stacks.js";
 import { explorerLinks } from "./explorer.js";
-import { getAddress, getBlock, getLogs, getTransaction, jsonSafe } from "./chain.js";
+import {
+  execute,
+  getAddress,
+  getBlock,
+  getLogs,
+  getTransaction,
+  jsonSafe,
+  simulateCall,
+} from "./chain.js";
 
 function text(value: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }] };
@@ -129,6 +137,53 @@ server.tool(
       toBlock: toBlock != null ? BigInt(toBlock) : undefined,
     });
     return text({ count: logs.length, logs: jsonSafe(logs) });
+  },
+);
+
+server.tool(
+  "simulate_call",
+  "Dry-run a call on a stack (eth_call, no state change). Returns return data.",
+  {
+    slug: z.string().describe("Stack slug"),
+    to: z.string().describe("Target contract address"),
+    data: z.string().optional().describe("Calldata hex (0x...)"),
+    value: z.string().optional().describe("Wei value as decimal string"),
+    from: z.string().optional().describe("Caller address (defaults to node)"),
+  },
+  async ({ slug, to, data, value, from }) => {
+    const rpc = await stacks.rpcFor(slug);
+    const result = await simulateCall(rpc, {
+      to: to as Address,
+      data: data as Hex | undefined,
+      value: value != null ? BigInt(value) : undefined,
+      from: from as Address | undefined,
+    });
+    return text(result);
+  },
+);
+
+server.tool(
+  "execute",
+  "Send a transaction on a stack and wait for the receipt. Signs with PRIVATE_KEY or anvil account 0 by default. Returns hash, receipt + explorer link.",
+  {
+    slug: z.string().describe("Stack slug"),
+    to: z.string().describe("Target address"),
+    data: z.string().optional().describe("Calldata hex (0x...)"),
+    value: z.string().optional().describe("Wei value as decimal string"),
+  },
+  async ({ slug, to, data, value }) => {
+    const rpc = await stacks.rpcFor(slug);
+    const result = await execute(
+      rpc,
+      {
+        to: to as Address,
+        data: data as Hex | undefined,
+        value: value != null ? BigInt(value) : undefined,
+      },
+      cfg.privateKey,
+    );
+    const links = explorerLinks(cfg, rpc);
+    return text({ ...jsonSafe(result), explorer: links.tx(result.hash) });
   },
 );
 

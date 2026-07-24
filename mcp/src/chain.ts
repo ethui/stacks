@@ -1,7 +1,24 @@
-import { createPublicClient, http, type Address, type Hash } from "viem";
+import {
+  createPublicClient,
+  createWalletClient,
+  http,
+  type Address,
+  type Hash,
+  type Hex,
+} from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+
+// anvil's default funded account 0 — public, deterministic dev key.
+export const ANVIL_ACCOUNT_0 =
+  "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" as const;
 
 export function clientFor(rpc: string) {
   return createPublicClient({ transport: http(rpc) });
+}
+
+export function walletFor(rpc: string, privateKey?: Hex) {
+  const account = privateKeyToAccount(privateKey ?? ANVIL_ACCOUNT_0);
+  return createWalletClient({ account, transport: http(rpc) });
 }
 
 // viem returns bigints; JSON.stringify can't serialize them. Bigints become strings.
@@ -47,4 +64,39 @@ export async function getLogs(
     fromBlock: params.fromBlock,
     toBlock: params.toBlock,
   });
+}
+
+export interface CallParams {
+  to: Address;
+  data?: Hex;
+  value?: bigint;
+  from?: Address;
+}
+
+export async function simulateCall(rpc: string, params: CallParams) {
+  const client = clientFor(rpc);
+  const result = await client.call({
+    to: params.to,
+    data: params.data,
+    value: params.value,
+    account: params.from,
+  });
+  return { data: result.data ?? "0x" };
+}
+
+export async function execute(
+  rpc: string,
+  params: CallParams,
+  privateKey?: Hex,
+) {
+  const wallet = walletFor(rpc, privateKey);
+  const public_ = clientFor(rpc);
+  const hash = await wallet.sendTransaction({
+    chain: null,
+    to: params.to,
+    data: params.data,
+    value: params.value,
+  });
+  const receipt = await public_.waitForTransactionReceipt({ hash });
+  return { hash, receipt };
 }
