@@ -56,7 +56,19 @@ pnpm --filter @ethui/stacks-mcp build
 ## Tools
 
 - `create_stack` / `list_stacks` / `delete_stack` — sandbox lifecycle
-- _(next)_ `get_block` / `get_transaction` / `get_address` / `get_logs` — read + explorer links
-- _(next)_ `simulate_call` / `execute` — run the experiment
-- _(next)_ cheatcodes: `impersonate` / `set_balance` / `mine` / `set_block_timestamp` / `snapshot` / `revert`
-- _(next)_ `decode` — foundry ABI decoding
+- `get_block` / `get_transaction` / `get_address` / `get_logs` — read + explorer links
+  (`get_transaction` decodes call + events when `FOUNDRY_OUT` is set)
+- `deploy_contract` — deploy a compiled contract from `out/` to a stack
+- `simulate_call` / `execute` — run the experiment (`execute` takes `from` to
+  impersonate any sender with no key)
+- cheatcodes: `impersonate` / `set_balance` / `mine` / `set_block_timestamp` /
+  `snapshot` / `revert`
+
+## Demo paths
+
+**Deploy your own:** `create_stack` → `deploy_contract Counter` → `execute` /
+`simulate_call` → `get_transaction` (decoded) → open explorer link → `delete_stack`.
+
+**Fork mainnet:** `create_stack {fork_url, fork_block_number}` → `impersonate`
+a whale (or `execute` with `from`) → move funds → inspect in explorer →
+`delete_stack`.
