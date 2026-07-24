@@ -63,6 +63,17 @@ export class StacksClient {
     return data;
   }
 
+  async getStack(slug: string): Promise<Stack> {
+    const { data } = await this.req<{ data: Stack }>(`/stacks/${slug}`);
+    return data;
+  }
+
+  async rpcFor(slug: string): Promise<string> {
+    const stack = await this.getStack(slug);
+    if (!stack.urls?.http_rpc) throw new Error(`Stack ${slug} has no http_rpc url`);
+    return stack.urls.http_rpc;
+  }
+
   async deleteStack(slug: string): Promise<void> {
     await this.req<void>(`/stacks/${slug}`, { method: "DELETE" });
   }
