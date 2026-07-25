@@ -15,6 +15,9 @@ defmodule EthuiWeb.Plugs.ApiKeyAuth do
 
   @min_token_length 20
 
+  # Successful lookups are cached for this window; a revoked key keeps working until it lapses.
+  @cache_ttl_ms :timer.seconds(60)
+
   def init(opts), do: opts
 
   def call(conn, _opts) do
@@ -26,10 +29,8 @@ defmodule EthuiWeb.Plugs.ApiKeyAuth do
   end
 
   defp do_call(conn) do
-    conn.path_info
-
     with [token | _] when byte_size(token) >= @min_token_length <- conn.path_info,
-         %ApiKey{} = api_key <- Accounts.get_api_key_by_token(token),
+         %ApiKey{} = api_key <- cached_api_key(token),
          true <- stack_matches?(conn, api_key) do
       conn |> Map.update!(:path_info, &tl/1)
     else
@@ -38,6 +39,27 @@ defmodule EthuiWeb.Plugs.ApiKeyAuth do
         |> put_status(:unauthorized)
         |> json(%{error: "Invalid API key"})
         |> halt()
+    end
+  end
+
+  # Cache successful token lookups so the proxy hot path skips the DB per request.
+  # Misses (invalid tokens) are not cached.
+  defp cached_api_key(token) do
+    now = System.monotonic_time(:millisecond)
+
+    case :ets.lookup(:api_key_cache, token) do
+      [{^token, %ApiKey{} = api_key, expiry}] when expiry > now ->
+        api_key
+
+      _ ->
+        case Accounts.get_api_key_by_token(token) do
+          %ApiKey{} = api_key ->
+            :ets.insert(:api_key_cache, {token, api_key, now + @cache_ttl_ms})
+            api_key
+
+          other ->
+            other
+        end
     end
   end
 

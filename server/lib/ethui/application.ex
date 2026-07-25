@@ -7,6 +7,13 @@ defmodule Ethui.Application do
 
   @impl true
   def start(_type, _args) do
+    # ETS cache backing EthuiWeb.Plugs.ApiKeyAuth; guard avoids raising if the
+    # table already exists on a re-entrant start/2.
+    _ =
+      if :ets.whereis(:api_key_cache) == :undefined do
+        :ets.new(:api_key_cache, [:named_table, :public, :set, read_concurrency: true])
+      end
+
     children = [
       EthuiWeb.Telemetry,
       Ethui.Repo,

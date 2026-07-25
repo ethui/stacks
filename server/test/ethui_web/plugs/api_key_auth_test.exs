@@ -2,10 +2,12 @@ defmodule EthuiWeb.Plugs.ApiKeyAuthTest do
   use EthuiWeb.ConnCase, async: false
 
   import Plug.Test
+  import Ecto.Query, only: [from: 2]
 
   alias EthuiWeb.Plugs.{ApiKeyAuth, Authenticate, StackSubdomain}
   alias Ethui.Repo
   alias Ethui.Accounts
+  alias Ethui.Accounts.ApiKey
   alias Ethui.Stacks.Stack
 
   describe "Api key auth plug when enabled" do
@@ -48,6 +50,60 @@ defmodule EthuiWeb.Plugs.ApiKeyAuthTest do
       assert conn.assigns[:proxy].slug == slug
       assert conn.path_info == ["execute"]
       refute conn.halted
+    end
+
+    test "caches successful lookups so the proxy hot path skips the DB", %{
+      slug: slug,
+      api_key: api_key
+    } do
+      call = fn ->
+        conn(:get, "/#{api_key}/execute")
+        |> Map.put(:host, "#{slug}.lvh.me")
+        |> StackSubdomain.call(StackSubdomain.init([]))
+        |> ApiKeyAuth.call(ApiKeyAuth.init([]))
+      end
+
+      refute call.().halted
+
+      # warm cache authorizes even after the DB row is gone
+      Repo.delete_all(from(k in ApiKey, where: k.token == ^api_key))
+      refute call.().halted
+
+      # evicted -> re-checked -> now missing -> rejected
+      :ets.delete(:api_key_cache, api_key)
+      assert call.().halted
+    end
+
+    test "expired cache entries are ignored and re-checked against the DB", %{
+      slug: slug,
+      api_key: api_key
+    } do
+      call = fn ->
+        conn(:get, "/#{api_key}/execute")
+        |> Map.put(:host, "#{slug}.lvh.me")
+        |> StackSubdomain.call(StackSubdomain.init([]))
+        |> ApiKeyAuth.call(ApiKeyAuth.init([]))
+      end
+
+      struct = Ethui.Accounts.get_api_key_by_token(api_key)
+      Repo.delete_all(from(k in ApiKey, where: k.token == ^api_key))
+
+      # a warm (non-expired) entry would still authorize; an expired one must not
+      :ets.insert(:api_key_cache, {api_key, struct, System.monotonic_time(:millisecond) - 1})
+      assert call.().halted
+    end
+
+    test "invalid tokens are not cached", %{slug: slug} do
+      bad = String.duplicate("z", 30)
+
+      conn =
+        conn(:get, "/#{bad}/execute")
+        |> Map.put(:host, "#{slug}.lvh.me")
+        |> StackSubdomain.call(StackSubdomain.init([]))
+        |> ApiKeyAuth.call(ApiKeyAuth.init([]))
+
+      assert conn.halted
+      assert :ets.lookup(:api_key_cache, bad) == []
     end
   end
 
