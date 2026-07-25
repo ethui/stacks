@@ -25,6 +25,8 @@ if jwt_secret = System.get_env("JWT_SECRET") do
   config :ethui, :jwt_secret, jwt_secret
 end
 
+config :ethui, :explorer_base, System.get_env("EXPLORER_BASE", "https://explorer.ethui.dev")
+
 is_saas? = !!System.get_env("ETHUI_STACKS_SAAS")
 
 config :ethui, EthuiWeb.Plugs.Authenticate, enabled: is_saas?

@@ -16,6 +16,8 @@ defmodule Ethui.Stacks.Stack do
     "enabled" => :boolean
   }
 
+  @type t :: %__MODULE__{}
+
   schema "stacks" do
     field(:slug, :string)
     field(:anvil_opts, :map, default: %{})

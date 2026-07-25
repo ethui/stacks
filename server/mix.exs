@@ -36,6 +36,7 @@ defmodule Ethui.MixProject do
       # application
       {:muontrap, "~> 1.6"},
       {:mint, "~> 1.7"},
+      {:anubis_mcp, "~> 1.10"},
 
       # development
       {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},

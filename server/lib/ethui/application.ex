@@ -18,7 +18,8 @@ defmodule Ethui.Application do
       # {Ethui.Worker, arg},
       # Start to serve requests, typically the last entry
       EthuiWeb.Endpoint,
-      Ethui.Stacks.Supervisor
+      Ethui.Stacks.Supervisor,
+      {Ethui.MCP.Server, transport: :streamable_http}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

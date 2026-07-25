@@ -70,6 +70,10 @@ defmodule Ethui.Stacks.Server do
       _ ->
         {:error, "Stack not found"}
     end
+  catch
+    # anvil dies mid-call when it cannot boot at all, e.g. bad fork options
+    :exit, {:timeout, _} -> {:error, "Stack is taking too long to start"}
+    :exit, _ -> {:error, "Stack failed to start, check its fork options"}
   end
 
   def graph_ip_from_slug(proxied_path, slug, target_port) do

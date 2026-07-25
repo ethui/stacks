@@ -33,6 +33,11 @@ defmodule EthuiWeb.Router do
     plug EthuiWeb.Plugs.Authenticate
   end
 
+  # No `accepts`: MCP clients negotiate json and text/event-stream on the same path
+  pipeline :mcp do
+    plug EthuiWeb.Plugs.Authenticate
+  end
+
   pipeline :proxy do
     plug EthuiWeb.Plugs.StackSubdomain
     plug EthuiWeb.Plugs.ApiKeyAuth
@@ -45,6 +50,12 @@ defmodule EthuiWeb.Router do
     post "/auth/send-code", Api.AuthController, :send_code
     post "/auth/verify-code", Api.AuthController, :verify_code
     get "/healthz", Api.HealthzController, :index
+  end
+
+  scope "/", host: "api." do
+    pipe_through [:base, :mcp]
+
+    forward "/mcp", Anubis.Server.Transport.StreamableHTTP.Plug, server: Ethui.MCP.Server
   end
 
   scope "/", EthuiWeb, host: "api." do

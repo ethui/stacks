@@ -7,6 +7,8 @@ defmodule Ethui.Accounts.User do
   import Ecto.Changeset
   alias Ethui.Stacks.Stack
 
+  @type t :: %__MODULE__{}
+
   schema "users" do
     field(:email, :string)
     field(:verification_code, :string)
