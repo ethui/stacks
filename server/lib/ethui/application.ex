@@ -10,9 +10,10 @@ defmodule Ethui.Application do
     # Hot-path cache for api-key auth on proxied requests (see EthuiWeb.Plugs.ApiKeyAuth).
     # Owned by the app master process, lives for the app lifetime.
     # Guarded so a re-entrant start/2 in the same VM doesn't raise on an existing table.
-    if :ets.whereis(:api_key_cache) == :undefined do
-      :ets.new(:api_key_cache, [:named_table, :public, :set, read_concurrency: true])
-    end
+    _ =
+      if :ets.whereis(:api_key_cache) == :undefined do
+        :ets.new(:api_key_cache, [:named_table, :public, :set, read_concurrency: true])
+      end
 
     children = [
       EthuiWeb.Telemetry,
