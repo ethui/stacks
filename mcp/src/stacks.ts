@@ -21,6 +21,23 @@ export interface CreateStackParams {
   fork_block_number?: number;
 }
 
+// list/show return url fields flat; create nests them under `urls`.
+export function normalizeStack(s: Record<string, unknown>): Stack {
+  const nested = s.urls as StackUrls | undefined;
+  const urls: StackUrls = nested ?? {
+    http_rpc: s.http_rpc as string,
+    ws_rpc: s.ws_rpc as string,
+    explorer: (s.explorer as string) ?? (s.http_rpc as string),
+  };
+  return {
+    slug: s.slug as string,
+    status: s.status as string,
+    urls,
+    chain_id: s.chain_id as string | undefined,
+    anvil_opts: s.anvil_opts as Record<string, unknown> | undefined,
+  };
+}
+
 export class StacksClient {
   constructor(private cfg: Config) {}
 
@@ -64,8 +81,8 @@ export class StacksClient {
   }
 
   async listStacks(): Promise<Stack[]> {
-    const { data } = await this.req<{ data: Stack[] }>("/stacks");
-    return data;
+    const { data } = await this.req<{ data: Record<string, unknown>[] }>("/stacks");
+    return data.map((s) => normalizeStack(s));
   }
 
   async getStack(slug: string): Promise<Stack> {
