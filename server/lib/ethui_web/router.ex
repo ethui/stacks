@@ -47,6 +47,12 @@ defmodule EthuiWeb.Router do
     get "/healthz", Api.HealthzController, :index
   end
 
+  scope "/", host: "api." do
+    pipe_through [:base]
+
+    forward "/mcp", Anubis.Server.Transport.StreamableHTTP.Plug, server: Ethui.MCP.Server
+  end
+
   scope "/", EthuiWeb, host: "api." do
     pipe_through [:base, :authenticated_api]
 
