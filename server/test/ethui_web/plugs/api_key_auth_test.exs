@@ -74,6 +74,38 @@ defmodule EthuiWeb.Plugs.ApiKeyAuthTest do
       :ets.delete(:api_key_cache, api_key)
       assert call.().halted
     end
+
+    test "expired cache entries are ignored and re-checked against the DB", %{
+      slug: slug,
+      api_key: api_key
+    } do
+      call = fn ->
+        conn(:get, "/#{api_key}/execute")
+        |> Map.put(:host, "#{slug}.lvh.me")
+        |> StackSubdomain.call(StackSubdomain.init([]))
+        |> ApiKeyAuth.call(ApiKeyAuth.init([]))
+      end
+
+      struct = Ethui.Accounts.get_api_key_by_token(api_key)
+      Repo.delete_all(from(k in ApiKey, where: k.token == ^api_key))
+
+      # a warm (non-expired) entry would still authorize; an expired one must not
+      :ets.insert(:api_key_cache, {api_key, struct, System.monotonic_time(:millisecond) - 1})
+      assert call.().halted
+    end
+
+    test "invalid tokens are not cached", %{slug: slug} do
+      bad = String.duplicate("z", 30)
+
+      conn =
+        conn(:get, "/#{bad}/execute")
+        |> Map.put(:host, "#{slug}.lvh.me")
+        |> StackSubdomain.call(StackSubdomain.init([]))
+        |> ApiKeyAuth.call(ApiKeyAuth.init([]))
+
+      assert conn.halted
+      assert :ets.lookup(:api_key_cache, bad) == []
+    end
   end
 
   describe "Api key auth plug when disabled " do

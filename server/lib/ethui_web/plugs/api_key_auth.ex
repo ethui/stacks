@@ -30,8 +30,6 @@ defmodule EthuiWeb.Plugs.ApiKeyAuth do
   end
 
   defp do_call(conn) do
-    conn.path_info
-
     with [token | _] when byte_size(token) >= @min_token_length <- conn.path_info,
          %ApiKey{} = api_key <- cached_api_key(token),
          true <- stack_matches?(conn, api_key) do
