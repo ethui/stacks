@@ -2,10 +2,12 @@ defmodule EthuiWeb.Plugs.ApiKeyAuthTest do
   use EthuiWeb.ConnCase, async: false
 
   import Plug.Test
+  import Ecto.Query, only: [from: 2]
 
   alias EthuiWeb.Plugs.{ApiKeyAuth, Authenticate, StackSubdomain}
   alias Ethui.Repo
   alias Ethui.Accounts
+  alias Ethui.Accounts.ApiKey
   alias Ethui.Stacks.Stack
 
   describe "Api key auth plug when enabled" do
@@ -48,6 +50,29 @@ defmodule EthuiWeb.Plugs.ApiKeyAuthTest do
       assert conn.assigns[:proxy].slug == slug
       assert conn.path_info == ["execute"]
       refute conn.halted
+    end
+
+    test "caches successful lookups so the proxy hot path skips the DB", %{
+      slug: slug,
+      api_key: api_key
+    } do
+      call = fn ->
+        conn(:get, "/#{api_key}/execute")
+        |> Map.put(:host, "#{slug}.lvh.me")
+        |> StackSubdomain.call(StackSubdomain.init([]))
+        |> ApiKeyAuth.call(ApiKeyAuth.init([]))
+      end
+
+      # first call populates the cache
+      refute call.().halted
+
+      # deleting the DB row must NOT break auth while the cache entry is warm
+      Repo.delete_all(from(k in ApiKey, where: k.token == ^api_key))
+      refute call.().halted
+
+      # once the cache entry is dropped, the now-missing key is rejected
+      :ets.delete(:api_key_cache, api_key)
+      assert call.().halted
     end
   end
 
