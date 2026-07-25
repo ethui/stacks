@@ -16,6 +16,4 @@ config :swoosh, local: false
 # Do not print debug messages in production
 config :logger, level: :info
 
-# Pool + pool_size are set in runtime.exs (the default DBConnection pool, not the
-# test SQL sandbox). :immediate transactions are recommended for SQLite web apps.
 config :ethui, Ethui.Repo, default_transaction_mode: :immediate
