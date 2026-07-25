@@ -63,14 +63,13 @@ defmodule EthuiWeb.Plugs.ApiKeyAuthTest do
         |> ApiKeyAuth.call(ApiKeyAuth.init([]))
       end
 
-      # first call populates the cache
       refute call.().halted
 
-      # deleting the DB row must NOT break auth while the cache entry is warm
+      # warm cache authorizes even after the DB row is gone
       Repo.delete_all(from(k in ApiKey, where: k.token == ^api_key))
       refute call.().halted
 
-      # once the cache entry is dropped, the now-missing key is rejected
+      # evicted -> re-checked -> now missing -> rejected
       :ets.delete(:api_key_cache, api_key)
       assert call.().halted
     end

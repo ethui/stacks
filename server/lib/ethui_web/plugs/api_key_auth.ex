@@ -15,8 +15,7 @@ defmodule EthuiWeb.Plugs.ApiKeyAuth do
 
   @min_token_length 20
 
-  # ponytail: 60s TTL cache; a revoked/deleted key keeps working up to 60s.
-  # Drop TTL or invalidate on api_key delete if that window matters.
+  # Successful lookups are cached for this window; a revoked key keeps working until it lapses.
   @cache_ttl_ms :timer.seconds(60)
 
   def init(opts), do: opts
@@ -43,9 +42,8 @@ defmodule EthuiWeb.Plugs.ApiKeyAuth do
     end
   end
 
-  # Caches successful token lookups in ETS so the proxy hot path doesn't hit the
-  # DB on every forwarded RPC request. Invalid tokens are not cached (they stay
-  # cheap-to-reject and can't fill the table).
+  # Cache successful token lookups so the proxy hot path skips the DB per request.
+  # Misses (invalid tokens) are not cached.
   defp cached_api_key(token) do
     now = System.monotonic_time(:millisecond)
 

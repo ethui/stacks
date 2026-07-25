@@ -7,9 +7,8 @@ defmodule Ethui.Application do
 
   @impl true
   def start(_type, _args) do
-    # Hot-path cache for api-key auth on proxied requests (see EthuiWeb.Plugs.ApiKeyAuth).
-    # Owned by the app master process, lives for the app lifetime.
-    # Guarded so a re-entrant start/2 in the same VM doesn't raise on an existing table.
+    # ETS cache backing EthuiWeb.Plugs.ApiKeyAuth; guard avoids raising if the
+    # table already exists on a re-entrant start/2.
     _ =
       if :ets.whereis(:api_key_cache) == :undefined do
         :ets.new(:api_key_cache, [:named_table, :public, :set, read_concurrency: true])
