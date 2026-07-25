@@ -87,12 +87,36 @@ The server speaks [MCP](https://modelcontextprotocol.io) over streamable HTTP at
 `/mcp` on the api host, so an agent can provision sandboxes, drive them and hand
 back explorer links a human can open.
 
-Authentication is the same 7-day JWT as the REST api:
+### 1. Get a token
+
+Authentication is the same JWT as the REST api. The code arrives by email:
 
 ```bash
-curl -X POST https://api.stacks.ethui.dev/auth/send-code -d '{"email":"you@example.com"}'
-curl -X POST https://api.stacks.ethui.dev/auth/verify-code -d '{"email":"you@example.com","code":"123456"}'
+curl -X POST https://api.stacks.ethui.dev/auth/send-code \
+  -H 'content-type: application/json' \
+  -d '{"email":"you@example.com"}'
+
+curl -X POST https://api.stacks.ethui.dev/auth/verify-code \
+  -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","code":"123456"}'
+# -> {"token":"eyJ..."}
 ```
+
+### 2. Add the server
+
+Claude Code:
+
+```bash
+claude mcp add --transport http --scope user ethui-stacks \
+  https://api.stacks.ethui.dev/mcp \
+  --header "Authorization: Bearer eyJ..."
+```
+
+`--scope user` makes it available in every project; drop it to add the server to
+the current one only. Check it with `claude mcp list`, then restart Claude Code —
+MCP servers are loaded when a session starts.
+
+Claude Desktop, and other clients that take JSON:
 
 ```json
 {
@@ -100,13 +124,21 @@ curl -X POST https://api.stacks.ethui.dev/auth/verify-code -d '{"email":"you@exa
     "ethui-stacks": {
       "type": "http",
       "url": "https://api.stacks.ethui.dev/mcp",
-      "headers": { "Authorization": "Bearer <jwt>" }
+      "headers": { "Authorization": "Bearer eyJ..." }
     }
   }
 }
 ```
 
-Tools:
+The token sits in that config in plaintext. Claude Code expands environment
+variables, so `"Bearer ${ETHUI_STACKS_TOKEN}"` works if you would rather keep it
+out of the file.
+
+Point `url` at your own instance to use a self-hosted Stacks. Running without
+`ETHUI_STACKS_SAAS` disables authentication entirely, so the header can be
+dropped locally.
+
+### Tools
 
 - lifecycle: `create_stack` `list_stacks` `delete_stack`
 - reads: `get_block` `get_transaction` `get_address` `get_logs`
