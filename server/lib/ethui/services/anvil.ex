@@ -60,9 +60,10 @@ defmodule Ethui.Services.Anvil do
     GenServer.call(id, :url)
   end
 
-  @spec ensure_running(id) :: :ok
-  def ensure_running(id) do
-    GenServer.call(id, :ensure_running)
+  # Booting a forked instance waits on the upstream chain, well past a default call timeout
+  @spec ensure_running(id, timeout) :: :ok
+  def ensure_running(id, timeout \\ :timer.seconds(30)) do
+    GenServer.call(id, :ensure_running, timeout)
   end
 
   @doc """

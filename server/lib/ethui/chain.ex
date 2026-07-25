@@ -37,7 +37,7 @@ defmodule Ethui.Chain do
   defp anvil_url(slug) do
     case Server.anvil_url(slug) do
       {:ok, url} -> {:ok, url}
-      {:error, _} -> {:error, "stack #{slug} is not running"}
+      {:error, reason} -> {:error, "stack #{slug} is not reachable: #{reason}"}
     end
   end
 

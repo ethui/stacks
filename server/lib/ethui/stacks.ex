@@ -122,7 +122,7 @@ defmodule Ethui.Stacks do
       Repo.all(from(s in Stack, where: s.user_id == ^user.id))
       |> Repo.preload(:api_key)
     else
-      Repo.all(Stack)
+      Repo.all(Stack) |> Repo.preload(:api_key)
     end
   end
 

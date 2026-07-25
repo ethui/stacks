@@ -7,8 +7,8 @@ defmodule Ethui.MCP.Tools.Execute do
 
   use Ethui.MCP.Tool
 
-  @receipt_attempts 30
-  @receipt_interval 100
+  @receipt_attempts 100
+  @receipt_interval 200
 
   schema do
     field(:slug, :string, required: true)

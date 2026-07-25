@@ -1,10 +1,6 @@
 defmodule EthuiWeb.MCPTest do
-  use Ethui.DataCase, async: false
+  use EthuiWeb.ConnCase, async: false
 
-  import Plug.Conn
-  import Plug.Test
-
-  alias Anubis.Server.Transport.StreamableHTTP
   alias Ethui.Accounts
 
   @protocol_version "2025-06-18"
@@ -17,11 +13,19 @@ defmodule EthuiWeb.MCPTest do
     Application.put_env(:ethui, EthuiWeb.Plugs.Authenticate, enabled: true)
     on_exit(fn -> Application.put_env(:ethui, EthuiWeb.Plugs.Authenticate, original) end)
 
-    {:ok, session: initialize()}
+    {:ok, user} =
+      Accounts.send_verification_code(
+        "mcp-http-#{System.unique_integer([:positive])}@example.com"
+      )
+
+    {:ok, token} = Accounts.generate_token(user)
+    auth = [authorization: "Bearer #{token}"]
+
+    {:ok, auth: auth, session: initialize(auth)}
   end
 
-  test "lists every tool", %{session: session} do
-    assert %{"result" => %{"tools" => tools}} = request(session, "tools/list", %{})
+  test "lists every tool", %{session: session, auth: auth} do
+    assert %{"result" => %{"tools" => tools}} = request(session, "tools/list", %{}, auth)
 
     names = Enum.map(tools, & &1["name"])
 
@@ -31,59 +35,53 @@ defmodule EthuiWeb.MCPTest do
     assert length(names) == 15
   end
 
-  test "rejects a tool call without a token", %{session: session} do
-    assert %{"result" => result} =
-             request(session, "tools/call", %{"name" => "list_stacks", "arguments" => %{}})
-
-    assert result["isError"]
-    assert [%{"text" => text}] = result["content"]
-    assert text =~ "Authorization"
+  test "refuses to open a session without a token" do
+    assert post_mcp(initialize_body(), []).status == 401
   end
 
-  test "runs a tool for an authenticated caller", %{session: session} do
-    {:ok, user} = Accounts.send_verification_code("mcp-http@example.com")
-    {:ok, token} = Accounts.generate_token(user)
-
+  test "runs a tool for an authenticated caller", %{session: session, auth: auth} do
     assert %{"result" => result} =
-             request(session, "tools/call", %{"name" => "list_stacks", "arguments" => %{}},
-               authorization: "Bearer #{token}"
-             )
+             request(session, "tools/call", %{"name" => "list_stacks", "arguments" => %{}}, auth)
 
     refute result["isError"]
     assert [%{"text" => "[]"}] = result["content"]
   end
 
-  test "reports unknown tools as protocol errors", %{session: session} do
+  test "reports unknown tools as protocol errors", %{session: session, auth: auth} do
     assert %{"error" => error} =
-             request(session, "tools/call", %{"name" => "nope", "arguments" => %{}})
+             request(session, "tools/call", %{"name" => "nope", "arguments" => %{}}, auth)
 
     assert error["message"] =~ "not found" or error["code"]
   end
 
-  defp initialize do
-    conn =
-      post_mcp(%{
-        "jsonrpc" => "2.0",
-        "id" => 1,
-        "method" => "initialize",
-        "params" => %{
-          "protocolVersion" => @protocol_version,
-          "clientInfo" => %{"name" => "test", "version" => "1.0.0"},
-          "capabilities" => %{}
-        }
-      })
+  defp initialize(headers) do
+    conn = post_mcp(initialize_body(), headers)
 
     assert conn.status == 200
-    [session_id] = get_resp_header(conn, "mcp-session-id")
+    [session_id] = Plug.Conn.get_resp_header(conn, "mcp-session-id")
 
-    post_mcp(%{"jsonrpc" => "2.0", "method" => "notifications/initialized"},
-      "mcp-session-id": session_id
+    post_mcp(
+      %{"jsonrpc" => "2.0", "method" => "notifications/initialized"},
+      Keyword.put(headers, :"mcp-session-id", session_id)
     )
 
     session_id
   end
 
-  defp request(session, method, params, headers \\ []) do
+  defp initialize_body do
+    %{
+      "jsonrpc" => "2.0",
+      "id" => 1,
+      "method" => "initialize",
+      "params" => %{
+        "protocolVersion" => @protocol_version,
+        "clientInfo" => %{"name" => "test", "version" => "1.0.0"},
+        "capabilities" => %{}
+      }
+    }
+  end
+
+  defp request(session, method, params, headers) do
     conn =
       post_mcp(
         %{
@@ -111,16 +109,16 @@ defmodule EthuiWeb.MCPTest do
 
   defp decode(body), do: Jason.decode!(body)
 
-  defp post_mcp(body, headers \\ []) do
+  defp post_mcp(body, headers) do
     :post
-    |> conn("/mcp", Jason.encode!(body))
-    |> put_req_header("content-type", "application/json")
-    |> put_req_header("accept", "application/json, text/event-stream")
+    |> Phoenix.ConnTest.build_conn("http://api.lvh.me/mcp", nil)
+    |> Plug.Conn.put_req_header("content-type", "application/json")
+    |> Plug.Conn.put_req_header("accept", "application/json, text/event-stream")
     |> then(fn conn ->
       Enum.reduce(headers, conn, fn {key, value}, acc ->
-        put_req_header(acc, to_string(key), value)
+        Plug.Conn.put_req_header(acc, to_string(key), value)
       end)
     end)
-    |> StreamableHTTP.Plug.call(StreamableHTTP.Plug.init(server: Ethui.MCP.Server))
+    |> Phoenix.ConnTest.dispatch(@endpoint, :post, "http://api.lvh.me/mcp", Jason.encode!(body))
   end
 end

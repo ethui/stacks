@@ -24,7 +24,7 @@ defmodule Ethui.MCP.Tools.CreateStack do
   def execute(params, frame) do
     with {:ok, user} <- Auth.current_user(frame),
          {:ok, stack} <- Stacks.create_stack(user, attrs(params)),
-         {:ok, _pid} <- Server.create(stack) do
+         {:ok, _pid} <- start(stack) do
       {:ok, stack.slug |> Stacks.get_stack_by_slug() |> StackInfo.describe()}
     else
       {:error, %Ecto.Changeset{} = changeset} -> {:error, changeset_error(changeset)}
@@ -34,6 +34,18 @@ defmodule Ethui.MCP.Tools.CreateStack do
       {:error, reason} -> {:error, "could not create stack: #{inspect(reason)}"}
     end
     |> reply(frame)
+  end
+
+  # The row is already committed, so a failed boot has to give the slug and quota slot back
+  defp start(stack) do
+    case Server.create(stack) do
+      {:ok, pid} ->
+        {:ok, pid}
+
+      error ->
+        Stacks.delete_stack(stack)
+        {:error, "could not start stack: #{inspect(error)}"}
+    end
   end
 
   defp attrs(params) do

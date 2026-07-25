@@ -83,7 +83,7 @@ defmodule Ethui.MCP.ToolsTest do
                )
 
       assert block.number == "0x0"
-      assert block.explorer =~ "/block/0x0"
+      assert String.ends_with?(block.explorer, "/block/0")
 
       assert {:ok, %{is_contract: false, nonce: "0"}} =
                call(Tools.GetAddress, %{slug: slug, address: @whale, block: "latest"}, frame)

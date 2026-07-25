@@ -70,6 +70,8 @@ defmodule Ethui.Stacks.Server do
       _ ->
         {:error, "Stack not found"}
     end
+  catch
+    :exit, {:timeout, _} -> {:error, "Stack is taking too long to start"}
   end
 
   def graph_ip_from_slug(proxied_path, slug, target_port) do

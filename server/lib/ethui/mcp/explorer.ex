@@ -19,7 +19,10 @@ defmodule Ethui.MCP.Explorer do
   @spec address(Stack.t(), String.t()) :: String.t()
   def address(stack, address), do: "#{root(stack)}/address/#{address}"
 
-  @spec block(Stack.t(), String.t() | integer) :: String.t()
+  @doc "Block links take a decimal number, the way the frontend builds them"
+  @spec block(Stack.t(), String.t() | integer | nil) :: String.t()
+  def block(stack, nil), do: root(stack)
+  def block(stack, "0x" <> hex), do: block(stack, String.to_integer(hex, 16))
   def block(stack, number), do: "#{root(stack)}/block/#{number}"
 
   defp base, do: Application.get_env(:ethui, :explorer_base, @default_base)
