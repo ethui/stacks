@@ -62,6 +62,24 @@ defmodule Ethui.MCP.ToolsTest do
       assert {:ok, []} = call(Tools.ListStacks, %{}, frame)
     end
 
+    test "reports a stack whose anvil cannot boot", %{frame: frame} do
+      assert {:ok, %{slug: slug}} =
+               call(
+                 Tools.CreateStack,
+                 %{slug: "badfork", fork_url: "http://127.0.0.1:1", fork_block_number: 1},
+                 frame
+               )
+
+      assert {:error, message} =
+               call(
+                 Tools.GetBlock,
+                 %{slug: slug, block: "latest", full_transactions: false},
+                 frame
+               )
+
+      assert message =~ "failed to start"
+    end
+
     test "rejects an invalid slug", %{frame: frame} do
       assert {:error, message} = call(Tools.CreateStack, %{slug: "Not Valid"}, frame)
       assert message =~ "slug"
@@ -169,13 +187,11 @@ defmodule Ethui.MCP.ToolsTest do
                call(Tools.Impersonate, %{slug: slug, address: @whale, stop: true}, frame)
     end
 
-    test "returns no logs on a fresh chain", %{frame: frame, slug: slug} do
-      assert {:ok, %{count: 0}} =
-               call(
-                 Tools.GetLogs,
-                 %{slug: slug, from_block: "earliest", to_block: "latest"},
-                 frame
-               )
+    test "returns no logs on a fresh chain, defaulting the block range", %{
+      frame: frame,
+      slug: slug
+    } do
+      assert {:ok, %{count: 0}} = call(Tools.GetLogs, %{slug: slug, to_block: "latest"}, frame)
     end
   end
 
