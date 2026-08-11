@@ -37,7 +37,21 @@ defmodule EthuiWeb.Endpoint do
   plug EthuiWeb.Plugs.LogMetadata
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
-  plug CORSPlug, origin: ["*"]
+  plug CORSPlug,
+    origin: ["https://stacks.ethui.dev"],
+    credentials: true,
+    max_age: 86_400,
+    headers: [
+      "Authorization",
+      "Content-Type",
+      "Accept",
+      "Origin",
+      "User-Agent",
+      "Cache-Control",
+      "Keep-Alive",
+      "X-Requested-With",
+      "X-CSRF-Token"
+    ]
 
   plug EthuiWeb.Router
 
