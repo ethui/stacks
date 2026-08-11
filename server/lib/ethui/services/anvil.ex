@@ -326,6 +326,10 @@ defmodule Ethui.Services.Anvil do
         to_string(port),
         "--state",
         "#{dir}/state.json",
+        # Without this, every suspend/resume cycle silently drops pre-restart state:
+        # blocks and logs survive, but eth_call at any older block fails with
+        # BlockOutOfRangeError, which breaks indexers replaying chain history.
+        "--preserve-historical-states",
         "--host",
         "0.0.0.0",
         "--chain-id",
