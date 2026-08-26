@@ -53,16 +53,22 @@ defmodule Ethui.Stacks.HttpPorts do
 
   @impl GenServer
   def handle_call(:claim, _from, %{range: range, claimed: claimed} = state) do
-    first_free =
-      range |> Enum.find(fn port -> not MapSet.member?(claimed, port) end)
+    # A port this pool believes is free can still be held by a process that
+    # outlived the stack that owned it. Handing it out anyway gives the caller
+    # a port it cannot bind - or worse, one where the old process answers - so
+    # occupied ports are marked claimed and skipped.
+    {port, claimed} =
+      Enum.reduce_while(range, {nil, claimed}, fn port, {_, claimed} ->
+        cond do
+          MapSet.member?(claimed, port) -> {:cont, {nil, claimed}}
+          bindable?(port) -> {:halt, {port, MapSet.put(claimed, port)}}
+          true -> {:cont, {nil, MapSet.put(claimed, port)}}
+        end
+      end)
 
-    case first_free do
-      nil ->
-        {:reply, {:error, :no_ports_available}, state}
-
-      port ->
-        new_state = %{state | claimed: MapSet.put(claimed, port)}
-        {:reply, {:ok, first_free}, new_state}
+    case port do
+      nil -> {:reply, {:error, :no_ports_available}, %{state | claimed: claimed}}
+      port -> {:reply, {:ok, port}, %{state | claimed: claimed}}
     end
   end
 
@@ -79,5 +85,16 @@ defmodule Ethui.Stacks.HttpPorts do
   @impl GenServer
   def handle_info(_, state) do
     {:noreply, state}
+  end
+
+  defp bindable?(port) do
+    case :gen_tcp.listen(port, [:binary, reuseaddr: true]) do
+      {:ok, socket} ->
+        :gen_tcp.close(socket)
+        true
+
+      {:error, _reason} ->
+        false
+    end
   end
 end

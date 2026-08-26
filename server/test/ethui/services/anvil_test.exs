@@ -7,6 +7,10 @@ defmodule Ethui.Services.AnvilTest do
 
   setup do
     cleanup()
+    # a failed assertion skips the destroy at the end of a test, and the anvil
+    # it started traps exits, so without this it outlives the test and keeps
+    # its port bound for every test that follows
+    on_exit(&cleanup/0)
     :ok
   end
 
@@ -18,6 +22,21 @@ defmodule Ethui.Services.AnvilTest do
     Server.list()
     |> Enum.each(fn slug ->
       Server.destroy(%Stack{slug: slug})
+    end)
+
+    Registry.select(Ethui.Stacks.Registry, [{{{:_, :anvil}, :"$1", :_}, [], [:"$1"]}])
+    |> Enum.each(fn pid ->
+      if Process.alive?(pid) do
+        ref = Process.monitor(pid)
+        Anvil.destroy(pid)
+        # destroy is a cast: without waiting, the next test claims the port
+        # this anvil has not released yet
+        receive do
+          {:DOWN, ^ref, :process, ^pid, _} -> :ok
+        after
+          :timer.seconds(40) -> :ok
+        end
+      end
     end)
 
     :ok
@@ -221,18 +240,14 @@ defmodule Ethui.Services.AnvilTest do
     Anvil.destroy(anvil)
   end
 
-  test "keeps the same port across suspend and resume" do
+  test "serves again after a suspend" do
     {:ok, anvil} = Anvil.start_link(ports: HttpPorts, slug: "resumed", hash: "hash", id: 1)
     :ok = Anvil.ensure_running(anvil)
-    url = Anvil.url(anvil)
 
     send(anvil, :suspend)
-    Process.sleep(200)
-
     :ok = Anvil.ensure_running(anvil)
-    assert Anvil.url(anvil) == url
 
-    client = Rpc.new_client(:http, rpc_url: url)
+    client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
     assert {:ok, _} = Rpc.request("anvil_nodeInfo", []) |> Rpc.send(client)
 
     Anvil.destroy(anvil)

@@ -17,6 +17,10 @@ defmodule Ethui.Services.Anvil do
   # back, rather than killing anvil half way through reading its own state.
   @boot_attempts 100
   @resume_attempts 20
+
+  # how long a stopping anvil gets to release its port before it is written off
+  # and left out of the pool
+  @port_free_attempts 100
   @log_max_size 10_000
 
   @type id :: pid | atom | {:via, atom, term}
@@ -111,12 +115,11 @@ defmodule Ethui.Services.Anvil do
     Process.flag(:trap_exit, true)
 
     with {:ok, dir} <- data_dir(opts[:slug], opts[:hash]),
-         :ok <- File.mkdir_p!(dir),
-         {:ok, port} <-
-           Ethui.Stacks.HttpPorts.claim() do
+         :ok <- File.mkdir_p!(dir) do
       {:ok,
        %{
-         port: port,
+         # claimed per boot, released when anvil lets go of it
+         port: nil,
          proc: nil,
          logs: :queue.new(),
          dir: dir,
@@ -136,7 +139,7 @@ defmodule Ethui.Services.Anvil do
   end
 
   @impl GenServer
-  def handle_info({:EXIT, _pid, exit_status}, %{port: port} = state) do
+  def handle_info({:EXIT, pid, exit_status}, %{proc: pid} = state) when not is_nil(pid) do
     case exit_status do
       # we killed it ourselves on suspend: the port stays claimed so the stack
       # keeps the same URL when it resumes
@@ -144,15 +147,19 @@ defmodule Ethui.Services.Anvil do
         {:noreply, %{state | proc: nil}}
 
       0 ->
-        Ethui.Stacks.HttpPorts.free(port)
+        release_port(state)
         {:stop, :normal, %{state | port: nil, proc: nil}}
 
       exit_code ->
         Logger.error("anvil exited with code #{inspect(exit_code)}")
-        Ethui.Stacks.HttpPorts.free(port)
+        release_port(state)
         {:stop, :normal, %{state | port: nil, proc: nil}}
     end
   end
+
+  # anything else linked to us - the process that started this stack, a task -
+  # is not anvil, and its exit says nothing about the chain
+  def handle_info({:EXIT, _pid, _status}, state), do: {:noreply, state}
 
   def handle_info({:anvil_output, line}, state) do
     {:noreply, log_line(state, line)}
@@ -164,9 +171,10 @@ defmodule Ethui.Services.Anvil do
       ) do
     Logger.info("Suspending #{state.slug}: #{last_used}")
 
-    kill_proc(proc, state.port)
+    kill_proc(proc)
+    release_port(state)
 
-    {:noreply, %{state | proc: nil, status: :suspended, idle_timer: nil}}
+    {:noreply, %{state | proc: nil, port: nil, status: :suspended, idle_timer: nil}}
   end
 
   @impl GenServer
@@ -223,8 +231,9 @@ defmodule Ethui.Services.Anvil do
   def handle_cast(:destroy, %{proc: proc} = state) do
     _ = remove_dir(state)
     # proc is nil while suspended
-    if proc, do: GenServer.stop(proc)
-    {:stop, :normal, state}
+    if proc, do: kill_proc(proc)
+    release_port(state)
+    {:stop, :normal, %{state | port: nil}}
   end
 
   @impl GenServer
@@ -407,33 +416,43 @@ defmodule Ethui.Services.Anvil do
 
   defp start_anvil(state, may_quarantine_state \\ true)
 
-  defp start_anvil(
-         %{dir: dir, chain_id: chain_id, args: args, slug: slug} = state,
-         may_quarantine
-       ) do
-    # The port is claimed once, in init/1, and held for the lifetime of the
-    # stack: claiming a fresh one on every resume leaked the previous one and
-    # moved the stack's URL out from under anyone holding it.
-    port = state.port
-    pid = self()
+  # Each boot takes a fresh port. Rebinding the one the previous anvil had means
+  # racing its shutdown, and a stale process answering on it reads as a healthy
+  # boot. The port is external to nobody: callers reach a stack by its slug and
+  # the proxy resolves the port per request.
+  defp start_anvil(%{slug: slug} = state, may_quarantine) do
+    case Ethui.Stacks.HttpPorts.claim() do
+      {:ok, port} ->
+        state = %{state | port: port}
+        boot_anvil(state, anvil_args(state), may_quarantine)
 
+      {:error, reason} ->
+        Logger.error("No port available for #{slug}: #{inspect(reason)}")
+        {:error, reason, %{state | status: :suspended, error: reason}}
+    end
+  end
+
+  defp anvil_args(%{dir: dir, chain_id: chain_id, args: args, port: port}) do
     # A repeated flag is a clap usage error ("cannot be used multiple times",
     # exit 2), not a last-one-wins override, so a caller flag that collides
     # with a server-managed one is dropped rather than appended to.
     args = drop_managed(args)
 
-    anvil_args =
-      args ++
-        [
-          "--port",
-          to_string(port),
-          "--state",
-          "#{dir}/state.json",
-          "--host",
-          "0.0.0.0",
-          "--chain-id",
-          to_string(chain_id)
-        ] ++ history_args(args)
+    args ++
+      [
+        "--port",
+        to_string(port),
+        "--state",
+        "#{dir}/state.json",
+        "--host",
+        "0.0.0.0",
+        "--chain-id",
+        to_string(chain_id)
+      ] ++ history_args(args)
+  end
+
+  defp boot_anvil(%{slug: slug, port: port} = state, anvil_args, may_quarantine) do
+    pid = self()
 
     case MuonTrap.Daemon.start_link(
            anvil_bin(),
@@ -475,7 +494,8 @@ defmodule Ethui.Services.Anvil do
   # output nothing explains the failure.
   defp boot_exited(%{slug: slug} = state, status, may_quarantine) do
     {lines, state} = drain_output(state)
-    wait_until_free(state.port)
+    release_port(state)
+    state = %{state | port: nil}
 
     Logger.error(
       "Failed to start anvil for #{slug}: exited with #{inspect(status)}" <>
@@ -543,10 +563,7 @@ defmodule Ethui.Services.Anvil do
     end
   end
 
-  # muontrap SIGTERMs the OS process once the daemon's port closes, and anvil
-  # keeps running while it dumps state, so the http port can still be bound
-  # after the daemon exits. The next resume rebinds it, so wait for the release.
-  defp kill_proc(proc, port) do
+  defp kill_proc(proc) do
     Process.exit(proc, :kill)
 
     receive do
@@ -554,13 +571,33 @@ defmodule Ethui.Services.Anvil do
     after
       :timer.seconds(5) -> :ok
     end
+  end
 
-    wait_until_free(port)
+  # muontrap SIGTERMs anvil when the daemon stops, and anvil keeps the socket
+  # while it dumps state. Handing the port back before it is actually released
+  # would give the next stack a port it cannot bind, so one that never comes
+  # free is left out of the pool instead.
+  defp release_port(%{port: nil}), do: :ok
+
+  defp release_port(%{port: port, slug: slug}) do
+    # Waiting here would block every call to this stack for as long as anvil
+    # takes to let go, so the pool gets the port back out of band.
+    spawn(fn ->
+      case wait_until_free(port) do
+        :ok ->
+          Ethui.Stacks.HttpPorts.free(port)
+
+        {:error, :timeout} ->
+          Logger.error("Port #{port} still held after #{slug} stopped, dropping it from the pool")
+      end
+    end)
+
+    :ok
   end
 
   # bounded well under ensure_running's call timeout: a resume queued behind a
   # slow suspend still has to get an answer
-  defp wait_until_free(port, attempts \\ 100)
+  defp wait_until_free(port, attempts \\ @port_free_attempts)
 
   defp wait_until_free(port, 0) do
     Logger.error("anvil still holds port #{port}")
