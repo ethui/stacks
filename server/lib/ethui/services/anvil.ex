@@ -10,6 +10,13 @@ defmodule Ethui.Services.Anvil do
   alias Ethui.Stacks
 
   @idle_timeout :timer.minutes(10)
+
+  # anvil replays its persisted state before it answers anything, and with
+  # historical states kept that runs into minutes on a busy chain. A slow load
+  # is not a failure: the boot is left running and the caller is told to come
+  # back, rather than killing anvil half way through reading its own state.
+  @boot_attempts 100
+  @resume_attempts 20
   @log_max_size 10_000
 
   @type id :: pid | atom | {:via, atom, term}
@@ -21,7 +28,8 @@ defmodule Ethui.Services.Anvil do
           slug: String.t(),
           hash: String.t(),
           anvil_opts: opts_map,
-          id: integer()
+          id: integer(),
+          boot_attempts: pos_integer()
         ]
 
   @type t :: %{
@@ -37,7 +45,9 @@ defmodule Ethui.Services.Anvil do
           chain_id: String.t(),
           # idle timer
           idle_timer: reference() | nil,
-          status: :suspended | :running | :failed,
+          # how long a first boot may take before the caller is told to retry
+          boot_attempts: pos_integer(),
+          status: :suspended | :starting | :running | :failed,
           # why the last boot attempt failed, when status is :failed
           error: term(),
           last_used: integer
@@ -117,6 +127,7 @@ defmodule Ethui.Services.Anvil do
          idle_timer: nil,
          status: :suspended,
          error: nil,
+         boot_attempts: opts[:boot_attempts] || @boot_attempts,
          last_used: nil
        }}
     else
@@ -153,7 +164,7 @@ defmodule Ethui.Services.Anvil do
       ) do
     Logger.info("Suspending #{state.slug}: #{last_used}")
 
-    kill_proc(proc)
+    kill_proc(proc, state.port)
 
     {:noreply, %{state | proc: nil, status: :suspended, idle_timer: nil}}
   end
@@ -181,6 +192,22 @@ defmodule Ethui.Services.Anvil do
       # lives, so retrying only burns another readiness timeout per request
       :failed ->
         {:reply, {:error, state.error}, state}
+
+      # a boot from an earlier request is still loading state: check on it
+      # briefly instead of starting a second anvil on the same port
+      :starting ->
+        case wait_until_ready(state.port, state.proc, @resume_attempts) do
+          :ok ->
+            Logger.info("#{slug} finished starting on port #{state.port}")
+            {:reply, :ok, %{state | status: :running, error: nil} |> touch()}
+
+          {:error, :timeout} ->
+            {:reply, {:error, :starting}, state}
+
+          {:exited, status} ->
+            {:error, error, state} = boot_exited(%{state | proc: nil}, status, true)
+            {:reply, {:error, error}, state}
+        end
 
       :suspended ->
         Logger.info("restarting slug: #{slug}")
@@ -338,11 +365,19 @@ defmodule Ethui.Services.Anvil do
     %{state | last_used: System.system_time(:second), idle_timer: timer}
   end
 
-  defp wait_until_ready(port, attempts \\ 100)
+  defp wait_until_ready(port, proc, attempts) do
+    # a process that already exited will never answer, so stop polling it: the
+    # exit status is what says whether anvil rejected its arguments
+    receive do
+      {:EXIT, ^proc, status} -> {:exited, status}
+    after
+      0 -> poll_until_ready(port, proc, attempts)
+    end
+  end
 
-  defp wait_until_ready(_port, 0), do: {:error, :timeout}
+  defp poll_until_ready(_port, _proc, 0), do: {:error, :timeout}
 
-  defp wait_until_ready(port, attempts) do
+  defp poll_until_ready(port, proc, attempts) do
     url = "http://127.0.0.1:#{port}"
 
     body =
@@ -356,7 +391,9 @@ defmodule Ethui.Services.Anvil do
     case :httpc.request(
            :post,
            {String.to_charlist(url), [], ~c"application/json", body},
-           [],
+           # anvil accepts the connection before it finishes loading state, and
+           # without these the request blocks this GenServer indefinitely
+           [{:timeout, 1_000}, {:connect_timeout, 500}],
            [{:body_format, :binary}]
          ) do
       {:ok, {{_, 200, _}, _, _}} ->
@@ -364,11 +401,16 @@ defmodule Ethui.Services.Anvil do
 
       _ ->
         Process.sleep(100)
-        wait_until_ready(port, attempts - 1)
+        wait_until_ready(port, proc, attempts - 1)
     end
   end
 
-  defp start_anvil(%{dir: dir, chain_id: chain_id, args: args, slug: slug} = state) do
+  defp start_anvil(state, may_quarantine_state \\ true)
+
+  defp start_anvil(
+         %{dir: dir, chain_id: chain_id, args: args, slug: slug} = state,
+         may_quarantine
+       ) do
     # The port is claimed once, in init/1, and held for the lifetime of the
     # stack: claiming a fresh one on every resume leaked the previous one and
     # moved the stack's URL out from under anyone holding it.
@@ -399,16 +441,27 @@ defmodule Ethui.Services.Anvil do
            logger_fun: fn line -> send(pid, {:anvil_output, line}) end,
            # TODO maybe patch muontrap to have a separate stream for stderr
            stderr_to_stdout: true,
-           exit_status_to_reason: & &1
+           exit_status_to_reason: & &1,
+           # anvil dumps its state on SIGTERM, and with historical states that
+           # takes longer than muontrap's 500ms default; a SIGKILL landing
+           # mid-dump leaves a truncated state.json that anvil then refuses to
+           # parse on the next boot
+           delay_to_sigkill: :timer.seconds(30)
          ) do
       {:ok, proc} ->
-        case wait_until_ready(port) do
+        case wait_until_ready(port, proc, state.boot_attempts) do
           :ok ->
             Logger.info("restarting slug with port: #{slug} #{port}")
             {:ok, %{state | proc: proc, status: :running, error: nil} |> touch()}
 
-          {:error, reason} ->
-            failed_to_boot(state, proc, reason)
+          {:exited, status} ->
+            boot_exited(%{state | proc: nil}, status, may_quarantine)
+
+          # still loading: leave it alone. Killing anvil part way through
+          # reading its state is what leaves that state unreadable.
+          {:error, :timeout} ->
+            Logger.info("#{slug} is still starting on port #{port}")
+            {:error, :starting, %{state | proc: proc, status: :starting, error: :starting}}
         end
 
       {:error, reason} ->
@@ -419,30 +472,62 @@ defmodule Ethui.Services.Anvil do
 
   # anvil writes the real reason to stdout and exits before the RPC port ever
   # opens - a rejected flag exits 2 immediately - so without replaying its
-  # output all that reaches the logs is our own readiness timeout.
-  defp failed_to_boot(%{slug: slug} = state, proc, reason) do
+  # output nothing explains the failure.
+  defp boot_exited(%{slug: slug} = state, status, may_quarantine) do
     {lines, state} = drain_output(state)
-    exit_status = stop_proc(proc)
+    wait_until_free(state.port)
 
     Logger.error(
-      "Failed to start anvil for #{slug}: #{inspect(reason)}" <>
-        exit_description(exit_status) <> output_description(lines)
+      "Failed to start anvil for #{slug}: exited with #{inspect(status)}" <>
+        output_description(lines)
     )
 
-    case exit_status do
-      # clap's usage error: anvil rejected the arguments themselves, and they
-      # cannot change while this process lives, so every later request fails
-      # from here instead of paying for another boot that cannot work
-      {:exited, 2} ->
-        {:error, {:exit, 2}, %{state | proc: nil, status: :failed, error: {:exit, 2}}}
+    cond do
+      # a truncated state file is recoverable: keep it for inspection and boot
+      # from scratch rather than wedging the stack forever
+      status == 2 and may_quarantine and state_file_rejected?(lines) ->
+        case quarantine_state(state) do
+          :ok -> start_anvil(state, false)
+          _ -> failed(state, {:exit, 2})
+        end
+
+      # clap's usage error on anything else: anvil rejected the arguments
+      # themselves, and they cannot change while this process lives, so every
+      # later request fails from here instead of paying for a boot that cannot
+      # work
+      status == 2 ->
+        failed(state, {:exit, 2})
 
       # anything else - an unreachable fork, a port that is still bound - can
       # succeed on the next try, so the stack stays resumable
-      {:exited, code} when is_integer(code) ->
-        {:error, {:exit, code}, %{state | proc: nil, status: :suspended, error: {:exit, code}}}
+      true ->
+        error = {:exit, status}
+        {:error, error, %{state | status: :suspended, error: error}}
+    end
+  end
 
-      _ ->
-        {:error, reason, %{state | proc: nil, status: :suspended, error: reason}}
+  defp failed(state, error) do
+    {:error, error, %{state | status: :failed, error: error}}
+  end
+
+  # "error: invalid value '/.../state.json' for '--state <PATH>': failed to
+  # parse json file"
+  defp state_file_rejected?(lines) do
+    Enum.any?(lines, &String.contains?(&1, "for '--state"))
+  end
+
+  defp quarantine_state(%{dir: dir, slug: slug}) do
+    path = "#{dir}/state.json"
+    broken = "#{path}.corrupt"
+
+    case File.rename(path, broken) do
+      :ok ->
+        Logger.warning("Unreadable anvil state for #{slug} moved to #{broken}")
+        :ok
+
+      {:error, reason} ->
+        Logger.error("Failed to move unreadable anvil state for #{slug}: #{inspect(reason)}")
+        {:error, reason}
     end
   end
 
@@ -458,20 +543,10 @@ defmodule Ethui.Services.Anvil do
     end
   end
 
-  defp stop_proc(proc) do
-    receive do
-      {:EXIT, ^proc, status} ->
-        {:exited, status}
-    after
-      0 ->
-        kill_proc(proc)
-        :killed
-    end
-  end
-
-  # waits for the exit so the http port is free again before the next resume
-  # tries to bind it
-  defp kill_proc(proc) do
+  # muontrap SIGTERMs the OS process once the daemon's port closes, and anvil
+  # keeps running while it dumps state, so the http port can still be bound
+  # after the daemon exits. The next resume rebinds it, so wait for the release.
+  defp kill_proc(proc, port) do
     Process.exit(proc, :kill)
 
     receive do
@@ -479,10 +554,30 @@ defmodule Ethui.Services.Anvil do
     after
       :timer.seconds(5) -> :ok
     end
+
+    wait_until_free(port)
   end
 
-  defp exit_description({:exited, status}), do: ", anvil exited with #{inspect(status)}"
-  defp exit_description(:killed), do: ", anvil never became ready and was killed"
+  # bounded well under ensure_running's call timeout: a resume queued behind a
+  # slow suspend still has to get an answer
+  defp wait_until_free(port, attempts \\ 100)
+
+  defp wait_until_free(port, 0) do
+    Logger.error("anvil still holds port #{port}")
+    {:error, :timeout}
+  end
+
+  defp wait_until_free(port, attempts) do
+    case :gen_tcp.connect(~c"127.0.0.1", port, [:binary, active: false], 100) do
+      {:error, _} ->
+        :ok
+
+      {:ok, socket} ->
+        :gen_tcp.close(socket)
+        Process.sleep(100)
+        wait_until_free(port, attempts - 1)
+    end
+  end
 
   defp output_description([]), do: ", no output"
 

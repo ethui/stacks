@@ -70,6 +70,10 @@ defmodule Ethui.Stacks.Server do
       {:error, {:exit, code}} ->
         {:error, "Stack failed to start: anvil exited with code #{code}, check its anvil options"}
 
+      # anvil is up but still replaying its state; it will answer once it has
+      {:error, :starting} ->
+        {:error, "Stack is still starting, try again shortly"}
+
       {:error, :timeout} ->
         {:error, "Stack is taking too long to start"}
 

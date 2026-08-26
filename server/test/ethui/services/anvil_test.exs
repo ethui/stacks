@@ -10,6 +10,10 @@ defmodule Ethui.Services.AnvilTest do
     :ok
   end
 
+  defp data_dir_root do
+    Application.get_env(:ethui, Ethui.Stacks) |> Keyword.fetch!(:data_dir_root)
+  end
+
   defp cleanup do
     Server.list()
     |> Enum.each(fn slug ->
@@ -118,6 +122,76 @@ defmodule Ethui.Services.AnvilTest do
       )
 
     assert :ok = Anvil.ensure_running(anvil)
+
+    client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
+    assert {:ok, _} = Rpc.request("anvil_nodeInfo", []) |> Rpc.send(client)
+
+    Anvil.destroy(anvil)
+  end
+
+  test "keeps chain state across suspend and resume" do
+    {:ok, anvil} = Anvil.start_link(ports: HttpPorts, slug: "persist", hash: "hash", id: 1)
+    :ok = Anvil.ensure_running(anvil)
+
+    client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
+    {:ok, _} = Rpc.request("anvil_mine", ["0x5"]) |> Rpc.send(client)
+
+    {:ok, %Exth.Rpc.Response.Success{result: mined}} =
+      Rpc.request("eth_blockNumber", []) |> Rpc.send(client)
+
+    # the call queues behind the suspend, which only returns once anvil has
+    # dumped its state and released the port
+    send(anvil, :suspend)
+    :ok = Anvil.ensure_running(anvil)
+
+    client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
+
+    assert {:ok, %Exth.Rpc.Response.Success{result: ^mined}} =
+             Rpc.request("eth_blockNumber", []) |> Rpc.send(client)
+
+    Anvil.destroy(anvil)
+  end
+
+  test "answers that it is still starting while anvil loads" do
+    bin = Path.join(System.tmp_dir!(), "slow_anvil")
+    File.write!(bin, "#!/bin/sh\nsleep 3\nexec anvil \"$@\"\n")
+    File.chmod!(bin, 0o755)
+
+    config = Application.get_env(:ethui, Ethui.Stacks)
+    Application.put_env(:ethui, Ethui.Stacks, Keyword.put(config, :anvil_bin, bin))
+    on_exit(fn -> Application.put_env(:ethui, Ethui.Stacks, config) end)
+
+    {:ok, anvil} =
+      Anvil.start_link(
+        ports: HttpPorts,
+        slug: "slow",
+        hash: "hash",
+        id: 1,
+        boot_attempts: 2
+      )
+
+    # anvil is alive and still loading, so the boot is left running
+    assert {:error, :starting} = Anvil.ensure_running(anvil)
+
+    Process.sleep(3_500)
+    assert :ok = Anvil.ensure_running(anvil)
+
+    client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
+    assert {:ok, _} = Rpc.request("anvil_nodeInfo", []) |> Rpc.send(client)
+
+    Anvil.destroy(anvil)
+  end
+
+  test "recovers from a state file anvil cannot parse" do
+    dir = Path.join([data_dir_root(), "corrupt.hash", "anvil"])
+    File.mkdir_p!(dir)
+    # what a suspend that outran anvil's state dump leaves behind
+    File.write!(Path.join(dir, "state.json"), "{ truncated")
+
+    {:ok, anvil} = Anvil.start_link(ports: HttpPorts, slug: "corrupt", hash: "hash", id: 1)
+
+    assert :ok = Anvil.ensure_running(anvil)
+    assert File.exists?(Path.join(dir, "state.json.corrupt"))
 
     client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
     assert {:ok, _} = Rpc.request("anvil_nodeInfo", []) |> Rpc.send(client)
