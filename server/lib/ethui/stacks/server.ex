@@ -65,6 +65,14 @@ defmodule Ethui.Stacks.Server do
          url when not is_nil(url) <- Anvil.url(pid) do
       {:ok, url}
     else
+      # anvil rejected its arguments and exited; the message it printed is in
+      # the stack's logs
+      {:error, {:exit, code}} ->
+        {:error, "Stack failed to start: anvil exited with code #{code}, check its anvil options"}
+
+      {:error, :timeout} ->
+        {:error, "Stack is taking too long to start"}
+
       _ ->
         {:error, "Stack not found"}
     end

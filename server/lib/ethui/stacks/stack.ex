@@ -114,6 +114,11 @@ defmodule Ethui.Stacks.Stack do
     changeset
     |> conflict(
       :anvil_opts,
+      opts["fork_block_number"] && is_nil(opts["fork_url"]),
+      "fork_block_number requires fork_url"
+    )
+    |> conflict(
+      :anvil_opts,
       opts["mixed_mining"] && is_nil(opts["block_time"]),
       "mixed_mining requires block_time"
     )

@@ -70,6 +70,13 @@ defmodule Ethui.Stacks.StackTest do
       assert msg =~ "no_mining cannot be combined with block_time or mixed_mining"
     end
 
+    test "rejects a fork block number without a fork url" do
+      assert %{anvil_opts: [msg]} = errors_on(anvil_opts(%{"fork_block_number" => 100}))
+      assert msg =~ "fork_block_number requires fork_url"
+
+      assert anvil_opts(%{"fork_url" => "http://localhost:1", "fork_block_number" => 100}).valid?
+    end
+
     test "rejects a non-map value" do
       assert %{anvil_opts: ["is invalid"]} = errors_on(anvil_opts("--port 4000"))
     end

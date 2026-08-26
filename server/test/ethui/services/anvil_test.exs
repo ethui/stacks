@@ -106,6 +106,64 @@ defmodule Ethui.Services.AnvilTest do
     Anvil.destroy(anvil)
   end
 
+  test "ignores server-managed flags handed in as anvil options" do
+    {:ok, anvil} =
+      Anvil.start_link(
+        ports: HttpPorts,
+        slug: "managed",
+        hash: "hash",
+        # anvil would exit 2 on the repeated flags if these reached the command
+        anvil_opts: %{"port" => 1, "host" => "10.0.0.1", "chain_id" => 5},
+        id: 1
+      )
+
+    assert :ok = Anvil.ensure_running(anvil)
+
+    client = Rpc.new_client(:http, rpc_url: Anvil.url(anvil))
+    assert {:ok, _} = Rpc.request("anvil_nodeInfo", []) |> Rpc.send(client)
+
+    Anvil.destroy(anvil)
+  end
+
+  test "reports a boot failure instead of retrying it forever" do
+    {:ok, anvil} =
+      Anvil.start_link(
+        ports: HttpPorts,
+        slug: "badopts",
+        hash: "hash",
+        # anvil refuses a fork block number with no fork url, and exits 2
+        # before it ever opens the rpc port
+        anvil_opts: %{"fork_block_number" => 100},
+        id: 1
+      )
+
+    assert {:error, {:exit, 2}} = Anvil.ensure_running(anvil)
+
+    # the second call answers from the recorded failure, without waiting on
+    # another boot
+    assert {:error, {:exit, 2}} = Anvil.ensure_running(anvil, :timer.seconds(1))
+    assert Process.alive?(anvil)
+
+    Anvil.destroy(anvil)
+  end
+
+  test "keeps the same port across suspend and resume" do
+    {:ok, anvil} = Anvil.start_link(ports: HttpPorts, slug: "resumed", hash: "hash", id: 1)
+    :ok = Anvil.ensure_running(anvil)
+    url = Anvil.url(anvil)
+
+    send(anvil, :suspend)
+    Process.sleep(200)
+
+    :ok = Anvil.ensure_running(anvil)
+    assert Anvil.url(anvil) == url
+
+    client = Rpc.new_client(:http, rpc_url: url)
+    assert {:ok, _} = Rpc.request("anvil_nodeInfo", []) |> Rpc.send(client)
+
+    Anvil.destroy(anvil)
+  end
+
   test "creates multiple anvil processes" do
     anvils =
       for i <- 1..10 do

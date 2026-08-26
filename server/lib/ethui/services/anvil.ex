@@ -37,7 +37,9 @@ defmodule Ethui.Services.Anvil do
           chain_id: String.t(),
           # idle timer
           idle_timer: reference() | nil,
-          status: atom(),
+          status: :suspended | :running | :failed,
+          # why the last boot attempt failed, when status is :failed
+          error: term(),
           last_used: integer
         }
 
@@ -61,7 +63,7 @@ defmodule Ethui.Services.Anvil do
   end
 
   # Booting a forked instance waits on the upstream chain, well past a default call timeout
-  @spec ensure_running(id, timeout) :: :ok
+  @spec ensure_running(id, timeout) :: :ok | {:error, {:exit, integer} | term}
   def ensure_running(id, timeout \\ :timer.seconds(30)) do
     GenServer.call(id, :ensure_running, timeout)
   end
@@ -114,6 +116,7 @@ defmodule Ethui.Services.Anvil do
          args: opts_to_args(opts[:anvil_opts]),
          idle_timer: nil,
          status: :suspended,
+         error: nil,
          last_used: nil
        }}
     else
@@ -123,21 +126,25 @@ defmodule Ethui.Services.Anvil do
 
   @impl GenServer
   def handle_info({:EXIT, _pid, exit_status}, %{port: port} = state) do
-    Ethui.Stacks.HttpPorts.free(port)
-
-    new_state = %{state | port: nil}
-
     case exit_status do
-      0 ->
-        {:stop, :normal, new_state}
-
+      # we killed it ourselves on suspend: the port stays claimed so the stack
+      # keeps the same URL when it resumes
       :killed ->
-        {:noreply, new_state}
+        {:noreply, %{state | proc: nil}}
+
+      0 ->
+        Ethui.Stacks.HttpPorts.free(port)
+        {:stop, :normal, %{state | port: nil, proc: nil}}
 
       exit_code ->
         Logger.error("anvil exited with code #{inspect(exit_code)}")
-        {:stop, :normal, new_state}
+        Ethui.Stacks.HttpPorts.free(port)
+        {:stop, :normal, %{state | port: nil, proc: nil}}
     end
+  end
+
+  def handle_info({:anvil_output, line}, state) do
+    {:noreply, log_line(state, line)}
   end
 
   def handle_info(
@@ -146,7 +153,7 @@ defmodule Ethui.Services.Anvil do
       ) do
     Logger.info("Suspending #{state.slug}: #{last_used}")
 
-    Process.exit(proc, :kill)
+    kill_proc(proc)
 
     {:noreply, %{state | proc: nil, status: :suspended, idle_timer: nil}}
   end
@@ -166,36 +173,36 @@ defmodule Ethui.Services.Anvil do
         _from,
         %{slug: slug, status: status} = state
       ) do
-    state =
-      case status do
-        :running ->
-          state
+    case status do
+      :running ->
+        {:reply, :ok, state}
 
-        :suspended ->
-          Logger.info("restarting slug: #{slug}")
+      # anvil rejected these args once and they cannot change while this process
+      # lives, so retrying only burns another readiness timeout per request
+      :failed ->
+        {:reply, {:error, state.error}, state}
 
-          start_anvil(state)
-      end
+      :suspended ->
+        Logger.info("restarting slug: #{slug}")
 
-    {:reply, :ok, state}
+        case start_anvil(state) do
+          {:ok, state} -> {:reply, :ok, state}
+          {:error, reason, state} -> {:reply, {:error, reason}, state}
+        end
+    end
   end
 
   @impl GenServer
   def handle_cast(:destroy, %{proc: proc} = state) do
     _ = remove_dir(state)
-    GenServer.stop(proc)
+    # proc is nil while suspended
+    if proc, do: GenServer.stop(proc)
     {:stop, :normal, state}
   end
 
   @impl GenServer
-  def handle_cast({:log, line}, %{logs: logs, log_subscribers: subs} = state) do
-    for s <- subs do
-      send(s, {:logs, :anvil, state.slug, [line]})
-    end
-
-    new_logs = :queue.in(line, logs) |> trim()
-
-    {:noreply, %{state | logs: new_logs}}
+  def handle_cast({:log, line}, state) do
+    {:noreply, log_line(state, line)}
   end
 
   @impl GenServer
@@ -212,7 +219,22 @@ defmodule Ethui.Services.Anvil do
     {:noreply, %{touch(state) | log_subscribers: MapSet.delete(subs, pid)}}
   end
 
+  @impl GenServer
+  def terminate(_reason, %{port: port}) when is_integer(port) do
+    Ethui.Stacks.HttpPorts.free(port)
+  end
+
+  def terminate(_reason, _state), do: :ok
+
   ## aux
+
+  defp log_line(%{logs: logs, log_subscribers: subs} = state, line) do
+    for s <- subs do
+      send(s, {:logs, :anvil, state.slug, [line]})
+    end
+
+    %{state | logs: :queue.in(line, logs) |> trim()}
+  end
 
   defp remove_dir(state) do
     case File.rm_rf(state.dir) do
@@ -276,6 +298,25 @@ defmodule Ethui.Services.Anvil do
 
   defp dashify(key) when is_binary(key), do: String.replace(key, "_", "-")
 
+  @managed_flags ~w(--port --state --host --chain-id --preserve-historical-states)
+
+  defp drop_managed([]), do: []
+
+  defp drop_managed([arg | rest]) do
+    if arg in @managed_flags do
+      rest |> drop_value() |> drop_managed()
+    else
+      [arg | drop_managed(rest)]
+    end
+  end
+
+  # a flag's value, if it has one: the next element unless it is another flag
+  defp drop_value([value | rest]) do
+    if String.starts_with?(value, "--"), do: [value | rest], else: rest
+  end
+
+  defp drop_value([]), do: []
+
   # Without --preserve-historical-states, every suspend/resume cycle silently drops
   # pre-restart state: blocks and logs survive, but eth_call at any older block fails
   # with BlockOutOfRangeError, which breaks indexers replaying chain history.
@@ -328,12 +369,17 @@ defmodule Ethui.Services.Anvil do
   end
 
   defp start_anvil(%{dir: dir, chain_id: chain_id, args: args, slug: slug} = state) do
-    {:ok, port} = Ethui.Stacks.HttpPorts.claim()
-
+    # The port is claimed once, in init/1, and held for the lifetime of the
+    # stack: claiming a fresh one on every resume leaked the previous one and
+    # moved the stack's URL out from under anyone holding it.
+    port = state.port
     pid = self()
 
-    # Caller args go first so the server-managed ones win any duplicate: clap
-    # takes the last occurrence of a flag.
+    # A repeated flag is a clap usage error ("cannot be used multiple times",
+    # exit 2), not a last-one-wins override, so a caller flag that collides
+    # with a server-managed one is dropped rather than appended to.
+    args = drop_managed(args)
+
     anvil_args =
       args ++
         [
@@ -347,23 +393,101 @@ defmodule Ethui.Services.Anvil do
           to_string(chain_id)
         ] ++ history_args(args)
 
-    with {:ok, proc} <-
-           MuonTrap.Daemon.start_link(
-             anvil_bin(),
-             anvil_args,
-             logger_fun: fn f -> GenServer.cast(pid, {:log, f}) end,
-             # TODO maybe patch muontrap to have a separate stream for stderr
-             stderr_to_stdout: true,
-             exit_status_to_reason: & &1
-           ),
-         :ok <- wait_until_ready(port) do
-      Logger.info("restarting slug with port: #{slug} #{port}")
+    case MuonTrap.Daemon.start_link(
+           anvil_bin(),
+           anvil_args,
+           logger_fun: fn line -> send(pid, {:anvil_output, line}) end,
+           # TODO maybe patch muontrap to have a separate stream for stderr
+           stderr_to_stdout: true,
+           exit_status_to_reason: & &1
+         ) do
+      {:ok, proc} ->
+        case wait_until_ready(port) do
+          :ok ->
+            Logger.info("restarting slug with port: #{slug} #{port}")
+            {:ok, %{state | proc: proc, status: :running, error: nil} |> touch()}
 
-      %{state | proc: proc, status: :running, port: port} |> touch()
-    else
+          {:error, reason} ->
+            failed_to_boot(state, proc, reason)
+        end
+
       {:error, reason} ->
-        Logger.error("Failed to start anvil: #{inspect(reason)}")
-        state
+        Logger.error("Failed to start anvil for #{slug}: #{inspect(reason)}")
+        {:error, reason, state}
     end
+  end
+
+  # anvil writes the real reason to stdout and exits before the RPC port ever
+  # opens - a rejected flag exits 2 immediately - so without replaying its
+  # output all that reaches the logs is our own readiness timeout.
+  defp failed_to_boot(%{slug: slug} = state, proc, reason) do
+    {lines, state} = drain_output(state)
+    exit_status = stop_proc(proc)
+
+    Logger.error(
+      "Failed to start anvil for #{slug}: #{inspect(reason)}" <>
+        exit_description(exit_status) <> output_description(lines)
+    )
+
+    case exit_status do
+      # clap's usage error: anvil rejected the arguments themselves, and they
+      # cannot change while this process lives, so every later request fails
+      # from here instead of paying for another boot that cannot work
+      {:exited, 2} ->
+        {:error, {:exit, 2}, %{state | proc: nil, status: :failed, error: {:exit, 2}}}
+
+      # anything else - an unreachable fork, a port that is still bound - can
+      # succeed on the next try, so the stack stays resumable
+      {:exited, code} when is_integer(code) ->
+        {:error, {:exit, code}, %{state | proc: nil, status: :suspended, error: {:exit, code}}}
+
+      _ ->
+        {:error, reason, %{state | proc: nil, status: :suspended, error: reason}}
+    end
+  end
+
+  # log lines arrive as messages, and this runs inside the call that started
+  # anvil, so everything it printed is still sitting in our mailbox
+  defp drain_output(state, acc \\ []) do
+    receive do
+      {:anvil_output, line} -> drain_output(state, [line | acc])
+    after
+      0 ->
+        lines = Enum.reverse(acc)
+        {lines, Enum.reduce(lines, state, &log_line(&2, &1))}
+    end
+  end
+
+  defp stop_proc(proc) do
+    receive do
+      {:EXIT, ^proc, status} ->
+        {:exited, status}
+    after
+      0 ->
+        kill_proc(proc)
+        :killed
+    end
+  end
+
+  # waits for the exit so the http port is free again before the next resume
+  # tries to bind it
+  defp kill_proc(proc) do
+    Process.exit(proc, :kill)
+
+    receive do
+      {:EXIT, ^proc, _status} -> :ok
+    after
+      :timer.seconds(5) -> :ok
+    end
+  end
+
+  defp exit_description({:exited, status}), do: ", anvil exited with #{inspect(status)}"
+  defp exit_description(:killed), do: ", anvil never became ready and was killed"
+
+  defp output_description([]), do: ", no output"
+
+  defp output_description(lines) do
+    tail = lines |> Enum.take(-10) |> Enum.map_join(" | ", &String.trim/1)
+    ", last output: #{tail}"
   end
 end
